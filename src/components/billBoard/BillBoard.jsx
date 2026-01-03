@@ -8,6 +8,7 @@ import UnlockOfferModal from '../products/UnlockOfferModel';
 
 export default function BillboardBanners() {
   const dispatch = useDispatch();
+
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [couponCode, setCouponCode] = useState(null);
 
@@ -17,11 +18,12 @@ export default function BillboardBanners() {
     bestOfferError,
   } = useSelector((state) => state.billboards);
 
+  /* ------------------ API CALL ------------------ */
   useEffect(() => {
     dispatch(fetchBestOfferBillboards());
   }, [dispatch]);
 
-  // Handle unlock offer - API call and open modal
+  /* ------------------ CLICK HANDLER ------------------ */
   const handleUnlockOffer = (product) => {
     dispatch(fetchProductOffer(product.Productid))
       .unwrap()
@@ -34,101 +36,96 @@ export default function BillboardBanners() {
       });
   };
 
-  /* ------------------ LOADING & ERROR STATES ------------------ */
-
+  /* ------------------ STATES ------------------ */
   if (bestOfferLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="h-12 w-12 rounded-full border-b-2 border-gray-900 animate-spin" />
       </div>
     );
   }
 
   if (bestOfferError) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600 text-center">
-          <p className="text-xl font-semibold">Something went wrong</p>
-          <p className="text-sm mt-2">{bestOfferError}</p>
-        </div>
+      <div className="flex justify-center items-center min-h-screen text-red-600">
+        {bestOfferError}
       </div>
     );
   }
 
   if (!bestOfferBillboards?.length) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500 text-lg">No offers available</p>
+      <div className="flex justify-center items-center min-h-screen text-gray-500">
+        No offers available
       </div>
     );
   }
 
-  /* ------------------ DATA PREP ------------------ */
+  /* ------------------ SORT ------------------ */
+  // const sorted = [...bestOfferBillboards].sort(
+  //   (a, b) => Number(b.Discount) - Number(a.Discount)
+  // );
+const sorted = [...bestOfferBillboards].sort((a, b) => {
+  const discountPercentA =
+    a.Price && a.Finalprice
+      ? ((a.Price - a.Finalprice) / a.Price) * 100
+      : 0;
 
-  // Sort by highest discount
-  const sorted = [...bestOfferBillboards].sort(
-    (a, b) => Number(b.Discount) - Number(a.Discount)
-  );
+  const discountPercentB =
+    b.Price && b.Finalprice
+      ? ((b.Price - b.Finalprice) / b.Price) * 100
+      : 0;
 
-  /* ------------------ RENDER ------------------ */
+  return discountPercentB - discountPercentA;
+});
 
+  /* ------------------ UI ------------------ */
   return (
-    <div className="w-full bg-white" style={{marginTop:"4rem"}}>
-      {/* Container with padding */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        
-        {/* Masonry Grid Layout */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+    <div className="w-full bg-white mt-16">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        {/* 12-column Grid */}
+        <div className="grid grid-cols-12 gap-6">
           {sorted.map((item, index) => {
-            // Make first item span 2 columns and 2 rows on larger screens
             const isHero = index === 0;
-            
+
             return (
               <div
                 key={item.Productid}
                 onClick={() => handleUnlockOffer(item)}
                 className={`
-                  relative overflow-hidden rounded-lg sm:rounded-xl cursor-pointer
-                  transition-all duration-300 ease-in-out
-                  hover:scale-[1.02] hover:shadow-2xl
-                  group
-                  ${isHero ? 'col-span-2 row-span-2' : 'col-span-1'}
-                  ${isHero ? 'h-[400px] sm:h-[500px] lg:h-[600px]' : 'h-[180px] sm:h-[220px] lg:h-[280px]'}
+                  rounded-2xl cursor-pointer overflow-hidden
+                  border border-gray-200
+                  bg-white
+                  transition-all duration-500 ease-out
+                  hover:-translate-y-1 hover:shadow-xl
+                  ${
+                    isHero
+                      ? 'col-span-12'
+                      : 'col-span-6 sm:col-span-4 lg:col-span-3'
+                  }
                 `}
               >
-                {/* Image */}
-                <img
-                  src={item.Imageurl}
-                  alt={item.ProductName}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                
-                {/* Overlay gradient - appears on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                {/* Discount badge - always visible */}
-                {item.Discount && (
-                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-red-500 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg">
-                    {item.Discount}% OFF
-                  </div>
-                )}
-
-                {/* Product info - appears on hover */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 lg:p-6 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <h3 className="text-sm sm:text-base lg:text-xl font-bold mb-1 line-clamp-1">
-                    {item.ProductName}
-                  </h3>
-                  <p className="text-xs sm:text-sm opacity-90 mb-2 line-clamp-1">
-                    {item.Brand}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base sm:text-lg lg:text-2xl font-bold">
-                      ₹{item.Finalprice}
-                    </span>
-                    <span className="text-xs sm:text-sm line-through opacity-70">
-                      ₹{item.Price}
-                    </span>
-                  </div>
+                {/* IMAGE CONTAINER */}
+                <div
+                  className={`
+                    w-full
+                    ${isHero ? 'aspect-[16/6]' : 'aspect-[3/5]'}
+                    overflow-hidden
+                    bg-[#e9f4fb]
+                  `}
+                >
+                  <img
+                    src={item.Imageurl}
+                    alt={item.ProductName}
+                    className={`
+                      w-full h-full
+                      ${isHero ? 'object-cover' : 'object-contain'}
+                      transition-transform duration-700 ease-out
+                      hover:scale-[1.03]
+                    `}
+                    loading="lazy"
+                  />
                 </div>
               </div>
             );
@@ -138,12 +135,12 @@ export default function BillboardBanners() {
 
       {/* Unlock Offer Modal */}
       <UnlockOfferModal
-        product={selectedProduct} 
-        couponCode={couponCode} 
+        product={selectedProduct}
+        couponCode={couponCode}
         onClose={() => {
           setSelectedProduct(null);
           setCouponCode(null);
-        }} 
+        }}
       />
     </div>
   );
