@@ -13,12 +13,12 @@ import {
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
-
 import Logo from "../../../public/Single Leaf Logo 2.svg";
+import godown from "../../../public/godown.png"
 import LocationPopup from './LocationPopup';
 import LoginPopup from '../LoginPopup';
 import { DEFAULT_LOCATION } from '../constants';
-import { selectIsAuthenticated } from '@/app/features/auth/authSlice';
+import { selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
 
 export default function Navbar() {
   const router = useRouter();
@@ -29,6 +29,11 @@ export default function Navbar() {
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const user = useSelector(selectUser);
+
+
+  console.log("selectUser 12" , user?.role === "admin")
+  console.log("selectUser 12" , user?.role)
 
   /* =========================
      AUTH-GUARDED HANDLERS
@@ -57,6 +62,13 @@ export default function Navbar() {
       setShowLogin(true);
     }
   };
+  const handleAdminClick = () => {
+    if (isAuthenticated) {
+      router.push('/admin');
+    } else {
+      setShowLogin(true);
+    }
+  };
 
   /* =========================
      LOAD SAVED LOCATION
@@ -79,8 +91,10 @@ export default function Navbar() {
   const navItems = [
     { name: 'For You', icon: Sparkles, onClick: handleForyouClick },
     { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
-    { name: 'Products', icon: ShoppingBag, onClick: handleProductsClick },
-  ];
+    // { name: 'Products', icon: ShoppingBag, onClick: handleProductsClick },
+  ...(user?.role === 'admin'
+    ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
+    : []),  ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900 via-gray-900 to-black backdrop-blur-md border-b border-amber-900/20 shadow-lg">
@@ -89,7 +103,8 @@ export default function Navbar() {
 
           {/* Logo + Location */}
           <div className="flex items-center gap-4">
-            <Image src={Logo} alt="logo" style={{ width: 155 }} />
+            <Image src={godown} alt="logo" style={{ width: 155 }} />
+            {/* <Image src={Logo} alt="logo" style={{ width: 155 }} /> */}
 
             {/* Location (Desktop) */}
             <div

@@ -20,14 +20,12 @@ const getFromStorage = (key) => {
   if (typeof window === 'undefined') return null;
 
   const value = localStorage.getItem(key);
-
   if (!value || value === 'undefined' || value === 'null') {
     return null;
   }
 
   return value;
 };
-
 
 const setToStorage = (key, value) => {
   if (typeof window === 'undefined') return;
@@ -52,7 +50,7 @@ export const loginUser = createAsyncThunk(
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
-          phoneno : phoneNumber,
+          phoneno: phoneNumber,
           password,
         }),
       });
@@ -63,7 +61,6 @@ export const loginUser = createAsyncThunk(
         throw new Error(data.message || 'Login failed');
       }
 
-      // ✅ Store safely
       if (data.token) {
         setToStorage('authToken', data.token);
         setToStorage('user', JSON.stringify(data.user));
@@ -114,6 +111,41 @@ export const verifyToken = createAsyncThunk(
   }
 );
 
+// 4️⃣ Validate Coupon
+export const validateCoupon = createAsyncThunk(
+  'auth/validateCoupon',
+  async ({ couponId, userId }, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage('authToken');
+
+      const response = await fetch(
+        `${API_BASE}/Update_CouponCode`,
+        {
+          method: 'POST',
+          headers: {
+            ...getHeaders(),
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({
+            couponId,
+            userId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Coupon validation failed');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
 /* =========================================================
    INITIAL STATE (SSR SAFE)
    ========================================================= */
@@ -134,6 +166,11 @@ const initialState = {
   loginError: null,
   logoutError: null,
   verifyError: null,
+
+  // Coupon
+  couponLoading: false,
+  couponSuccess: null,
+  couponError: null,
 
   showLoginModal: false,
 };
@@ -169,19 +206,37 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // LOGIN
       .addCase(loginUser.pending, (state) => {
         state.loginLoading = true;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
+        console.log("action" , action)
         state.loginLoading = false;
-        state.user = action.payload.user || null;
+        state.user = action.payload || null;
         state.token = action.payload.token || null;
         state.isAuthenticated = true;
         state.showLoginModal = false;
       })
       .addCase(loginUser.rejected, (state, action) => {
+
         state.loginLoading = false;
         state.loginError = action.payload;
+      })
+
+      // VALIDATE COUPON
+      .addCase(validateCoupon.pending, (state) => {
+        state.couponLoading = true;
+        state.couponError = null;
+        state.couponSuccess = null;
+      })
+      .addCase(validateCoupon.fulfilled, (state, action) => {
+        state.couponLoading = false;
+        state.couponSuccess = action.payload;
+      })
+      .addCase(validateCoupon.rejected, (state, action) => {
+        state.couponLoading = false;
+        state.couponError = action.payload;
       });
   },
 });
@@ -201,7 +256,12 @@ export const {
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectUser = (state) => state.auth.user;
 export const selectToken = (state) => state.auth.token;
+
 export const selectLoginLoading = (state) => state.auth.loginLoading;
 export const selectLoginError = (state) => state.auth.loginError;
+
+export const selectCouponLoading = (state) => state.auth.couponLoading;
+export const selectCouponSuccess = (state) => state.auth.couponSuccess;
+export const selectCouponError = (state) => state.auth.couponError;
 
 export default authSlice.reducer;
