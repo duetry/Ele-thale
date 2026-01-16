@@ -204,7 +204,8 @@ import {
   Gift,
   Menu,
   X,
-  ShoppingBag
+  ShoppingBag,
+  LogOut
 } from 'lucide-react';
 
 import Image from 'next/image';
@@ -215,8 +216,10 @@ import godown from "../../../public/godown.png"
 import LocationPopup from './LocationPopup';
 import LoginPopup from '../LoginPopup';
 import { DEFAULT_LOCATION } from '../constants';
-import { selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
+import { clearAuth, selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
 import { userTracking } from '@/app/features/adminPanel/adminPanelSlice';
+import { Logout } from '@mui/icons-material';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function Navbar() {
   const router = useRouter();
@@ -230,8 +233,7 @@ export default function Navbar() {
   const user = useSelector(selectUser);
 
  const dispatch = useDispatch();
-  console.log("selectUser 12" , user?.role === "admin")
-  console.log("selectUser 12" , user?.role)
+
 
   /* =========================
      AUTH-GUARDED HANDLERS
@@ -296,6 +298,13 @@ export default function Navbar() {
     ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
     : []),  ];
 
+
+      const handleLogout = () => {
+     dispatch(clearAuth());
+  router.push('/');
+  toast.success('Logged out successfully 👋');
+ 
+  };
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-md border-b border-orange-500/20 shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -341,6 +350,15 @@ export default function Navbar() {
                 </span>
               </button>
             ))}
+               {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="px-5 py-2.5 rounded-xl text-red-400 hover:text-red-300 flex items-center gap-2 border border-red-500/30 hover:border-red-500/50 transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-semibold text-sm">Logout</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile Toggle */}
@@ -398,6 +416,18 @@ export default function Navbar() {
       />
 
       {showLogin && <LoginPopup close={() => setShowLogin(false)} />}
+        <Toaster
+  position="top-right"
+  toastOptions={{
+    duration: 2500,
+    style: {
+      background: '#0f172a',
+      color: '#fff',
+      border: '1px solid #f97316',
+    },
+  }}
+/>
+
     </nav>
   );
 }
