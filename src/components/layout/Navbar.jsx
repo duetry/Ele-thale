@@ -209,13 +209,14 @@ import {
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Logo from "../../../public/Single Leaf Logo 2.svg";
 import godown from "../../../public/godown.png"
 import LocationPopup from './LocationPopup';
 import LoginPopup from '../LoginPopup';
 import { DEFAULT_LOCATION } from '../constants';
 import { selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
+import { userTracking } from '@/app/features/adminPanel/adminPanelSlice';
 
 export default function Navbar() {
   const router = useRouter();
@@ -228,7 +229,7 @@ export default function Navbar() {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const user = useSelector(selectUser);
 
-
+ const dispatch = useDispatch();
   console.log("selectUser 12" , user?.role === "admin")
   console.log("selectUser 12" , user?.role)
 
@@ -239,6 +240,7 @@ export default function Navbar() {
   const handleForyouClick = () => {
     if (isAuthenticated) {
       router.push('/');
+       dispatch(userTracking("foryou"));
     } else {
       setShowLogin(true);
     }
@@ -247,6 +249,7 @@ export default function Navbar() {
   const handleSpecialOfferClick = () => {
     if (isAuthenticated) {
       router.push('/specialOffer');
+      dispatch(userTracking("specialOffer"));
     } else {
       setShowLogin(true);
     }

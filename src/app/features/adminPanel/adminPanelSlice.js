@@ -112,6 +112,68 @@ export const getCouponCodeList = createAsyncThunk(
   }
 );
 
+export const userTracking = createAsyncThunk(
+  'admin/userTracking',
+  async (pageName, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage('authToken');
+
+      const response = await fetch(`${API_BASE}/Update_UserTracking`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pagename : pageName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(
+          data.message || 'Failed to update user tracking'
+        );
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
+export const getUserTracking = createAsyncThunk(
+  'admin/getUserTracking',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage('authToken');
+
+      const response = await fetch(
+        `${API_BASE}/GET_UserTracking`,
+        {
+          method: 'GET',
+          headers: getHeaders(token),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch user tracking');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
+
+
+
 // 4️⃣ GET Login User Details (with or without phoneno)
 export const getLoginUserDetails = createAsyncThunk(
   'admin/getLoginUserDetails',
@@ -158,6 +220,7 @@ const initialState = {
 
   // Login User Details
   loginUsers: [],
+  userTrackingData: [],
   userDetailLoading: false,
   userDetailError: null,
 
@@ -206,6 +269,22 @@ const adminPanelSlice = createSlice({
         state.postSearchLoading = false;
         state.postSearchError = action.payload;
       })
+         .addCase(userTracking.pending, (state) => {
+      state.postSearchLoading = true;
+      state.postSearchError = null;
+      state.postSearchSuccess = false;
+    })
+    .addCase(userTracking.fulfilled, (state, action) => {
+
+    
+      state.postSearchLoading = false;
+      state.postSearchSuccess = true;
+      // state.userTrackingData = action.payload;
+    })
+    .addCase(userTracking.rejected, (state, action) => {
+      state.postSearchLoading = false;
+      state.postSearchError = action.payload;
+    })
 
       // GET Search Log
       .addCase(getSearchLog.pending, (state) => {
@@ -227,7 +306,6 @@ const adminPanelSlice = createSlice({
         state.couponError = null;
       })
       .addCase(getCouponCodeList.fulfilled, (state, action) => {
-        console.log("action"  , action)
         state.couponLoading = false;
         state.couponCodes =  action.payload?.data;
       })
@@ -248,6 +326,19 @@ const adminPanelSlice = createSlice({
       .addCase(getLoginUserDetails.rejected, (state, action) => {
         state.userDetailLoading = false;
         state.userDetailError = action.payload;
+      })
+      .addCase(getUserTracking.pending, (state) => {
+        state.userTrackingLoading = true;
+        state.userTrackingError = null;
+      })
+      .addCase(getUserTracking.fulfilled, (state, action) => {
+          console.log("action" , action)
+        state.userTrackingLoading = false;
+        state.userTrackingData =  action.payload ?? [];
+      })
+      .addCase(getUserTracking.rejected, (state, action) => {
+        state.userTrackingLoading = false;
+        state.userTrackingError = action.payload;
       });
   },
 });

@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { Users, Tag } from 'lucide-react';
+import { Users, Tag, Activity } from 'lucide-react';
 import UserDetailsTab from './UserDetailsTab';
 import CouponDetails from './CouponDetails';
+import UsertrackingTab from './UsertrackingTab';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('users');
@@ -17,7 +18,7 @@ const AdminPanel = () => {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Admin Dashboard
           </h1>
-          <p className="text-gray-600">Manage users, coupons, and analytics</p>
+          {/* <p className="text-gray-600">Manage users, coupons, and analytics</p> */}
         </div>
 
         {/* Tabs */}
@@ -33,6 +34,7 @@ const AdminPanel = () => {
             <Users className="w-4 h-4 mr-2" />
             User Details
           </button>
+
           <button
             onClick={() => setActiveTab('coupons')}
             className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
@@ -44,11 +46,25 @@ const AdminPanel = () => {
             <Tag className="w-4 h-4 mr-2" />
             Coupons
           </button>
+
+          <button
+            onClick={() => setActiveTab('userTracking')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
+              activeTab === 'userTracking'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            User Tracking
+          </button>
         </div>
 
         {/* Content */}
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          {activeTab === 'users' ? <UserDetailsTab /> : <CouponDetails />}
+          {activeTab === 'users' && <UserDetailsTab />}
+          {activeTab === 'coupons' && <CouponDetails />}
+          {activeTab === 'userTracking' && <UsertrackingTab />}
         </div>
       </div>
     </div>

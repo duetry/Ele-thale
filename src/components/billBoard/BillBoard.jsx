@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlice';
 import { fetchProductOffer } from '@/app/features/products/productSlice';
 import UnlockOfferModal from '../products/UnlockOfferModel';
+import { userTracking } from '@/app/features/adminPanel/adminPanelSlice';
 
 export default function BillboardBanners() {
   const dispatch = useDispatch();
@@ -25,8 +26,7 @@ export default function BillboardBanners() {
 
   /* ------------------ CLICK HANDLER ------------------ */
   const handleUnlockOffer = (product) => {
-
-
+ dispatch(userTracking(product?.ProductName));
     dispatch(fetchProductOffer(product.Storeid))
       .unwrap()
       .then((res) => {

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Ele Thale",
+  title: "Offer Go Down",
   description: "Generated Ele Thale",
     icons: {
     icon: "/Single Leaf Logo 2.svg",
