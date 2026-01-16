@@ -142,7 +142,30 @@ export const fetchProductOffer = createAsyncThunk(
   async (productId, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `${API_BASE}/GET_CouponCode?productId=${productId}`,
+        `${API_BASE}/GET_Stores?storeId=${productId}`,
+        {
+          method: 'GET',
+          headers: getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to fetch product offer');
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+export const fetchForyou = createAsyncThunk(
+  'products/fetchForyou',
+  async (productId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_BASE}/GET-Foryou`,
         {
           method: 'GET',
           headers: getHeaders(),
@@ -185,8 +208,13 @@ const initialState = {
 
   // Product Offer Popup
 productOffer: null,
+foryouDetail: null,
 productOfferLoading: false,
+foryouLoading: false,
 productOfferError: null,
+
+
+foryouError: null,
 
 
   // UI Filters
@@ -280,6 +308,20 @@ const productSlice = createSlice({
 .addCase(fetchProductOffer.rejected, (state, action) => {
   state.productOfferLoading = false;
   state.productOfferError = action.payload;
+})
+.addCase(fetchForyou.pending, (state) => {
+  state.foryouLoading = true;
+  state.foryouError = null;
+})
+.addCase(fetchForyou.fulfilled, (state, action) => {
+
+  console.log("action" , action)
+  state.foryouLoading = false;
+  state.foryouDetail = action.payload.data; // adjust if API structure differs
+})
+.addCase(fetchForyou.rejected, (state, action) => {
+  state.foryouLoading = false;
+  state.foryouError = action.payload;
 });
 
   },

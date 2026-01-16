@@ -25,10 +25,12 @@ export default function BillboardBanners() {
 
   /* ------------------ CLICK HANDLER ------------------ */
   const handleUnlockOffer = (product) => {
-    dispatch(fetchProductOffer(product.Productid))
+
+
+    dispatch(fetchProductOffer(product.Storeid))
       .unwrap()
       .then((res) => {
-        setCouponCode(res);
+        setCouponCode(res?.data[0]);
         setSelectedProduct(product);
       })
       .catch((err) => {
