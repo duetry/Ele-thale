@@ -54,14 +54,6 @@ export default function HeroSection() {
 
   const currentImage = foryouDetail[currentIndex];
 
-  const handleShopClick = () => {
-    if (isAuthenticated) router.push('/specialOffer');
-    else {
-      setLoginForUnlockOffer(false);
-      setShowLogin(true);
-    }
-  };
-
   const handleUnlockOffer = (product) => {
     if (isAuthenticated) {
       dispatch(fetchProductOffer(product.Storeid))
@@ -77,101 +69,53 @@ export default function HeroSection() {
     }
   };
 
-  /* ---------------- RESPONSIVE STYLES ---------------- */
+  /* ---------------- FULL IMAGE STYLES ---------------- */
   const sectionStyle = {
     minHeight: '100vh',
-    display: 'flex',
-    justifyContent: 'center',
+    width: '100%',
     background:
       'linear-gradient(135deg, #FFF4E6 0%, #FFECD2 50%, #FCE4CC 100%)',
-    padding: isMobile ? '60px 16px' : '100px 20px 60px',
-  };
-
-  const containerStyle = {
-    maxWidth: '1400px',
-    width: '100%',
-    display: 'grid',
-    gridTemplateColumns: isMobile ? '1fr' : '1fr 1.2fr',
-    gap: isMobile ? '30px' : '60px',
-    alignItems: 'center',
-  };
-
-  const contentStyle = {
-    padding: isMobile ? '0' : '40px',
-    textAlign: isMobile ? 'center' : 'left',
-  };
-
-  const headingStyle = {
-    fontSize: isMobile ? 'clamp(48px, 12vw, 72px)' : '120px',
-    fontWeight: 900,
-    lineHeight: 1,
-    margin: '20px 0',
-    color: '#1F2937',
-  };
-
-  const subHeadingStyle = {
-    fontSize: isMobile ? '18px' : '28px',
-    marginBottom: '32px',
-    color: '#374151',
-  };
-
-  const buttonStyle = {
-    background: 'linear-gradient(90deg, #1F2937, #111827)',
-    color: '#fff',
-    padding: '16px 36px',
-    border: 'none',
-    cursor: 'pointer',
-    fontWeight: 600,
-  };
-
-  const fullImageWrapper = {
-    width: isMobile ? '100%' : '50vw',
-    height: isMobile ? '280px' : '70vh',
     display: 'flex',
-    justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: '16px',
-    background: '#fff',
-    cursor: 'pointer',
+    justifyContent: 'center',
+    padding: isMobile ? '16px' : '40px',
+        marginTop:'2rem'
   };
 
-  const fullImageStyle = {
+  const imageWrapperStyle = {
+    width: '100%',
+    height: isMobile ? '300px' : '80vh',
+    maxWidth: '1400px',
+    background: '#fff',
+    borderRadius: '20px',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
+  };
+
+  const imageStyle = {
     width: '100%',
     height: '100%',
-    objectFit: 'contain',
-    borderRadius: '16px',
+    objectFit: 'inherit', // 🔥 fills space properly
+
   };
 
   return (
     <section style={sectionStyle}>
-      <div style={containerStyle}>
-        {/* LEFT */}
-        <div style={contentStyle}>
-          <h1 style={headingStyle}>UPTO 30% OFF</h1>
-          <p style={subHeadingStyle}>
-            Grab yours before they&apos;re gone!
-          </p>
-          <button style={buttonStyle} onClick={handleShopClick}>
-            Shop Now
-          </button>
+      {currentImage && (
+        <div
+          style={imageWrapperStyle}
+          onClick={() => handleUnlockOffer(currentImage)}
+        >
+          <img
+            src={currentImage.Imageurl}
+            alt={currentImage.ProductName}
+            style={imageStyle}
+          />
         </div>
+      )}
 
-        {/* RIGHT */}
-        {currentImage && (
-          <div
-            style={fullImageWrapper}
-            onClick={() => handleUnlockOffer(currentImage)}
-          >
-            <img
-              src={currentImage.Imageurl}
-              alt={currentImage.ProductName}
-              style={fullImageStyle}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* LOGIN */}
+      {/* LOGIN POPUP */}
       {showLogin && (
         <LoginPopup
           close={() => setShowLogin(false)}
@@ -186,7 +130,7 @@ export default function HeroSection() {
         />
       )}
 
-      {/* MODAL */}
+      {/* UNLOCK OFFER MODAL */}
       {selectedProduct && couponCode && (
         <UnlockOfferModal
           product={selectedProduct}
