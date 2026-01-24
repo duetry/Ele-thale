@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Offer Go Down",
-  description: "Generated Ele Thale",
+  title: "OfferGoDown",
+  description: "Generated OfferGoDown",
     icons: {
-    icon: "/Single Leaf Logo 2.svg",
+    icon: "/godown.png",
     shortcut: "/Single Leaf Logo 2.svg",
     apple: "/apple-touch-icon.png", // optional
   },

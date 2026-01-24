@@ -727,6 +727,62 @@ export default function UnlockOfferModal({ product, couponCode, onClose }) {
             <MapPin size={20} color="#0EA5E9" />
             Store Information
           </h3>
+  <div style={{ marginBottom: '16px' }}>
+            <div
+              style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#1F2937',
+                marginBottom: '10px',
+              }}
+            >
+              📍 Location
+            </div>
+
+            <div
+              style={{
+                background: 'white',
+                padding: '14px',
+                borderRadius: '10px',
+                fontSize: '14px',
+                color: '#4B5563',
+                lineHeight: '1.6',
+                marginBottom: '12px',
+              }}
+            >
+              {couponCode?.Storeaddress || (
+                <>
+                  JC69+477, Veerachi S St, Manapparai,
+                  <br />
+                  Tamil Nadu 621307
+                </>
+              )}
+            </div>
+
+            <button
+              onClick={handleNavigate}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: '#4285F4',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '15px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+                boxShadow:
+                  '0 4px 12px rgba(66, 133, 244, 0.3)',
+              }}
+            >
+              🗺️ Navigate with Google Maps
+            </button>
+          </div>
 
           {/* Store Name */}
           <div
@@ -812,83 +868,8 @@ export default function UnlockOfferModal({ product, couponCode, onClose }) {
           </div>
 
           {/* Location */}
-          <div style={{ marginBottom: '16px' }}>
-            <div
-              style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#1F2937',
-                marginBottom: '10px',
-              }}
-            >
-              📍 Location
-            </div>
-
-            <div
-              style={{
-                background: 'white',
-                padding: '14px',
-                borderRadius: '10px',
-                fontSize: '14px',
-                color: '#4B5563',
-                lineHeight: '1.6',
-                marginBottom: '12px',
-              }}
-            >
-              {couponCode?.Storeaddress || (
-                <>
-                  JC69+477, Veerachi S St, Manapparai,
-                  <br />
-                  Tamil Nadu 621307
-                </>
-              )}
-            </div>
-
-            <button
-              onClick={handleNavigate}
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: '#4285F4',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '15px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.2s',
-                boxShadow:
-                  '0 4px 12px rgba(66, 133, 244, 0.3)',
-              }}
-            >
-              🗺️ Navigate with Google Maps
-            </button>
-          </div>
-
-          <div
-            style={{
-              background:
-                'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
-              padding: '16px',
-              borderRadius: '10px',
-              border: '2px solid #6EE7B7',
-              textAlign: 'center',
-            }}
-          >
-            <div
-              style={{
-                fontSize: '14px',
-                fontWeight: '700',
-                color: '#065F46',
-              }}
-            >
-              ✅ Visit us today!
-            </div>
-          </div>
+        
+        
         </div>
       </div>
     </div>

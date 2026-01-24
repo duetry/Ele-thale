@@ -291,7 +291,7 @@ export default function Navbar() {
      ========================= */
 
   const navItems = [
-    { name: 'For You', icon: Sparkles, onClick: handleForyouClick },
+    // { name: 'For You', icon: Sparkles, onClick: handleForyouClick },
     { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
     // { name: 'Products', icon: ShoppingBag, onClick: handleProductsClick },
   ...(user?.role === 'admin'
@@ -311,17 +311,17 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
 
           {/* Logo + Location */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-1">
             {/* Logo with white background for visibility */}
               <Image 
                 src={godown} 
                 alt="OfferGodown Logo" 
-                style={{ width: 140, height: 'auto' }} 
+                style={{ width: 300, height: 'auto' }} 
                 className="object-contain"
               />
 
             {/* Location (Desktop) */}
-            <div
+            {/* <div
               onClick={() => setShowLocationPopup(true)}
               className="hidden lg:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 cursor-pointer border border-orange-500/30 hover:border-orange-500/50 transition-all duration-300 shadow-md hover:shadow-lg"
             >
@@ -329,7 +329,8 @@ export default function Navbar() {
               <span className="text-sm font-medium text-gray-100">
                 {selectedLocation?.area || 'Location'}
               </span>
-            </div>
+            </div> */}
+
           </div>
 
           {/* Desktop Nav */}

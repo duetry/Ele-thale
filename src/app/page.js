@@ -1,10 +1,10 @@
-import HeroSection from '@/components/foryou/HeroSection'
+import BillboardBanners from '@/components/billBoard/BillBoard'
 import React from 'react'
 
 const page = () => {
   return (
     <div>
-        <HeroSection/>
+        <BillboardBanners/>
     </div>
   )
 }

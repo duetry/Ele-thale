@@ -141,6 +141,13 @@ export const fetchProductOffer = createAsyncThunk(
   'products/fetchProductOffer',
   async (productId, { rejectWithValue }) => {
     try {
+       const token =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('authToken')
+          : null;
+
+      // ✅ DEBUG: See token in console
+      console.log('Auth Token sent to API:', token);
       const response = await fetch(
         `${API_BASE}/GET_Stores?storeId=${productId}`,
         {

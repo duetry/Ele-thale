@@ -145,6 +145,62 @@ export const validateCoupon = createAsyncThunk(
     }
   }
 );
+export const sentOtp = createAsyncThunk(
+  'auth/sentOtp',
+  async ({ phoneNumber }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE}/Login`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          phoneno: phoneNumber, // ✅ REQUIRED BY API
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log("DD" , data)
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send OTP');
+      }
+
+    
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+export const verifyOtp = createAsyncThunk(
+  'auth/verifyOtp',
+  async ({ phoneNumber, otp }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE}/GET_OTP_Validate`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          phoneno: phoneNumber,
+          otp,
+        }),
+      });
+
+      const data = await response.json();
+  if (data.token) {
+        setToStorage('authToken', data.token);
+        setToStorage('user', JSON.stringify(data.user));
+      }
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid OTP');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 
 /* =========================================================
    INITIAL STATE (SSR SAFE)
@@ -235,6 +291,37 @@ const authSlice = createSlice({
         state.couponSuccess = action.payload;
       })
       .addCase(validateCoupon.rejected, (state, action) => {
+        state.couponLoading = false;
+        state.couponError = action.payload;
+      })
+      // VALIDATE COUPON
+      .addCase(sentOtp.pending, (state) => {
+        state.couponLoading = true;
+        state.couponError = null;
+        state.couponSuccess = null;
+      })
+      .addCase(sentOtp.fulfilled, (state, action) => {
+        state.couponLoading = false;
+        state.couponSuccess = action.payload;
+      })
+      .addCase(sentOtp.rejected, (state, action) => {
+        state.couponLoading = false;
+        state.couponError = action.payload;
+      })
+      .addCase(verifyOtp.pending, (state) => {
+        state.couponLoading = true;
+        state.couponError = null;
+        state.couponSuccess = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+           console.log("action" , action)
+        state.loginLoading = false;
+        state.user = action.payload || null;
+        state.token = action.payload.token || null;
+        state.isAuthenticated = true;
+        state.showLoginModal = false;
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
         state.couponLoading = false;
         state.couponError = action.payload;
       });

@@ -59,6 +59,7 @@ export const fetchBestOfferBillboards = createAsyncThunk(
 
 const initialState = {
   bestOfferBillboards: [],
+  bestOfferBanner: [],
   bestOfferLoading: false,
   bestOfferError: null,
 };
@@ -73,6 +74,7 @@ const billboardSlice = createSlice({
   reducers: {
     clearBestOfferBillboards: (state) => {
       state.bestOfferBillboards = [];
+      state.bestOfferBanner = [];
       state.bestOfferError = null;
     },
   },
@@ -84,7 +86,8 @@ const billboardSlice = createSlice({
       })
       .addCase(fetchBestOfferBillboards.fulfilled, (state, action) => {
         state.bestOfferLoading = false;
-        state.bestOfferBillboards = action.payload.data ?? [];
+        state.bestOfferBillboards = action.payload.data?.card ?? [];
+        state.bestOfferBanner = action.payload.data?.banner ?? [];
       })
       .addCase(fetchBestOfferBillboards.rejected, (state, action) => {
         state.bestOfferLoading = false;
