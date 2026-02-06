@@ -313,13 +313,15 @@ export default function Navbar() {
           {/* Logo + Location */}
           <div className="flex items-center gap-1">
             {/* Logo with white background for visibility */}
-              <Image 
+              {/* <Image 
                 src={godown} 
                 alt="OfferGodown Logo" 
                 style={{ width: 300, height: 'auto' }} 
                 className="object-contain"
-              />
+              /> */}
 
+
+<span>Offer go down</span>
             {/* Location (Desktop) */}
             {/* <div
               onClick={() => setShowLocationPopup(true)}
