@@ -250,6 +250,8 @@ import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlic
 import { fetchProductOffer } from '@/app/features/products/productSlice';
 import UnlockOfferModal from '../products/UnlockOfferModel';
 import { userTracking } from '@/app/features/adminPanel/adminPanelSlice';
+import { selectIsAuthenticated } from '@/app/features/auth/authSlice';
+import LoginPopup from '../LoginPopup';
 
 export default function BillboardBanners() {
   const dispatch = useDispatch();
@@ -258,6 +260,7 @@ export default function BillboardBanners() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [couponCode, setCouponCode] = useState(null);
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [showLogin, setShowLogin] = useState(false);
 
   const {
     bestOfferBillboards,
@@ -289,8 +292,11 @@ export default function BillboardBanners() {
     return () => clearInterval(interval);
   }, [mounted, bestOfferBanner]);
 
+    const isAuthenticated = useSelector(selectIsAuthenticated);
   /* ------------------ CLICK HANDLER ------------------ */
-  const handleUnlockOffer = (product) => {
+const handleUnlockOffer = (product) => {
+
+  if (isAuthenticated) {
     dispatch(userTracking(product?.ProductName));
 
     dispatch(fetchProductOffer(product.Storeid))
@@ -302,7 +308,14 @@ export default function BillboardBanners() {
       .catch((err) => {
         console.error('Offer API failed:', err);
       });
-  };
+
+      setSelectedProduct(product);   // ✅ store product
+  } else {
+    setShowLogin(true);
+  }
+
+};
+
 
   /* ------------------ STATES ------------------ */
   if (!mounted || bestOfferLoading) {
@@ -558,6 +571,30 @@ export default function BillboardBanners() {
           setCouponCode(null);
         }}
       />
+
+
+    {showLogin && (
+  <LoginPopup
+    close={() => setShowLogin(false)}
+    onLoginSuccess={() => {
+      setShowLogin(false);
+
+      if (selectedProduct) {
+        dispatch(userTracking(selectedProduct?.ProductName));
+
+        dispatch(fetchProductOffer(selectedProduct.Storeid))
+          .unwrap()
+          .then((res) => {
+            setCouponCode(res?.data?.[0]);
+          })
+          .catch((err) => {
+            console.error('Offer API failed:', err);
+          });
+      }
+    }}
+  />
+)}
+
     </div>
   );
 }

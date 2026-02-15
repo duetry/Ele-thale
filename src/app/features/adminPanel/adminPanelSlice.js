@@ -202,6 +202,63 @@ export const getLoginUserDetails = createAsyncThunk(
     }
   }
 );
+export const getAdminOffers = createAsyncThunk(
+  'admin/getAdminOffers',
+  async (phoneno = null, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage('authToken');
+      let url = `${API_BASE}/List_Products`;
+      if (phoneno) {
+        url += `?phoneno=${phoneno}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getHeaders(token),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch user details');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
+
+export const postAdminOffers = createAsyncThunk(
+  'admin/postAdminOffers',
+  async (formData, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage('authToken');
+
+      const response = await fetch(`${API_BASE}/Update_Products`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`, 
+       
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create offer');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
 
 /* =========================================================
    INITIAL STATE
@@ -223,6 +280,13 @@ const initialState = {
   userTrackingData: [],
   userDetailLoading: false,
   userDetailError: null,
+
+  // admin offers
+  adminOffers: [],
+  userTrackingData: [],
+  adminOffersLoading: false,
+  adminOffersError: null,
+  adminOffersSuccess: false,
 
   // POST Search Log
   postSearchLoading: false,
@@ -269,6 +333,7 @@ const adminPanelSlice = createSlice({
         state.postSearchLoading = false;
         state.postSearchError = action.payload;
       })
+     
          .addCase(userTracking.pending, (state) => {
       state.postSearchLoading = true;
       state.postSearchError = null;
@@ -327,6 +392,34 @@ const adminPanelSlice = createSlice({
         state.userDetailLoading = false;
         state.userDetailError = action.payload;
       })
+      // GET Login User Details
+      .addCase(getAdminOffers.pending, (state) => {
+        state.adminOffersLoading = true;
+        state.adminOffersError = null;
+      })
+      .addCase(getAdminOffers.fulfilled, (state, action) => {
+        console.log("action.payload" , action.payload)
+        state.adminOffersLoading = false;
+        state.adminOffers = Array.isArray(action.payload) ? action.payload?.data : action.payload?.data;
+      })
+      .addCase(getAdminOffers.rejected, (state, action) => {
+        state.adminOffersLoading = false;
+        state.adminOffersError = action.payload;
+      })
+
+       .addCase(postAdminOffers.pending, (state) => {
+        state.adminOffersLoading = true;
+        state.adminOffersError = null;
+        state.adminOffersSuccess = false;
+      })
+      .addCase(postAdminOffers.fulfilled, (state) => {
+        state.adminOffersLoading = false;
+        state.adminOffersSuccess = true;
+      })
+      .addCase(postAdminOffers.rejected, (state, action) => {
+        state.adminOffersLoading = false;
+        state.adminOffersError = action.payload;
+      })
       .addCase(getUserTracking.pending, (state) => {
         state.userTrackingLoading = true;
         state.userTrackingError = null;
@@ -367,6 +460,10 @@ export const selectCouponError = (state) => state.adminPanel.couponError;
 export const selectLoginUsers = (state) => state.adminPanel.loginUsers;
 export const selectUserDetailLoading = (state) => state.adminPanel.userDetailLoading;
 export const selectUserDetailError = (state) => state.adminPanel.userDetailError;
+
+export const selectAdminOffers = (state) => state.adminPanel.adminOffers;
+export const selectAdminOffersLoading = (state) => state.adminPanel.userDetailLoading;
+export const selectAdminOffersError = (state) => state.adminPanel.userDetailError;
 
 export const selectPostSearchLoading = (state) => state.adminPanel.postSearchLoading;
 export const selectPostSearchError = (state) => state.adminPanel.postSearchError;

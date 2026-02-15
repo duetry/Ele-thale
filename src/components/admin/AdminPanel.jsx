@@ -6,6 +6,7 @@ import { Users, Tag, Activity } from 'lucide-react';
 import UserDetailsTab from './UserDetailsTab';
 import CouponDetails from './CouponDetails';
 import UsertrackingTab from './UsertrackingTab';
+import AdminOffers from './AdminOffers';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('users');
@@ -58,6 +59,17 @@ const AdminPanel = () => {
             <Activity className="w-4 h-4 mr-2" />
             User Tracking
           </button>
+          <button
+            onClick={() => setActiveTab('adminOffers')}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
+              activeTab === 'adminOffers'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            admin offers
+          </button>
         </div>
 
         {/* Content */}
@@ -65,6 +77,7 @@ const AdminPanel = () => {
           {activeTab === 'users' && <UserDetailsTab />}
           {activeTab === 'coupons' && <CouponDetails />}
           {activeTab === 'userTracking' && <UsertrackingTab />}
+          {activeTab === 'adminOffers' && <AdminOffers />}
         </div>
       </div>
     </div>

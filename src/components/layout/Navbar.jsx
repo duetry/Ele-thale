@@ -294,10 +294,12 @@ export default function Navbar() {
     // { name: 'For You', icon: Sparkles, onClick: handleForyouClick },
     { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
     // { name: 'Products', icon: ShoppingBag, onClick: handleProductsClick },
-  ...(user?.role === 'admin'
+  ...(user?.usertype === 'admin'
     ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
     : []),  ];
 
+
+    console.log("user" , user)
 
       const handleLogout = () => {
      dispatch(clearAuth());
