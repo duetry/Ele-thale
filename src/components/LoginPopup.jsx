@@ -385,11 +385,15 @@ export default function LoginPopup({ close, onLoginSuccess }) {
 
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [step, setStep] = useState('phone'); 
+  // phone | password | createPassword
+
   const [errors, setErrors] = useState({ phone: '', password: '' });
   const [touched, setTouched] = useState({ phone: false, password: false });
   const [showPassword, setShowPassword] = useState(false);
 
   /* ================= VALIDATION ================= */
+
   const validatePhone = (value) => {
     const phoneRegex = /^[6-9]\d{9}$/;
     if (!value) return 'Phone number is required';
@@ -407,63 +411,82 @@ export default function LoginPopup({ close, onLoginSuccess }) {
 
   const handleBlur = (field) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    setErrors((prev) => ({
-      ...prev,
-      [field]:
-        field === 'phone'
-          ? validatePhone(phone)
-          : "",
-    }));
+
+    if (field === 'phone') {
+      setErrors((prev) => ({
+        ...prev,
+        phone: validatePhone(phone),
+      }));
+    }
+
+    if (field === 'password') {
+      setErrors((prev) => ({
+        ...prev,
+        password: validatePassword(password),
+      }));
+    }
   };
 
   /* ================= SUBMIT ================= */
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
 
-  //   const phoneError = validatePhone(phone);
-  //   const passwordError = validatePassword(password);
-
-  //   setErrors({ phone: phoneError, password: passwordError });
-  //   setTouched({ phone: true, password: true });
-
-  //   if (phoneError || passwordError) return;
-
-  //   const result = await dispatch(
-  //     sentOtp({
-  //       phoneNumber: phone,
-  //       // password,
-  //     })
-  //   );
-
-  //   if (loginUser.fulfilled.match(result)) {
-  //     // ✅ ONLY LOGIC CHANGE — NO REDIRECT
-  //     onLoginSuccess?.();
-  //     close();
-  //   }
-  // };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const phoneError = validatePhone(phone);
-    const passwordError = validatePassword(password);
+    // STEP 1 → PHONE CHECK
+    if (step === 'phone') {
+      const phoneError = validatePhone(phone);
 
-    setErrors({ phone: phoneError, password: passwordError });
-    setTouched({ phone: true, password: true });
+      setErrors({ phone: phoneError, password: '' });
+      setTouched({ phone: true, password: false });
 
-    if (phoneError || passwordError) return;
+      if (phoneError) return;
 
-    const result = await dispatch(
-      loginUser({
-        phoneNumber: phone,
-        password,
-      })
-    );
+      const result = await dispatch(
+        loginUser({
+          phoneNumber: phone,
+        })
+      );
 
-    if (loginUser.fulfilled.match(result)) {
-      //  router.push('/specialOffer');
-      close();
+      if (loginUser.fulfilled.match(result)) {
+        const response = result.payload;
+
+        if (response?.Password === true) {
+          setStep('password');
+        } else {
+          setStep('createPassword');
+        }
+
+        setPassword('');
+        setErrors({ phone: '', password: '' });
+        setTouched({ phone: false, password: false });
+      }
+
+      return;
+    }
+
+    // STEP 2 → PASSWORD OR CREATE PASSWORD
+    if (step === 'password' || step === 'createPassword') {
+      const passwordError = validatePassword(password);
+
+      setErrors({ phone: '', password: passwordError });
+      setTouched({ phone: false, password: true });
+
+      if (passwordError) return;
+
+      const result = await dispatch(
+        loginUser({
+          phoneNumber: phone,
+          password,
+        })
+      );
+
+      if (loginUser.fulfilled.match(result)) {
+        close();
+        if (onLoginSuccess) onLoginSuccess();
+      }
     }
   };
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center min-h-[100svh] px-4">
       
@@ -474,8 +497,8 @@ export default function LoginPopup({ close, onLoginSuccess }) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 animate-scaleIn">
-        
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
+
         {/* Close */}
         <button
           onClick={close}
@@ -488,24 +511,35 @@ export default function LoginPopup({ close, onLoginSuccess }) {
         {/* Header */}
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-semibold text-slate-800 mb-2">
-            Welcome back
+            {step === 'phone'
+              ? 'Welcome'
+              : step === 'password'
+              ? 'Welcome back'
+              : 'Create Your Account'}
           </h2>
+
           <p className="text-slate-500 text-sm">
-            Sign in to continue to your account
+            {step === 'phone'
+              ? 'Enter your phone number to continue'
+              : step === 'password'
+              ? 'Enter your password to sign in'
+              : 'Set a password to create your account'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          
+
           {/* Phone */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Phone Number
             </label>
+
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 font-medium">
                 +91
               </span>
+
               <input
                 type="tel"
                 value={phone}
@@ -513,40 +547,55 @@ export default function LoginPopup({ close, onLoginSuccess }) {
                 onBlur={() => handleBlur('phone')}
                 placeholder="9876543210"
                 maxLength={10}
-                className="w-full pl-16 pr-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-200 outline-none"
+                disabled={step !== 'phone'}
+                className="w-full pl-16 pr-4 py-3 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-200 outline-none disabled:bg-slate-100"
               />
             </div>
+
             {errors.phone && touched.phone && (
               <p className="mt-1 text-sm text-rose-600">{errors.phone}</p>
             )}
           </div>
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onBlur={() => handleBlur('password')}
-                placeholder="Enter your password"
-                className="w-full px-4 py-3 pr-12 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-200 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
+          {/* Password Section */}
+          {step !== 'phone' && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                {step === 'password'
+                  ? 'Password'
+                  : 'Create Password'}
+              </label>
+
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => handleBlur('password')}
+                  placeholder={
+                    step === 'password'
+                      ? 'Enter your password'
+                      : 'Create a new password'
+                  }
+                  className="w-full px-4 py-3 pr-12 rounded-lg border border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-200 outline-none"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+
+              {errors.password && touched.password && (
+                <p className="mt-1 text-sm text-rose-600">
+                  {errors.password}
+                </p>
+              )}
             </div>
-            {errors.password && touched.password && (
-              <p className="mt-1 text-sm text-rose-600">{errors.password}</p>
-            )}
-          </div>
+          )}
 
           {/* API Error */}
           {loginError && (
@@ -565,13 +614,20 @@ export default function LoginPopup({ close, onLoginSuccess }) {
                 : 'bg-slate-800 hover:bg-slate-700'
             }`}
           >
-            {loginLoading ? 'Signing in...' : 'Sign in'}
+            {loginLoading
+              ? 'Processing...'
+              : step === 'phone'
+              ? 'Continue'
+              : step === 'password'
+              ? 'Sign in'
+              : 'Create Account'}
           </button>
         </form>
       </div>
     </div>
   );
 }
+
 
 
 // 'use client';

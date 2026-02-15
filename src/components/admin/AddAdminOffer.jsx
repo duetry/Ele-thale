@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import {
   postAdminOffers,
@@ -15,24 +15,27 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
-const AddAdminOffers = ({ open, handleClose }) => {
+const AddAdminOffers = ({ open, handleClose, editData }) => {
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
 
   const formik = useFormik({
     initialValues: {
-      Description: "",
-      Finalprice: "",
-      Isactive: "true",
-      ProductName: "",
-      Price: "",
-      Discount: "",
-      Brand: "",
-      Type: "",
+      Description: editData?.Description || "",
+      Finalprice: editData?.Finalprice || "",
+      Isactive: editData?.Isactive || "true",
+      ProductName: editData?.ProductName || "",
+      Price: editData?.Price || "",
+      Discount: editData?.Discount || "",
+      Brand: editData?.Brand || "",
+      Type: editData?.Type || "",
       Imagefile: null,
     },
+    enableReinitialize: true,
     validationSchema: Yup.object({
       Description: Yup.string().required("Required"),
       Finalprice: Yup.number().required("Required"),
@@ -41,37 +44,53 @@ const AddAdminOffers = ({ open, handleClose }) => {
       Discount: Yup.number().required("Required"),
       Brand: Yup.string().required("Required"),
       Type: Yup.string().required("Required"),
-      Imagefile: Yup.mixed().required("Image is required"),
     }),
     onSubmit: async (values, { resetForm }) => {
-      const formData = new FormData();
+      setLoading(true);
 
-      formData.append("Description", values.Description);
-      formData.append("Finalprice", values.Finalprice);
-      formData.append("Isactive", values.Isactive);
-      formData.append("ProductName", values.ProductName);
-      formData.append("Price", values.Price);
-      formData.append("Discount", values.Discount);
-      formData.append("Brand", values.Brand);
-      formData.append("Type", values.Type);
+      let base64Image = editData?.Imageurl || "";
+
+      const sendPayload = async (image) => {
+        const payload = {
+          Productid: editData?.Productid,
+          Description: values.Description,
+          Finalprice: values.Finalprice,
+          Isactive: values.Isactive,
+          ProductName: values.ProductName,
+          Price: values.Price,
+          Discount: values.Discount,
+          Brand: values.Brand,
+          Type: values.Type,
+          Imageurl: image,
+        };
+
+        await dispatch(postAdminOffers(payload));
+        await dispatch(getAdminOffers());
+
+        setLoading(false);
+        resetForm();
+        handleClose();
+      };
 
       if (values.Imagefile) {
-        formData.append("Imagefile", values.Imagefile);
+        const reader = new FileReader();
+        reader.readAsDataURL(values.Imagefile);
+        reader.onload = async () => {
+          await sendPayload(reader.result);
+        };
+      } else {
+        await sendPayload(base64Image);
       }
-
-
-      console.log("formData" , formData)
-      await dispatch(postAdminOffers(formData));
-      await dispatch(getAdminOffers());
-
-      resetForm();
-      handleClose();
     },
   });
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"   // 👈 Increased width
+    >
       <DialogTitle
         sx={{
           display: "flex",
@@ -79,7 +98,7 @@ const AddAdminOffers = ({ open, handleClose }) => {
           alignItems: "center",
         }}
       >
-        Create Admin Offer
+        {editData ? "Edit Offer" : "Create Offer"}
 
         <IconButton onClick={handleClose}>
           <CloseIcon />
@@ -105,8 +124,6 @@ const AddAdminOffers = ({ open, handleClose }) => {
               name="Brand"
               value={formik.values.Brand}
               onChange={formik.handleChange}
-              error={formik.touched.Brand && Boolean(formik.errors.Brand)}
-              helperText={formik.touched.Brand && formik.errors.Brand}
               fullWidth
             />
 
@@ -115,8 +132,6 @@ const AddAdminOffers = ({ open, handleClose }) => {
               name="Type"
               value={formik.values.Type}
               onChange={formik.handleChange}
-              error={formik.touched.Type && Boolean(formik.errors.Type)}
-              helperText={formik.touched.Type && formik.errors.Type}
               fullWidth
             />
 
@@ -126,8 +141,6 @@ const AddAdminOffers = ({ open, handleClose }) => {
               type="number"
               value={formik.values.Price}
               onChange={formik.handleChange}
-              error={formik.touched.Price && Boolean(formik.errors.Price)}
-              helperText={formik.touched.Price && formik.errors.Price}
               fullWidth
             />
 
@@ -137,8 +150,6 @@ const AddAdminOffers = ({ open, handleClose }) => {
               type="number"
               value={formik.values.Finalprice}
               onChange={formik.handleChange}
-              error={formik.touched.Finalprice && Boolean(formik.errors.Finalprice)}
-              helperText={formik.touched.Finalprice && formik.errors.Finalprice}
               fullWidth
             />
 
@@ -148,8 +159,6 @@ const AddAdminOffers = ({ open, handleClose }) => {
               type="number"
               value={formik.values.Discount}
               onChange={formik.handleChange}
-              error={formik.touched.Discount && Boolean(formik.errors.Discount)}
-              helperText={formik.touched.Discount && formik.errors.Discount}
               fullWidth
             />
 
@@ -160,30 +169,21 @@ const AddAdminOffers = ({ open, handleClose }) => {
               rows={3}
               value={formik.values.Description}
               onChange={formik.handleChange}
-              error={formik.touched.Description && Boolean(formik.errors.Description)}
-              helperText={formik.touched.Description && formik.errors.Description}
               fullWidth
             />
 
-            {/* Upload Button */}
             <Button variant="outlined" component="label">
               Upload Image
               <input
                 type="file"
                 hidden
                 accept="image/*"
-                onChange={(event) => {
-                  const file = event.currentTarget.files[0];
-                  formik.setFieldValue("Imagefile", file);
-                }}
+                onChange={(e) =>
+                  formik.setFieldValue("Imagefile", e.target.files[0])
+                }
               />
             </Button>
 
-            {formik.errors.Imagefile && formik.touched.Imagefile && (
-              <Box color="error.main">{formik.errors.Imagefile}</Box>
-            )}
-
-            {/* Image Preview */}
             {formik.values.Imagefile && (
               <Box mt={2}>
                 <img
@@ -199,12 +199,17 @@ const AddAdminOffers = ({ open, handleClose }) => {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={handleClose} color="secondary">
+          <Button onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained">
-            Submit
-          </Button>
+
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={loading}
+          >
+            {editData ? "Update" : "Submit"}
+          </LoadingButton>
         </DialogActions>
       </form>
     </Dialog>

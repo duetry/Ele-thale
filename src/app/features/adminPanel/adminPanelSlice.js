@@ -233,17 +233,18 @@ export const getAdminOffers = createAsyncThunk(
 
 export const postAdminOffers = createAsyncThunk(
   'admin/postAdminOffers',
-  async (formData, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
+    console.log("payload payload " ,payload)
     try {
       const token = getFromStorage('authToken');
 
       const response = await fetch(`${API_BASE}/Update_Products`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`, 
-       
+          ...getHeaders(token),
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -255,6 +256,37 @@ export const postAdminOffers = createAsyncThunk(
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
+
+export const deleteAdminOffer = createAsyncThunk(
+  'admin/deleteAdminOffer',
+  async (productId, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage('authToken');
+
+      const response = await fetch(`${API_BASE}/Delete_Product`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Productid: productId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Delete failed');
+      }
+
+      return productId;
+    } catch (error) {
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -417,6 +449,19 @@ const adminPanelSlice = createSlice({
         state.adminOffersSuccess = true;
       })
       .addCase(postAdminOffers.rejected, (state, action) => {
+        state.adminOffersLoading = false;
+        state.adminOffersError = action.payload;
+      })
+       .addCase(deleteAdminOffer.pending, (state) => {
+        state.adminOffersLoading = true;
+        state.adminOffersError = null;
+        state.adminOffersSuccess = false;
+      })
+      .addCase(deleteAdminOffer.fulfilled, (state) => {
+        state.adminOffersLoading = false;
+        state.adminOffersSuccess = true;
+      })
+      .addCase(deleteAdminOffer.rejected, (state, action) => {
         state.adminOffersLoading = false;
         state.adminOffersError = action.payload;
       })

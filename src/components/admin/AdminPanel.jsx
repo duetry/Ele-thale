@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { Users, Tag, Activity } from 'lucide-react';
+import { Users, Tag, Activity, Dice6 } from 'lucide-react';
 import UserDetailsTab from './UserDetailsTab';
 import CouponDetails from './CouponDetails';
 import UsertrackingTab from './UsertrackingTab';
@@ -67,7 +67,7 @@ const AdminPanel = () => {
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            <Activity className="w-4 h-4 mr-2" />
+            <Dice6  className="w-4 h-4 mr-2" />
             admin offers
           </button>
         </div>
