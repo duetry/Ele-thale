@@ -309,7 +309,7 @@ const handleUnlockOffer = (product) => {
         console.error('Offer API failed:', err);
       });
 
-      setSelectedProduct(product);   // ✅ store product
+      // setSelectedProduct(product);   // ✅ store product
   } else {
     setShowLogin(true);
   }
@@ -474,22 +474,24 @@ if (!mounted || bestOfferLoading) {
                 }}
               >
                 {/* Image */}
-                <div style={{
-                  height: 180,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}>
-                  <img
-                    src={item.Imageurl}
-                    alt={item.ProductName}
-                    style={{
-                      maxHeight: '100%',
-                      maxWidth: '100%',
-                      objectFit: 'contain'
-                    }}
-                  />
-                </div>
+          <div
+  style={{
+    width: "100%",
+    aspectRatio: "1 / 1",   // perfect square
+    overflow: "hidden",
+    background: "#fff"
+  }}
+>
+  <img
+    src={item.Imageurl}
+    alt={item.ProductName}
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover"
+    }}
+  />
+</div>
 
                 {/* Name */}
                 <h3 style={{
