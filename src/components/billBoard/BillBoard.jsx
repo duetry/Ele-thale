@@ -318,18 +318,49 @@ const handleUnlockOffer = (product) => {
 
 
   /* ------------------ STATES ------------------ */
-  if (!mounted || bestOfferLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh'
-      }}>
-        Loading...
+if (!mounted || bestOfferLoading) {
+  return (
+    <div style={{ width: '100%', marginTop: 60, padding: 20 }}>
+      
+      {/* Banner Skeleton */}
+      <div
+        className="skeleton"
+        style={{
+          width: '100%',
+          height: 380,
+          borderRadius: 24,
+          marginBottom: 40
+        }}
+      />
+
+      {/* Cards Skeleton Grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: 20
+        }}
+      >
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              padding: 16,
+              borderRadius: 16,
+              background: '#fff'
+            }}
+          >
+            <div className="skeleton" style={{ height: 180 }} />
+            <div className="skeleton" style={{ height: 20, marginTop: 12 }} />
+            <div className="skeleton" style={{ height: 16, marginTop: 8, width: '70%' }} />
+            <div className="skeleton" style={{ height: 30, marginTop: 16, width: '40%' }} />
+            <div className="skeleton" style={{ height: 40, marginTop: 16 }} />
+          </div>
+        ))}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (bestOfferError) {
     return (

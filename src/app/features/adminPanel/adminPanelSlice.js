@@ -259,6 +259,34 @@ export const postAdminOffers = createAsyncThunk(
     }
   }
 );
+export const updateAdminOffers = createAsyncThunk(
+  'admin/updateAdminOffers',
+  async (payload, { rejectWithValue }) => {
+    console.log("payload payload " ,payload)
+    try {
+      const token = getFromStorage('authToken');
+
+      const response = await fetch(`${API_BASE}/Put_Products`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create offer');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
 
 
 export const deleteAdminOffer = createAsyncThunk(
@@ -449,6 +477,19 @@ const adminPanelSlice = createSlice({
         state.adminOffersSuccess = true;
       })
       .addCase(postAdminOffers.rejected, (state, action) => {
+        state.adminOffersLoading = false;
+        state.adminOffersError = action.payload;
+      })
+       .addCase(updateAdminOffers.pending, (state) => {
+        state.adminOffersLoading = true;
+        state.adminOffersError = null;
+        state.adminOffersSuccess = false;
+      })
+      .addCase(updateAdminOffers.fulfilled, (state) => {
+        state.adminOffersLoading = false;
+        state.adminOffersSuccess = true;
+      })
+      .addCase(updateAdminOffers.rejected, (state, action) => {
         state.adminOffersLoading = false;
         state.adminOffersError = action.payload;
       })

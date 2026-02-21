@@ -543,8 +543,10 @@ export default function LoginPopup({ close, onLoginSuccess }) {
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onBlur={() => handleBlur('phone')}
+  onChange={(e) => {
+    const onlyNums = e.target.value.replace(/\D/g, "");
+    setPhone(onlyNums);
+  }}                onBlur={() => handleBlur('phone')}
                 placeholder="9876543210"
                 maxLength={10}
                 disabled={step !== 'phone'}
