@@ -379,39 +379,44 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-900/98 backdrop-blur-lg border-t border-orange-500/20 shadow-xl">
-          <div className="px-4 py-4 space-y-2">
+     {mobileMenuOpen && (
+  <div className="md:hidden bg-slate-900/98 backdrop-blur-lg border-t border-orange-500/20 shadow-xl">
+    <div className="px-4 py-4 space-y-2">
 
-            {/* Location */}
-            <div
-              onClick={() => {
-                setShowLocationPopup(true);
-                setMobileMenuOpen(false);
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/30 text-gray-100 active:scale-95 transition-transform"
-            >
-              <MapPin className="w-5 h-5 text-orange-400" />
-              <span className="font-medium">{selectedLocation?.area || 'Select Location'}</span>
-            </div>
+      {/* Location */}
+    
 
-            {/* Nav Items */}
-            {navItems.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => {
-                  item.onClick();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-200 hover:bg-white/10 active:scale-95 transition-all duration-200 border border-transparent hover:border-orange-500/20"
-              >
-                <item.icon className="w-5 h-5 text-orange-400" />
-                <span className="font-medium">{item.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Nav Items */}
+      {navItems.map((item) => (
+        <button
+          key={item.name}
+          onClick={() => {
+            item.onClick();
+            setMobileMenuOpen(false);
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-200 hover:bg-white/10 active:scale-95 transition-all duration-200 border border-transparent hover:border-orange-500/20"
+        >
+          <item.icon className="w-5 h-5 text-orange-400" />
+          <span className="font-medium">{item.name}</span>
+        </button>
+      ))}
+
+      {/* Logout Button (ONLY if authenticated) */}
+      {isAuthenticated && (
+        <button
+          onClick={() => {
+            handleLogout();
+            setMobileMenuOpen(false);
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 active:scale-95 transition-all duration-200 border border-red-500/30"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="font-medium">Logout</span>
+        </button>
       )}
+    </div>
+  </div>
+)}
 
       {/* Popups */}
       <LocationPopup
