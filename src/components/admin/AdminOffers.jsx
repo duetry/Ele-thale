@@ -38,11 +38,12 @@ const AdminOffers = () => {
 
   const columns = [
     { field: 'ProductName', headerName: 'Product Name', width: 150 },
-    { field: 'Brand', headerName: 'Brand', width: 130 },
+    { field: 'Brand', headerName: 'Brand', width: 230 },
     { field: 'Type', headerName: 'Type', width: 150 },
     { field: 'Price', headerName: 'Price', width: 100 },
     { field: 'Finalprice', headerName: 'Final Price', width: 120 },
     { field: 'Discount', headerName: 'Discount', width: 100 },
+    { field: 'Description', headerName: 'Type', width: 100 },
     { field: 'Isactive', headerName: 'Active', width: 100 },
     {
       field: 'actions',

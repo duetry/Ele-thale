@@ -84,7 +84,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     initialValues: {
       Description: editData?.Description || "",
       Finalprice: editData?.Finalprice || "",
-      Isactive: editData?.Isactive ?? true,
+      Isactive: editData?.Isactive === "true" ?? true,
       ProductName: editData?.ProductName || "",
       Price: editData?.Price || "",
       Discount: editData?.Discount || "",
@@ -113,6 +113,8 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       setLoading(true);
       let base64Image = editData?.Imageurl || "";
 
+
+    
       const sendPayload = async (image) => {
         const payload = {
           Productid: editData?.Productid,
@@ -151,7 +153,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       }
     },
   });
-
+  console.log("editData" , editData)
   useEffect(() => {
     const price = parseFloat(formik.values.Price);
     const discount = parseFloat(formik.values.Discount);
@@ -340,7 +342,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               />
               <TextField
                 select
-                label="Offer Display Type"
+                // label="Offer Display Type"
                 name="Description"
                 value={formik.values.Description}
                 onChange={formik.handleChange}

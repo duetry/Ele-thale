@@ -68,7 +68,7 @@ const AdminPanel = () => {
             }`}
           >
             <Dice6  className="w-4 h-4 mr-2" />
-            admin offers
+            Admin offers
           </button>
         </div>
 

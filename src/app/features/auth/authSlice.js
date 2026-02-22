@@ -61,10 +61,10 @@ export const loginUser = createAsyncThunk(
         throw new Error(data.message || 'Login failed');
       }
 
-      if (data.token) {
-        setToStorage('authToken', data.token);
-        setToStorage('user', JSON.stringify(data.user));
-      }
+      // if (data.token) {
+      //   setToStorage('authToken', data.token);
+      //   setToStorage('user', JSON.stringify(data.user));
+      // }
 
       return data;
     } catch (error) {
@@ -271,7 +271,7 @@ const authSlice = createSlice({
         state.loginLoading = false;
         state.user = action.payload || null;
         state.token = action.payload.token || null;
-        state.isAuthenticated = true;
+        state.isAuthenticated = false;
         state.showLoginModal = false;
       })
       .addCase(loginUser.rejected, (state, action) => {
