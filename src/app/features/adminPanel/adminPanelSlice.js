@@ -1,14 +1,15 @@
 // src/app/features/admin/adminPanelSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 /* =========================================================
    API CONFIG
    ========================================================= */
 
-const API_BASE = 'https://dxaoss4u5f.execute-api.us-east-1.amazonaws.com/ET_UAT';
+const API_BASE =
+  "https://dxaoss4u5f.execute-api.us-east-1.amazonaws.com/ET_UAT";
 
 const getHeaders = (token) => ({
-  'Content-Type': 'application/json',
+  "Content-Type": "application/json",
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 });
 
@@ -17,9 +18,9 @@ const getHeaders = (token) => ({
    ========================================================= */
 
 const getFromStorage = (key) => {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   const value = localStorage.getItem(key);
-  if (!value || value === 'undefined' || value === 'null') return null;
+  if (!value || value === "undefined" || value === "null") return null;
   return value;
 };
 
@@ -29,12 +30,12 @@ const getFromStorage = (key) => {
 
 // 1️⃣ POST Search Log
 export const postSearchLog = createAsyncThunk(
-  'admin/postSearchLog',
+  "admin/postSearchLog",
   async ({ searchKeywords }, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
       const response = await fetch(`${API_BASE}/GET_SearchLog`, {
-        method: 'POST',
+        method: "POST",
         headers: getHeaders(token),
         body: JSON.stringify({
           Searchkeywords: searchKeywords,
@@ -44,88 +45,115 @@ export const postSearchLog = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to log search');
+        throw new Error(data.message || "Failed to log search");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
 
 // 2️⃣ GET Search Log (with or without phoneno)
 export const getSearchLog = createAsyncThunk(
-  'admin/getSearchLog',
+  "admin/getSearchLog",
   async (phoneno = null, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
       let url = `${API_BASE}/GET_SearchLog`;
       if (phoneno) {
         url += `?phoneno=${phoneno}`;
       }
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: getHeaders(token),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch search logs');
+        throw new Error(data.message || "Failed to fetch search logs");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
 
 // 3️⃣ GET Coupon Code List (with or without phoneno)
 export const getCouponCodeList = createAsyncThunk(
-  'admin/getCouponCodeList',
+  "admin/getCouponCodeList",
   async (phoneno = null, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
       let url = `${API_BASE}/GET_CouponCode_List`;
       if (phoneno) {
         url += `?phoneno=${phoneno}`;
       }
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: getHeaders(token),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch coupon codes');
+        throw new Error(data.message || "Failed to fetch coupon codes");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
+);
+export const getLocationList = createAsyncThunk(
+  "admin/getLocationList",
+  async (phoneno = null, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage("authToken");
+      let url = `${API_BASE}/GET_Location`;
+      if (phoneno) {
+        url += `?phoneno=${phoneno}`;
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: getHeaders(token),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch coupon codes");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || "Something went wrong");
+    }
+  },
 );
 
 export const userTracking = createAsyncThunk(
-  'admin/userTracking',
+  "admin/userTracking",
   async (pageName, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
 
       const response = await fetch(`${API_BASE}/Update_UserTracking`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           ...getHeaders(token),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          pagename : pageName,
+          pagename: pageName,
         }),
       });
 
@@ -133,116 +161,108 @@ export const userTracking = createAsyncThunk(
 
       if (!response.ok) {
         return rejectWithValue(
-          data.message || 'Failed to update user tracking'
+          data.message || "Failed to update user tracking",
         );
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
 
 export const getUserTracking = createAsyncThunk(
-  'admin/getUserTracking',
+  "admin/getUserTracking",
   async (_, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
 
-      const response = await fetch(
-        `${API_BASE}/GET_UserTracking`,
-        {
-          method: 'GET',
-          headers: getHeaders(token),
-        }
-      );
+      const response = await fetch(`${API_BASE}/GET_UserTracking`, {
+        method: "GET",
+        headers: getHeaders(token),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch user tracking');
+        throw new Error(data.message || "Failed to fetch user tracking");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
-
-
-
 
 // 4️⃣ GET Login User Details (with or without phoneno)
 export const getLoginUserDetails = createAsyncThunk(
-  'admin/getLoginUserDetails',
+  "admin/getLoginUserDetails",
   async (phoneno = null, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
       let url = `${API_BASE}/GET_LoginUserDetails`;
       if (phoneno) {
         url += `?phoneno=${phoneno}`;
       }
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: getHeaders(token),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch user details');
+        throw new Error(data.message || "Failed to fetch user details");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
 export const getAdminOffers = createAsyncThunk(
-  'admin/getAdminOffers',
+  "admin/getAdminOffers",
   async (phoneno = null, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
       let url = `${API_BASE}/List_Products`;
       if (phoneno) {
         url += `?phoneno=${phoneno}`;
       }
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: getHeaders(token),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch user details');
+        throw new Error(data.message || "Failed to fetch user details");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
-
 
 export const postAdminOffers = createAsyncThunk(
-  'admin/postAdminOffers',
+  "admin/postAdminOffers",
   async (payload, { rejectWithValue }) => {
-    console.log("payload payload " ,payload)
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
 
       const response = await fetch(`${API_BASE}/Update_Products`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           ...getHeaders(token),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
@@ -250,27 +270,26 @@ export const postAdminOffers = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create offer');
+        throw new Error(data.message || "Failed to create offer");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
 export const updateAdminOffers = createAsyncThunk(
-  'admin/updateAdminOffers',
+  "admin/updateAdminOffers",
   async (payload, { rejectWithValue }) => {
-    console.log("payload payload " ,payload)
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
 
       const response = await fetch(`${API_BASE}/Put_Products`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           ...getHeaders(token),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
@@ -278,28 +297,27 @@ export const updateAdminOffers = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create offer');
+        throw new Error(data.message || "Failed to create offer");
       }
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Something went wrong');
+      return rejectWithValue(error.message || "Something went wrong");
     }
-  }
+  },
 );
 
-
 export const deleteAdminOffer = createAsyncThunk(
-  'admin/deleteAdminOffer',
+  "admin/deleteAdminOffer",
   async (productId, { rejectWithValue }) => {
     try {
-      const token = getFromStorage('authToken');
+      const token = getFromStorage("authToken");
 
       const response = await fetch(`${API_BASE}/Delete_Product`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           ...getHeaders(token),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           Productid: productId,
@@ -309,16 +327,15 @@ export const deleteAdminOffer = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Delete failed');
+        throw new Error(data.message || "Delete failed");
       }
 
       return productId;
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  },
 );
-
 
 /* =========================================================
    INITIAL STATE
@@ -334,6 +351,12 @@ const initialState = {
   couponCodes: [],
   couponLoading: false,
   couponError: null,
+
+  // locationData
+  locationData: [],
+  locationLoading: false,
+  locationError: null,
+  selectedLocation: null,
 
   // Login User Details
   loginUsers: [],
@@ -359,7 +382,7 @@ const initialState = {
    ========================================================= */
 
 const adminPanelSlice = createSlice({
-  name: 'adminPanel',
+  name: "adminPanel",
   initialState,
   reducers: {
     clearSearchLogError: (state) => {
@@ -374,6 +397,9 @@ const adminPanelSlice = createSlice({
     clearPostSearchStatus: (state) => {
       state.postSearchError = null;
       state.postSearchSuccess = false;
+    },
+    setSelectedLocation: (state, action) => {
+      state.selectedLocation = action.payload;
     },
     resetAdminState: () => initialState,
   },
@@ -393,23 +419,21 @@ const adminPanelSlice = createSlice({
         state.postSearchLoading = false;
         state.postSearchError = action.payload;
       })
-     
-         .addCase(userTracking.pending, (state) => {
-      state.postSearchLoading = true;
-      state.postSearchError = null;
-      state.postSearchSuccess = false;
-    })
-    .addCase(userTracking.fulfilled, (state, action) => {
 
-    
-      state.postSearchLoading = false;
-      state.postSearchSuccess = true;
-      // state.userTrackingData = action.payload;
-    })
-    .addCase(userTracking.rejected, (state, action) => {
-      state.postSearchLoading = false;
-      state.postSearchError = action.payload;
-    })
+      .addCase(userTracking.pending, (state) => {
+        state.postSearchLoading = true;
+        state.postSearchError = null;
+        state.postSearchSuccess = false;
+      })
+      .addCase(userTracking.fulfilled, (state, action) => {
+        state.postSearchLoading = false;
+        state.postSearchSuccess = true;
+        // state.userTrackingData = action.payload;
+      })
+      .addCase(userTracking.rejected, (state, action) => {
+        state.postSearchLoading = false;
+        state.postSearchError = action.payload;
+      })
 
       // GET Search Log
       .addCase(getSearchLog.pending, (state) => {
@@ -418,7 +442,9 @@ const adminPanelSlice = createSlice({
       })
       .addCase(getSearchLog.fulfilled, (state, action) => {
         state.searchLogLoading = false;
-        state.searchLogs = Array.isArray(action.payload) ? action.payload : [action.payload];
+        state.searchLogs = Array.isArray(action.payload)
+          ? action.payload
+          : [action.payload];
       })
       .addCase(getSearchLog.rejected, (state, action) => {
         state.searchLogLoading = false;
@@ -432,9 +458,23 @@ const adminPanelSlice = createSlice({
       })
       .addCase(getCouponCodeList.fulfilled, (state, action) => {
         state.couponLoading = false;
-        state.couponCodes =  action.payload?.data;
+        state.couponCodes = action.payload?.data;
       })
       .addCase(getCouponCodeList.rejected, (state, action) => {
+        state.couponLoading = false;
+        state.couponError = action.payload;
+      })
+      // GET Coupon Code List
+
+      .addCase(getLocationList.pending, (state) => {
+        state.couponLoading = true;
+        state.couponError = null;
+      })
+      .addCase(getLocationList.fulfilled, (state, action) => {
+        state.couponLoading = false;
+        state.locationData = action.payload?.data;
+      })
+      .addCase(getLocationList.rejected, (state, action) => {
         state.couponLoading = false;
         state.couponError = action.payload;
       })
@@ -446,7 +486,9 @@ const adminPanelSlice = createSlice({
       })
       .addCase(getLoginUserDetails.fulfilled, (state, action) => {
         state.userDetailLoading = false;
-        state.loginUsers = Array.isArray(action.payload) ? action.payload?.data : [action.payload?.data];
+        state.loginUsers = Array.isArray(action.payload)
+          ? action.payload?.data
+          : [action.payload?.data];
       })
       .addCase(getLoginUserDetails.rejected, (state, action) => {
         state.userDetailLoading = false;
@@ -458,16 +500,17 @@ const adminPanelSlice = createSlice({
         state.adminOffersError = null;
       })
       .addCase(getAdminOffers.fulfilled, (state, action) => {
-        console.log("action.payload" , action.payload)
         state.adminOffersLoading = false;
-        state.adminOffers = Array.isArray(action.payload) ? action.payload?.data : action.payload?.data;
+        state.adminOffers = Array.isArray(action.payload)
+          ? action.payload?.data
+          : action.payload?.data;
       })
       .addCase(getAdminOffers.rejected, (state, action) => {
         state.adminOffersLoading = false;
         state.adminOffersError = action.payload;
       })
 
-       .addCase(postAdminOffers.pending, (state) => {
+      .addCase(postAdminOffers.pending, (state) => {
         state.adminOffersLoading = true;
         state.adminOffersError = null;
         state.adminOffersSuccess = false;
@@ -480,7 +523,7 @@ const adminPanelSlice = createSlice({
         state.adminOffersLoading = false;
         state.adminOffersError = action.payload;
       })
-       .addCase(updateAdminOffers.pending, (state) => {
+      .addCase(updateAdminOffers.pending, (state) => {
         state.adminOffersLoading = true;
         state.adminOffersError = null;
         state.adminOffersSuccess = false;
@@ -493,7 +536,7 @@ const adminPanelSlice = createSlice({
         state.adminOffersLoading = false;
         state.adminOffersError = action.payload;
       })
-       .addCase(deleteAdminOffer.pending, (state) => {
+      .addCase(deleteAdminOffer.pending, (state) => {
         state.adminOffersLoading = true;
         state.adminOffersError = null;
         state.adminOffersSuccess = false;
@@ -511,9 +554,8 @@ const adminPanelSlice = createSlice({
         state.userTrackingError = null;
       })
       .addCase(getUserTracking.fulfilled, (state, action) => {
-          console.log("action" , action)
         state.userTrackingLoading = false;
-        state.userTrackingData =  action.payload ?? [];
+        state.userTrackingData = action.payload ?? [];
       })
       .addCase(getUserTracking.rejected, (state, action) => {
         state.userTrackingLoading = false;
@@ -531,28 +573,42 @@ export const {
   clearCouponError,
   clearUserDetailError,
   clearPostSearchStatus,
+  setSelectedLocation,
   resetAdminState,
 } = adminPanelSlice.actions;
 
 // Selectors
 export const selectSearchLogs = (state) => state.adminPanel.searchLogs;
-export const selectSearchLogLoading = (state) => state.adminPanel.searchLogLoading;
+export const selectSearchLogLoading = (state) =>
+  state.adminPanel.searchLogLoading;
 export const selectSearchLogError = (state) => state.adminPanel.searchLogError;
 
 export const selectCouponCodes = (state) => state.adminPanel.couponCodes;
 export const selectCouponLoading = (state) => state.adminPanel.couponLoading;
 export const selectCouponError = (state) => state.adminPanel.couponError;
 
+export const selectLocationList = (state) => state.adminPanel.locationData;
+export const selectLocationLoading = (state) =>
+  state.adminPanel.locationLoading;
+export const selectLocationError = (state) => state.adminPanel.locationError;
+
 export const selectLoginUsers = (state) => state.adminPanel.loginUsers;
-export const selectUserDetailLoading = (state) => state.adminPanel.userDetailLoading;
-export const selectUserDetailError = (state) => state.adminPanel.userDetailError;
+export const selectUserDetailLoading = (state) =>
+  state.adminPanel.userDetailLoading;
+export const selectUserDetailError = (state) =>
+  state.adminPanel.userDetailError;
 
 export const selectAdminOffers = (state) => state.adminPanel.adminOffers;
-export const selectAdminOffersLoading = (state) => state.adminPanel.userDetailLoading;
-export const selectAdminOffersError = (state) => state.adminPanel.userDetailError;
+export const selectAdminOffersLoading = (state) =>
+  state.adminPanel.userDetailLoading;
+export const selectAdminOffersError = (state) =>
+  state.adminPanel.userDetailError;
 
-export const selectPostSearchLoading = (state) => state.adminPanel.postSearchLoading;
-export const selectPostSearchError = (state) => state.adminPanel.postSearchError;
-export const selectPostSearchSuccess = (state) => state.adminPanel.postSearchSuccess;
-
+export const selectPostSearchLoading = (state) =>
+  state.adminPanel.postSearchLoading;
+export const selectPostSearchError = (state) =>
+  state.adminPanel.postSearchError;
+export const selectPostSearchSuccess = (state) =>
+  state.adminPanel.postSearchSuccess;
+export const selectSelectedLocation = (state) => state.adminPanel.selectedLocation;
 export default adminPanelSlice.reducer;

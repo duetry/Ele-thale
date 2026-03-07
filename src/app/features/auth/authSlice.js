@@ -159,7 +159,6 @@ export const sentOtp = createAsyncThunk(
 
       const data = await response.json();
 
-      console.log("DD" , data)
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to send OTP');
@@ -267,7 +266,6 @@ const authSlice = createSlice({
         state.loginLoading = true;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        console.log("action" , action)
         state.loginLoading = false;
         state.user = action.payload || null;
         state.token = action.payload.token || null;
@@ -314,7 +312,6 @@ const authSlice = createSlice({
         state.couponSuccess = null;
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
-           console.log("action" , action)
         state.loginLoading = false;
         state.user = action.payload || null;
         state.token = action.payload.token || null;

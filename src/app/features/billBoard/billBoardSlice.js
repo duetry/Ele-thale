@@ -31,15 +31,20 @@ const getHeaders = () => {
 // ✅ Fetch Best Offer Billboards / Products
 export const fetchBestOfferBillboards = createAsyncThunk(
   'billboards/fetchBestOfferBillboards',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await fetch(
-        `${API_BASE}/GET_Isbestoffer_Products?isbestoffer=true`,
-        {
-          method: 'GET',
-          headers: getHeaders(),
-        }
-      );
+  async (params = {}, { rejectWithValue }) => {
+    try {                                                        // ← missing try
+      console.log("THUNK params →", JSON.stringify(params));
+      const LocationId = params?.LocationId;
+      console.log("THUNK LocationId →", LocationId);
+
+      const url = LocationId
+        ? `${API_BASE}/GET_Isbestoffer_Products?isbestoffer=true&LocationId=${LocationId}`
+        : `${API_BASE}/GET_Isbestoffer_Products?isbestoffer=true`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getHeaders(),
+      });
 
       if (!response.ok) {
         const text = await response.text();

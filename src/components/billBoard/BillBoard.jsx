@@ -1,257 +1,17 @@
-// 'use client';
+"use client";
 
-// import React, { useEffect, useState } from 'react';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { motion } from 'framer-motion';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-// import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlice';
-// import { fetchProductOffer } from '@/app/features/products/productSlice';
-// import UnlockOfferModal from '../products/UnlockOfferModel';
-// import { userTracking } from '@/app/features/adminPanel/adminPanelSlice';
-
-// export default function BillboardBanners() {
-//   const dispatch = useDispatch();
-
-//   const [mounted, setMounted] = useState(false);
-//   const [selectedProduct, setSelectedProduct] = useState(null);
-//   const [couponCode, setCouponCode] = useState(null);
-//   const [currentBanner, setCurrentBanner] = useState(0);
-
-//   const {
-//     bestOfferBillboards,
-//     bestOfferLoading,
-//     bestOfferError,
-//     bestOfferBanner
-//   } = useSelector((state) => state.billboards);
-
-//   /* ------------------ MOUNT CHECK ------------------ */
-//   useEffect(() => {
-//     setMounted(true);
-//   }, []);
-
-//   /* ------------------ API CALL ------------------ */
-//   useEffect(() => {
-//     dispatch(fetchBestOfferBillboards());
-//   }, [dispatch]);
-
-//   /* ------------------ BANNER AUTO SLIDE ------------------ */
-//   useEffect(() => {
-//     if (!mounted || !bestOfferBanner?.length) return;
-
-//     const interval = setInterval(() => {
-//       setCurrentBanner((prev) =>
-//         prev === bestOfferBanner.length - 1 ? 0 : prev + 1
-//       );
-//     }, 4000);
-
-//     return () => clearInterval(interval);
-//   }, [mounted, bestOfferBanner]);
-
-//   /* ------------------ CLICK HANDLER ------------------ */
-//   const handleUnlockOffer = (product) => {
-//     dispatch(userTracking(product?.ProductName));
-
-//     dispatch(fetchProductOffer(product.Storeid))
-//       .unwrap()
-//       .then((res) => {
-//         setCouponCode(res?.data?.[0]);
-//         setSelectedProduct(product);
-//       })
-//       .catch((err) => {
-//         console.error('Offer API failed:', err);
-//       });
-//   };
-
-//   /* ------------------ STATES ------------------ */
-//   if (!mounted || bestOfferLoading) {
-//     return (
-//       <div className="flex justify-center items-center min-h-screen">
-//         <div className="h-12 w-12 rounded-full border-b-2 border-gray-900 animate-spin" />
-//       </div>
-//     );
-//   }
-
-//   if (bestOfferError) {
-//     return (
-//       <div className="flex justify-center items-center min-h-screen text-red-600">
-//         {bestOfferError}
-//       </div>
-//     );
-//   }
-
-//   /* ------------------ SORT BY DISCOUNT % ------------------ */
-//   const sorted = [...(bestOfferBillboards || [])].sort((a, b) => {
-//     const discountA =
-//       a.Price && a.Finalprice ? ((a.Price - a.Finalprice) / a.Price) * 100 : 0;
-//     const discountB =
-//       b.Price && b.Finalprice ? ((b.Price - b.Finalprice) / b.Price) * 100 : 0;
-
-//     return discountB - discountA;
-//   });
-
-//   return (
-//     <div className="w-full bg-white mt-16">
-//       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
-//         {/* ===================== BANNER CAROUSEL ===================== */}
-//         {bestOfferBanner?.length > 0 && (
-//           <div className="relative w-full overflow-hidden rounded-3xl mb-14 shadow-lg">
-//             <div
-//               className="flex transition-transform duration-700 ease-in-out"
-//               style={{ transform: `translateX(-${currentBanner * 100}%)` }}
-//             >
-//               {bestOfferBanner.map((banner, index) => (
-//                 <div key={index} className="min-w-full h-[320px] sm:h-[420px]">
-//                   <img
-//                     src={banner.Imageurl}
-//                     alt="Best Offer Banner"
-//                     className="w-full h-full object-cover"
-//                   />
-//                 </div>
-//               ))}
-//             </div>
-
-//             {/* Dots */}
-//             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-//               {bestOfferBanner.map((_, i) => (
-//                 <span
-//                   key={i}
-//                   onClick={() => setCurrentBanner(i)}
-//                   className={`h-2.5 w-2.5 rounded-full cursor-pointer ${
-//                     currentBanner === i ? 'bg-white' : 'bg-white/50'
-//                   }`}
-//                 />
-//               ))}
-//             </div>
-//           </div>
-//         )}
-
-//         {/* ===================== OFFER CARDS ===================== */}
-//         <div className="grid grid-cols-12 gap-6">
-//           {sorted.map((item) => {
-//             const discountPercent = Math.round(
-//               ((item.Price - item.Finalprice) / item.Price) * 100
-//             );
-
-//             return (
-//               <motion.div
-//                 key={item.Productid}
-//                 onClick={() => handleUnlockOffer(item)}
-//                 initial={{ opacity: 0, y: 30 }}
-//                 animate={{ opacity: 1, y: 0 }}
-//                 whileHover={{ scale: 1.03 }}
-//                 transition={{ duration: 0.4, ease: 'easeOut' }}
-//                 className="
-//                   col-span-12 sm:col-span-6 lg:col-span-3
-//                   cursor-pointer rounded-2xl
-//                   bg-gradient-to-br from-green-50 to-emerald-50
-//                   border border-green-200
-//                   relative overflow-hidden
-//                   hover:shadow-[0_0_25px_rgba(34,197,94,0.45)]
-//                   h-[360px]
-//                 "
-//               >
-//                 {/* Glow blob */}
-//                 <div className="absolute -top-12 -right-12 h-28 w-28
-//                   rounded-full bg-green-300/30 blur-2xl" />
-
-//                 {/* ================= PRICE HERO (50%) ================= */}
-//                 <div className="h-1/2 flex flex-col items-center justify-center relative">
-//                   <div className="absolute top-4 right-4 rounded-full
-//                     bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow">
-//                     {discountPercent}% OFF
-//                   </div>
-
-//                   <motion.div
-//                     initial={{ scale: 0.95, opacity: 0 }}
-//                     animate={{ scale: 1, opacity: 1 }}
-//                     transition={{ type: 'spring', stiffness: 160 }}
-//                     className="text-center"
-//                   >
-//                     <p className="text-4xl font-extrabold text-emerald-700">
-//                       ₹{item.Finalprice}
-//                     </p>
-//                     <p className="text-sm text-gray-400 line-through mt-1">
-//                       ₹{item.Price}
-//                     </p>
-//                   </motion.div>
-//                 </div>
-
-//                 {/* ================= DETAILS (50%) ================= */}
-//                 <div className="h-1/2 px-6 pb-6 flex flex-col justify-between">
-//                   <div>
-//                     <h3 className="text-lg font-semibold text-gray-800">
-//                       {item.ProductName}
-//                     </h3>
-//                     <p className="text-sm text-gray-600 mt-1">
-//                       {item.Brand} • {item.Type}
-//                     </p>
-//                   </div>
-
-//                   {/* <motion.button
-//                     whileHover={{ scale: 1.08 }}
-//                     whileTap={{ scale: 0.95 }}
-//                     className="
-//                       w-full rounded-xl
-//                       bg-white/80 backdrop-blur
-//                       px-4 py-2 text-sm font-semibold
-//                       text-green-700 shadow
-//                       hover:bg-white
-//                     "
-//                   >
-//                     View Store
-//                   </motion.button> */}
-// <motion.button
-//   animate={{ opacity: [1, 0.4, 1] }}
-//   transition={{
-//     duration: 1.2,
-//     repeat: Infinity,
-//     ease: "easeInOut",
-//   }}
-//   whileHover={{ scale: 1.08, opacity: 1 }}
-//   whileTap={{ scale: 0.95 }}
-//   className="
-//     w-full rounded-xl
-//     bg-white/80 backdrop-blur
-//     px-4 py-2 text-sm font-semibold
-//     text-green-700 shadow
-//   "
-// >
-//   View Store
-// </motion.button>
-
-//                 </div>
-//               </motion.div>
-//             );
-//           })}
-//         </div>
-//       </div>
-
-//       {/* ===================== MODAL ===================== */}
-//       <UnlockOfferModal
-//         product={selectedProduct}
-//         couponCode={couponCode}
-//         onClose={() => {
-//           setSelectedProduct(null);
-//           setCouponCode(null);
-//         }}
-//       />
-//     </div>
-//   );
-// }
-
-
-'use client';
-
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-
-import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlice';
-import { fetchProductOffer } from '@/app/features/products/productSlice';
-import UnlockOfferModal from '../products/UnlockOfferModel';
-import { userTracking } from '@/app/features/adminPanel/adminPanelSlice';
-import { selectIsAuthenticated } from '@/app/features/auth/authSlice';
-import LoginPopup from '../LoginPopup';
+import { fetchBestOfferBillboards } from "@/app/features/billBoard/billBoardSlice";
+import { fetchProductOffer } from "@/app/features/products/productSlice";
+import UnlockOfferModal from "../products/UnlockOfferModel";
+import {
+  setSelectedLocation,
+  userTracking,
+} from "@/app/features/adminPanel/adminPanelSlice";
+import { selectIsAuthenticated } from "@/app/features/auth/authSlice";
+import LoginPopup from "../LoginPopup";
 
 export default function BillboardBanners() {
   const dispatch = useDispatch();
@@ -266,18 +26,22 @@ export default function BillboardBanners() {
     bestOfferBillboards,
     bestOfferLoading,
     bestOfferError,
-    bestOfferBanner
+    bestOfferBanner,
   } = useSelector((state) => state.billboards);
+
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const selectedLocation = useSelector(setSelectedLocation);
 
   /* ------------------ MOUNT CHECK ------------------ */
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  /* ------------------ API CALL ------------------ */
+  /* ------------------ FETCH WHEN LOCATION CHANGES ------------------ */
   useEffect(() => {
-    dispatch(fetchBestOfferBillboards());
-  }, [dispatch]);
+    if (!selectedLocation?.LocationId) return;
+    dispatch(fetchBestOfferBillboards({ LocationId: String(selectedLocation.LocationId) }));
+  }, [selectedLocation, dispatch]);
 
   /* ------------------ BANNER AUTO SLIDE ------------------ */
   useEffect(() => {
@@ -285,92 +49,64 @@ export default function BillboardBanners() {
 
     const interval = setInterval(() => {
       setCurrentBanner((prev) =>
-        prev === bestOfferBanner.length - 1 ? 0 : prev + 1
+        prev === bestOfferBanner.length - 1 ? 0 : prev + 1,
       );
     }, 4000);
 
     return () => clearInterval(interval);
   }, [mounted, bestOfferBanner]);
 
-    const isAuthenticated = useSelector(selectIsAuthenticated);
   /* ------------------ CLICK HANDLER ------------------ */
-const handleUnlockOffer = (product) => {
+  const handleUnlockOffer = (product) => {
+    if (isAuthenticated) {
+      dispatch(userTracking(product?.ProductName));
 
-  if (isAuthenticated) {
-    dispatch(userTracking(product?.ProductName));
-
-    dispatch(fetchProductOffer(product.Storeid))
-      .unwrap()
-      .then((res) => {
-        setCouponCode(res?.data?.[0]);
-        setSelectedProduct(product);
-      })
-      .catch((err) => {
-        console.error('Offer API failed:', err);
-      });
-
-      // setSelectedProduct(product);   // ✅ store product
-  } else {
-    setShowLogin(true);
-  }
-
-};
-
+      dispatch(fetchProductOffer(product.Storeid))
+        .unwrap()
+        .then((res) => {
+          setCouponCode(res?.data?.[0]);
+          setSelectedProduct(product);
+        })
+        .catch((err) => {
+          console.error("Offer API failed:", err);
+        });
+    } else {
+      setShowLogin(true);
+    }
+  };
 
   /* ------------------ STATES ------------------ */
-if (!mounted || bestOfferLoading) {
-  return (
-    <div style={{ width: '100%', marginTop: 60, padding: 20 }}>
-      
-      {/* Banner Skeleton */}
-      <div
-        className="skeleton"
-        style={{
-          width: '100%',
-          height: 380,
-          borderRadius: 24,
-          marginBottom: 40
-        }}
-      />
-
-      {/* Cards Skeleton Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: 20
-        }}
-      >
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            style={{
-              padding: 16,
-              borderRadius: 16,
-              background: '#fff'
-            }}
-          >
-            <div className="skeleton" style={{ height: 180 }} />
-            <div className="skeleton" style={{ height: 20, marginTop: 12 }} />
-            <div className="skeleton" style={{ height: 16, marginTop: 8, width: '70%' }} />
-            <div className="skeleton" style={{ height: 30, marginTop: 16, width: '40%' }} />
-            <div className="skeleton" style={{ height: 40, marginTop: 16 }} />
-          </div>
-        ))}
+  if (!mounted || bestOfferLoading) {
+    return (
+      <div style={{ width: "100%", marginTop: 60, padding: 20 }}>
+        <div
+          className="skeleton"
+          style={{ width: "100%", height: 380, borderRadius: 24, marginBottom: 40 }}
+        />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 20,
+          }}
+        >
+          {[...Array(8)].map((_, i) => (
+            <div key={i} style={{ padding: 16, borderRadius: 16, background: "#fff" }}>
+              <div className="skeleton" style={{ height: 180 }} />
+              <div className="skeleton" style={{ height: 20, marginTop: 12 }} />
+              <div className="skeleton" style={{ height: 16, marginTop: 8, width: "70%" }} />
+              <div className="skeleton" style={{ height: 30, marginTop: 16, width: "40%" }} />
+              <div className="skeleton" style={{ height: 40, marginTop: 16 }} />
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (bestOfferError) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        color: 'red'
-      }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "red" }}>
         {bestOfferError}
       </div>
     );
@@ -378,71 +114,48 @@ if (!mounted || bestOfferLoading) {
 
   /* ------------------ SORT BY DISCOUNT % ------------------ */
   const sorted = [...(bestOfferBillboards || [])].sort((a, b) => {
-    const discountA =
-      a.Price && a.Finalprice ? ((a.Price - a.Finalprice) / a.Price) * 100 : 0;
-    const discountB =
-      b.Price && b.Finalprice ? ((b.Price - b.Finalprice) / b.Price) * 100 : 0;
-
+    const discountA = a.Price && a.Finalprice ? ((a.Price - a.Finalprice) / a.Price) * 100 : 0;
+    const discountB = b.Price && b.Finalprice ? ((b.Price - b.Finalprice) / b.Price) * 100 : 0;
     return discountB - discountA;
   });
 
   return (
-    <div style={{ width: '100%', background: '#fff', marginTop: 60 }}>
-      <div style={{
-        maxWidth: 1400,
-        margin: '0 auto',
-        padding: 20
-      }}>
+    <div style={{ width: "100%", background: "#fff", marginTop: 60 }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: 20 }}>
 
         {/* ===================== BANNER CAROUSEL ===================== */}
         {bestOfferBanner?.length > 0 && (
-          <div style={{
-            position: 'relative',
-            overflow: 'hidden',
-            borderRadius: 24,
-            marginBottom: 40
-          }}>
+          <div style={{ position: "relative", overflow: "hidden", borderRadius: 24, marginBottom: 40 }}>
             <div
               style={{
-                display: 'flex',
+                display: "flex",
                 transform: `translateX(-${currentBanner * 100}%)`,
-                transition: 'transform 0.7s ease-in-out'
+                transition: "transform 0.7s ease-in-out",
               }}
             >
               {bestOfferBanner.map((banner, index) => (
-                <div key={index} style={{ minWidth: '100%', height: 380 }}>
+                <div key={index} style={{ minWidth: "100%", height: 380 }}>
                   <img
                     src={banner.Imageurl}
                     alt="Best Offer Banner"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 </div>
               ))}
             </div>
-
-            {/* Dots */}
-            <div style={{
-              position: 'absolute',
-              bottom: 16,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              gap: 8
-            }}>
+            <div
+              style={{
+                position: "absolute", bottom: 16, left: "50%",
+                transform: "translateX(-50%)", display: "flex", gap: 8,
+              }}
+            >
               {bestOfferBanner.map((_, i) => (
                 <span
                   key={i}
                   onClick={() => setCurrentBanner(i)}
                   style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: currentBanner === i ? '#fff' : 'rgba(255,255,255,0.6)',
-                    cursor: 'pointer'
+                    width: 10, height: 10, borderRadius: "50%", cursor: "pointer",
+                    background: currentBanner === i ? "#fff" : "rgba(255,255,255,0.6)",
                   }}
                 />
               ))}
@@ -450,185 +163,340 @@ if (!mounted || bestOfferLoading) {
           </div>
         )}
 
-        {/* ===================== OFFER CARDS ===================== */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: 20
-        }}>
-          {sorted.map((item) => {
-            const discountPercent = Math.round(
-              ((item.Price - item.Finalprice) / item.Price) * 100
-            );
-
-            return (
-              <div
-                key={item.Productid}
-                onClick={() => handleUnlockOffer(item)}
-                style={{
-                  background: '#c7f4c7',
-                  borderRadius: 16,
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
-                  padding: 16,
-                  cursor: 'pointer'
-                }}
-              >
-                {/* Image */}
+        {/* ===================== EMPTY STATE ===================== */}
+        {sorted.length === 0 && (
           <div
-  style={{
-    width: "100%",
-    aspectRatio: "1 / 1",   // perfect square
-    overflow: "hidden",
-    background: "#fff"
-  }}
->
-  <img
-    src={item.Imageurl}
-    alt={item.ProductName}
-    style={{
-      width: "100%",
-      height: "100%",
-      objectFit: "cover"
-    }}
-  />
-</div>
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "80px 24px",
+              background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 60%, #f0fdf4 100%)",
+              borderRadius: 24,
+              border: "1.5px dashed #86efac",
+              textAlign: "center",
+              minHeight: 340,
+            }}
+          >
+            {/* Icon circle */}
+            <div
+              style={{
+                width: 88,
+                height: 88,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #bbf7d0, #86efac)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 28,
+                boxShadow: "0 8px 32px rgba(34,197,94,0.18)",
+              }}
+            >
+              <svg
+                width="42"
+                height="42"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#16a34a"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+                <line x1="7" y1="7" x2="7.01" y2="7" />
+                <line x1="12" y1="17" x2="17" y2="12" />
+              </svg>
+            </div>
 
-                {/* Name */}
-                <h3 style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  marginTop: 12,
-                   color:'black'
-                }}>
-                  {item.ProductName}
-                </h3>
+            {/* Headline */}
+            <h2
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: "#14532d",
+                margin: "0 0 10px",
+                letterSpacing: "-0.3px",
+              }}
+            >
+              No Special Offers Available
+            </h2>
 
-                {/* Brand */}
-                <p style={{
-                  fontSize: 14,
-                  color: '#666',
-                  marginTop: 4
-                }}>
-                  {item.Brand} • {item.Type}
-                </p>
+            {/* Description */}
+            <p
+              style={{
+                fontSize: 15,
+                color: "#4b7c5e",
+                maxWidth: 380,
+                lineHeight: 1.7,
+                margin: "0 0 28px",
+              }}
+            >
+              We couldn't find any active deals for your selected location.
+              Switch to a nearby area — great offers might be just around the corner!
+            </p>
 
-                {/* Rating */}
-                {/* <div style={{
-                  marginTop: 8,
-                  fontSize: 14,
-                  color: '#f4b400'
-                }}>
-                  ★★★★★ <span style={{ color: '#777' }}>(97)</span>
-                </div> */}
+            {/* Suggestion pill */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "#ffffff",
+                border: "1px solid #bbf7d0",
+                borderRadius: 999,
+                padding: "10px 22px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#16a34a",
+                boxShadow: "0 2px 10px rgba(34,197,94,0.10)",
+              }}
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#16a34a"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              Try selecting a different location
+            </div>
+          </div>
+        )}
 
-                {/* Price */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: 16
-                }}>
-                  <div>
-                    <div style={{display:"flex"}}>
- <div style={{
-                      textDecoration: 'line-through',
-                      color: '#999',
-                      fontSize: 18
-                    }}>
-                      ₹{item.Price}
-                    </div>
-                      <div style={{
-                      color: 'green',
-                      fontSize: 18,
-                      fontWeight: 600,
-                      marginLeft:"0.5rem"
-                    }}>
-                      -{discountPercent}%
-                    </div>
-                    </div>
-                   
-                    <div style={{
-                      fontSize: 30,
-                      fontWeight: 700,
-                       color:'black'
-                    }}>
-                      ₹{item.Finalprice}
-                    </div>
-                  
-                  </div>
+        {/* ===================== OFFER CARDS ===================== */}
+        {sorted.length > 0 && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: 20,
+            }}
+          >
+            {sorted.map((item) => {
+              const now = new Date();
+              const startTime = item.OfferStartTime ? new Date(item.OfferStartTime) : null;
+              const endTime = item.OfferEndTime ? new Date(item.OfferEndTime) : null;
+              const isExpired = endTime ? now > endTime : false;
+              const isUpcoming = startTime ? now < startTime : false;
+              const showStartTime = isUpcoming && startTime;
+              const showEndTime = !isExpired && endTime;
 
-                  {/* <div style={{
-                    width: 44,
-                    height: 44,
-                    background: '#2563eb',
-                    color: '#fff',
-                    borderRadius: 12,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    fontSize: 18
-                  }}>
-                    🛒
-                  </div> */}
-                </div>
+              const discountPercent = Math.round(((item.Price - item.Finalprice) / item.Price) * 100);
 
-                {/* CTA */}
-                <button
+              // Card bg: green = active, pink = expired, amber = upcoming
+              const cardBg = isExpired ? "#fce4ec" : isUpcoming ? "#fffbeb" : "#c7f4c7";
+              const accentColor = isExpired ? "#9f1239" : isUpcoming ? "#d97706" : "#16a34a";
+              const timeBadgeBg = "#fff0f5";
+              const timeBadgeBorder = "#fbcfe8";
+              const timeBadgeText = "#be185d";
+
+              const getTimeRemaining = (date) => {
+                const diffMs = date - now;
+                if (diffMs <= 0) return null;
+                const totalMins = Math.floor(diffMs / 60000);
+                const days = Math.floor(totalMins / 1440);
+                const hours = Math.floor((totalMins % 1440) / 60);
+                const mins = totalMins % 60;
+                if (days > 0) return `${days}d ${hours}h left`;
+                if (hours > 0) return `${hours}h ${mins}m left`;
+                return `${mins}m left`;
+              };
+
+              const formatDateTime = (date) => {
+                return date.toLocaleString("en-IN", {
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                });
+              };
+
+              return (
+                <div
+                  key={item.Productid}
+                  onClick={() => !isExpired && handleUnlockOffer(item)}
                   style={{
-                    width: '100%',
-                    marginTop: 16,
-                    padding: '10px 0',
-                    borderRadius: 12,
-                    border: 'none',
-                    background: '#f1f5f9',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    color:'black'
+                    background: cardBg,
+                    borderRadius: 16,
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+                    padding: 16,
+                    cursor: isExpired ? "not-allowed" : "pointer",
+                    opacity: isExpired ? 0.82 : 1,
+                    position: "relative",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
-                  View Store
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                  {/* Expired overlay ribbon */}
+                  {isExpired && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 16,
+                        right: -28,
+                        background: "#9f1239",
+                        color: "#fff",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "4px 36px",
+                        transform: "rotate(45deg)",
+                        letterSpacing: 1,
+                        zIndex: 2,
+                        boxShadow: "0 2px 6px rgba(159,18,57,0.35)",
+                      }}
+                    >
+                      EXPIRED
+                    </div>
+                  )}
+
+                  {/* Product image */}
+                  <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#fff", borderRadius: 10, flexShrink: 0 }}>
+                    <img
+                      src={item.Imageurl}
+                      alt={item.ProductName}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", filter: isExpired ? "grayscale(40%)" : "none" }}
+                    />
+                  </div>
+
+                  <h3 style={{ fontSize: 16, fontWeight: 600, marginTop: 12, color: "black", margin: "12px 0 0" }}>
+                    {item.ProductName}
+                  </h3>
+
+                  <p style={{ fontSize: 14, color: "#666", marginTop: 4, marginBottom: 0 }}>
+                    {item.Brand} • {item.Type}
+                  </p>
+
+                  {/* Time badge — always reserves space so cards align */}
+                  <div style={{ marginTop: 12, minHeight: 38 }}>
+                    {(showStartTime || showEndTime || isExpired) && (
+                      <div
+                        style={{
+                          padding: "8px 10px",
+                          background: timeBadgeBg,
+                          border: `1px solid ${timeBadgeBorder}`,
+                          borderRadius: 10,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 5,
+                        }}
+                      >
+                        {showStartTime && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={timeBadgeText} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            <span style={{ fontSize: 11, color: timeBadgeText, fontWeight: 500 }}>
+                              <span style={{ fontWeight: 700 }}>Starts:</span> {formatDateTime(startTime)}
+                            </span>
+                          </div>
+                        )}
+
+                        {showEndTime && (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={timeBadgeText} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              <span style={{ fontSize: 11, color: timeBadgeText, fontWeight: 500 }}>
+                                <span style={{ fontWeight: 700 }}>Ends:</span> {formatDateTime(endTime)}
+                              </span>
+                            </div>
+                            {getTimeRemaining(endTime) && (
+                              <span style={{
+                                fontSize: 10, fontWeight: 700, color: "#fff",
+                                background: "#e91e8c", borderRadius: 999,
+                                padding: "2px 8px", whiteSpace: "nowrap",
+                              }}>
+                                {getTimeRemaining(endTime)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {isExpired && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#be185d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                            </svg>
+                            <span style={{ fontSize: 11, color: "#be185d", fontWeight: 700 }}>This offer has ended</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pricing — pushed to bottom via flex-grow spacer */}
+                  <div style={{ flex: 1 }} />
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ textDecoration: "line-through", color: "#999", fontSize: 16 }}>
+                        ₹{item.Price}
+                      </div>
+                      <div style={{ color: accentColor, fontSize: 15, fontWeight: 700 }}>
+                        -{discountPercent}%
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: isExpired ? "#9f1239" : "black" }}>
+                      ₹{item.Finalprice}
+                    </div>
+                  </div>
+
+                  <button
+                    disabled={isExpired}
+                    style={{
+                      width: "100%",
+                      marginTop: 14,
+                      padding: "10px 0",
+                      borderRadius: 12,
+                      border: "none",
+                      background: isExpired ? "#fce7f3" : "#fff0f5",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: isExpired ? "not-allowed" : "pointer",
+                      color: isExpired ? "#9f1239" : "#be185d",
+                    }}
+                  >
+                    {isExpired ? "Offer Expired" : "View Store"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* ===================== MODAL ===================== */}
       <UnlockOfferModal
         product={selectedProduct}
         couponCode={couponCode}
-        onClose={() => {
-          setSelectedProduct(null);
-          setCouponCode(null);
-        }}
+        onClose={() => { setSelectedProduct(null); setCouponCode(null); }}
       />
 
-
-    {showLogin && (
-  <LoginPopup
-    close={() => setShowLogin(false)}
-    onLoginSuccess={() => {
-      setShowLogin(false);
-
-      if (selectedProduct) {
-        dispatch(userTracking(selectedProduct?.ProductName));
-
-        dispatch(fetchProductOffer(selectedProduct.Storeid))
-          .unwrap()
-          .then((res) => {
-            setCouponCode(res?.data?.[0]);
-          })
-          .catch((err) => {
-            console.error('Offer API failed:', err);
-          });
-      }
-    }}
-  />
-)}
-
+      {showLogin && (
+        <LoginPopup
+          close={() => setShowLogin(false)}
+          onLoginSuccess={() => {
+            setShowLogin(false);
+            if (selectedProduct) {
+              dispatch(userTracking(selectedProduct?.ProductName));
+              dispatch(fetchProductOffer(selectedProduct.Storeid))
+                .unwrap()
+                .then((res) => { setCouponCode(res?.data?.[0]); })
+                .catch((err) => { console.error("Offer API failed:", err); });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
-

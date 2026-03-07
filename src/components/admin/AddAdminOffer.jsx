@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   postAdminOffers,
   getAdminOffers,
   updateAdminOffers,
+  getLocationList,
 } from "@/app/features/adminPanel/adminPanelSlice";
 
 import {
@@ -20,6 +21,7 @@ import {
   InputAdornment,
   Fade,
   Slide,
+  Autocomplete,
 } from "@mui/material";
 
 import CloseIcon from "@mui/icons-material/Close";
@@ -33,11 +35,13 @@ import CategoryIcon from "@mui/icons-material/Category";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
-// ─── Styled helpers using inline sx (no extra deps) ─────────────────────────
+// ─── Styled helpers ──────────────────────────────────────────────────────────
 
 const sectionLabel = {
   fontSize: "11px",
@@ -79,6 +83,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const locationData = useSelector((state) => state?.adminPanel?.locationData);
 
   const formik = useFormik({
     initialValues: {
@@ -91,6 +96,11 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       Brand: editData?.Brand || "",
       Type: editData?.Type || "",
       Imagefile: null,
+      Location: editData?.Location
+        ? locationData?.find((l) => l.LocationId === editData.Location) || null
+        : null,
+      OfferStartTime: editData?.OfferStartTime || "",
+      OfferEndTime: editData?.OfferEndTime || "",
     },
     enableReinitialize: true,
     validationSchema: Yup.object({
@@ -103,18 +113,22 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
         .required("Required")
         .min(0, "Cannot be negative")
         .max(100, "Cannot exceed 100%"),
-      Finalprice: Yup.number()
-        .required("Required")
-        .test("not-greater", "Final Price cannot be greater than Price", function (value) {
-          return value <= this.parent.Price;
+      Finalprice: Yup.number().required("Required").min(0, "Cannot be negative"),
+      Location: Yup.object().nullable().required("Location is required"),
+      OfferStartTime: Yup.string().required("Start date & time is required"),
+      OfferEndTime: Yup.string()
+        .nullable()
+        .optional()
+        .test("after-start", "End time must be after start time", function (value) {
+          const { OfferStartTime } = this.parent;
+          if (!value || !OfferStartTime) return true;
+          return new Date(value) > new Date(OfferStartTime);
         }),
     }),
     onSubmit: async (values, { resetForm }) => {
       setLoading(true);
       let base64Image = editData?.Imageurl || "";
 
-
-    
       const sendPayload = async (image) => {
         const payload = {
           Productid: editData?.Productid,
@@ -127,6 +141,10 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           Brand: values.Brand,
           Type: values.Type,
           Imageurl: image,
+          LocationId: values.Location?.LocationId || "",
+          LocationName: values.Location?.Name || "",
+          OfferStartTime: values.OfferStartTime,
+          OfferEndTime: values.OfferEndTime || null,
         };
 
         if (editData?.Productid) {
@@ -153,15 +171,10 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       }
     },
   });
-  console.log("editData" , editData)
+
   useEffect(() => {
-    const price = parseFloat(formik.values.Price);
-    const discount = parseFloat(formik.values.Discount);
-    if (!isNaN(price) && !isNaN(discount)) {
-      const final = price - (price * discount) / 100;
-      if (final >= 0) formik.setFieldValue("Finalprice", final.toFixed(2));
-    }
-  }, [formik.values.Discount, formik.values.Price]);
+    dispatch(getLocationList());
+  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -175,8 +188,6 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     formik.setFieldValue("Imagefile", null);
     setImagePreview(null);
   };
-
-  const discountPct = parseFloat(formik.values.Discount) || 0;
 
   return (
     <Dialog
@@ -229,7 +240,6 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          {/* Active toggle in header */}
           <Box
             sx={{
               display: "flex",
@@ -321,7 +331,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               />
             </Box>
 
-            {/* Row 2: Type | Offer Display Type */}
+            {/* Row 2: Type | Description */}
             <Box sx={{ display: "flex", gap: 2 }}>
               <TextField
                 label="Type"
@@ -342,7 +352,6 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               />
               <TextField
                 select
-                // label="Offer Display Type"
                 name="Description"
                 value={formik.values.Description}
                 onChange={formik.handleChange}
@@ -358,6 +367,77 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               </TextField>
             </Box>
 
+            {/* Row 3: Location Autocomplete */}
+            <Autocomplete
+              options={locationData || []}
+              getOptionLabel={(option) => option?.Name || ""}
+              isOptionEqualToValue={(option, value) => option?.LocationId === value?.LocationId}
+              value={formik.values.Location}
+              onChange={(_, newValue) => formik.setFieldValue("Location", newValue)}
+              onBlur={() => formik.setFieldTouched("Location", true)}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, px: 1.5 }}
+                >
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <LocationOnIcon sx={{ fontSize: 16, color: "#7c3aed" }} />
+                  </Box>
+                  <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#1e293b" }}>
+                    {option.Name}
+                  </Typography>
+                </Box>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Location"
+                  placeholder="Search location..."
+                  error={formik.touched.Location && Boolean(formik.errors.Location)}
+                  helperText={formik.touched.Location && formik.errors.Location}
+                  sx={fieldSx}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <LocationOnIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              PaperComponent={({ children, ...paperProps }) => (
+                <Box
+                  {...paperProps}
+                  sx={{
+                    borderRadius: "14px",
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+                    border: "1px solid #e2e8f0",
+                    overflow: "hidden",
+                    mt: 0.5,
+                    background: "#fff",
+                  }}
+                >
+                  {children}
+                </Box>
+              )}
+            />
+
             {/* ── Divider ── */}
             <Divider sx={{ borderColor: "#e2e8f0" }} />
             <Box sx={{ ...sectionLabel, mb: 0 }}>
@@ -365,7 +445,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               Pricing Details
             </Box>
 
-            {/* Row 3: Price | Discount */}
+            {/* Row 4: Price | Discount | Final Price */}
             <Box sx={{ display: "flex", gap: 2 }}>
               <TextField
                 label="Original Price"
@@ -373,6 +453,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                 type="number"
                 value={formik.values.Price}
                 onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
                 error={formik.touched.Price && Boolean(formik.errors.Price)}
                 helperText={formik.touched.Price && formik.errors.Price}
                 fullWidth
@@ -391,6 +472,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                 type="number"
                 value={formik.values.Discount}
                 onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
                 error={formik.touched.Discount && Boolean(formik.errors.Discount)}
                 helperText={formik.touched.Discount && formik.errors.Discount}
                 fullWidth
@@ -403,64 +485,179 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                   ),
                 }}
               />
-            </Box>
-
-            {/* Final Price — full width summary card */}
-            <Box>
-              <Box
-                sx={{
-                  background: discountPct > 0
-                    ? "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)"
-                    : "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-                  border: discountPct > 0 ? "2px solid #6ee7b7" : "2px dashed #e2e8f0",
-                  borderRadius: "14px",
-                  px: 3,
-                  py: 1.5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  transition: "all 0.3s",
+              <TextField
+                label="Final Price"
+                name="Finalprice"
+                type="number"
+                value={formik.values.Finalprice}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Finalprice && Boolean(formik.errors.Finalprice)}
+                helperText={formik.touched.Finalprice && formik.errors.Finalprice}
+                fullWidth
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Typography sx={{ color: "#94a3b8", fontSize: 14 }}>₹</Typography>
+                    </InputAdornment>
+                  ),
                 }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <Box>
-                    <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#64748b", letterSpacing: "0.08em", textTransform: "uppercase", mb: 0.3 }}>
-                      Final Customer Price
-                    </Typography>
-                    <Typography sx={{ fontSize: "22px", fontWeight: 800, color: discountPct > 0 ? "#059669" : "#94a3b8", lineHeight: 1 }}>
-                      {formik.values.Finalprice ? `₹${formik.values.Finalprice}` : "—"}
-                    </Typography>
-                  </Box>
-
-                  {discountPct > 0 && formik.values.Price && (
-                    <Box sx={{ borderLeft: "1px solid #a7f3d0", pl: 3 }}>
-                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#64748b", letterSpacing: "0.08em", textTransform: "uppercase", mb: 0.3 }}>
-                        Customer Saves
-                      </Typography>
-                      <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#dc2626" }}>
-                        ₹{(parseFloat(formik.values.Price) - parseFloat(formik.values.Finalprice)).toFixed(2)}
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-
-                {discountPct > 0 && (
-                  <Chip
-                    label={`${discountPct}% OFF`}
-                    sx={{
-                      background: "linear-gradient(135deg, #059669, #10b981)",
-                      color: "#fff",
-                      fontWeight: 800,
-                      fontSize: "13px",
-                      height: "32px",
-                      px: 0.5,
-                      borderRadius: "10px",
-                      boxShadow: "0 2px 8px rgba(5,150,105,0.35)",
-                    }}
-                  />
-                )}
-              </Box>
+              />
             </Box>
+
+            {/* ── Section: Offer Validity ── */}
+            <Divider sx={{ borderColor: "#e2e8f0" }} />
+            <Box sx={{ ...sectionLabel, mb: 0 }}>
+              <AccessTimeIcon sx={{ fontSize: 14 }} />
+              Offer Validity
+            </Box>
+
+            {/* Row 5: Start Time | End Time */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                label="Offer Start Date & Time"
+                name="OfferStartTime"
+                type="datetime-local"
+                value={formik.values.OfferStartTime}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.OfferStartTime && Boolean(formik.errors.OfferStartTime)}
+                helperText={formik.touched.OfferStartTime && formik.errors.OfferStartTime}
+                fullWidth
+                sx={fieldSx}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccessTimeIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                  inputProps: {
+                    style: { colorScheme: "light" },
+                  },
+                }}
+              />
+              <TextField
+                label="Offer End Date & Time (Optional)"
+                name="OfferEndTime"
+                type="datetime-local"
+                value={formik.values.OfferEndTime}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.OfferEndTime && Boolean(formik.errors.OfferEndTime)}
+                helperText={
+                  formik.touched.OfferEndTime && formik.errors.OfferEndTime
+                    ? formik.errors.OfferEndTime
+                    : "Leave empty for no expiry"
+                }
+                fullWidth
+                sx={fieldSx}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AccessTimeIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: formik.values.OfferEndTime ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => formik.setFieldValue("OfferEndTime", "")}
+                        sx={{ color: "#94a3b8", "&:hover": { color: "#ef4444" } }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                  inputProps: {
+                    min: formik.values.OfferStartTime || undefined,
+                    style: { colorScheme: "light" },
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Validity duration badge */}
+            {formik.values.OfferStartTime &&
+              formik.values.OfferEndTime &&
+              new Date(formik.values.OfferEndTime) > new Date(formik.values.OfferStartTime) && (
+                <Fade in>
+                  <Box
+                    sx={{
+                      background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+                      border: "2px solid #bfdbfe",
+                      borderRadius: "14px",
+                      px: 3,
+                      py: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "10px",
+                          background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <AccessTimeIcon sx={{ color: "#fff", fontSize: 18 }} />
+                      </Box>
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#64748b",
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Offer Duration
+                        </Typography>
+                        <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#1e40af" }}>
+                          {(() => {
+                            const diffMs =
+                              new Date(formik.values.OfferEndTime) -
+                              new Date(formik.values.OfferStartTime);
+                            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                            const diffHrs = Math.floor(
+                              (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+                            );
+                            const diffMins = Math.floor(
+                              (diffMs % (1000 * 60 * 60)) / (1000 * 60)
+                            );
+                            if (diffDays > 0) return `${diffDays}d ${diffHrs}h ${diffMins}m`;
+                            if (diffHrs > 0) return `${diffHrs}h ${diffMins}m`;
+                            return `${diffMins} minutes`;
+                          })()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Chip
+                      icon={
+                        <CheckCircleIcon sx={{ fontSize: "14px !important", color: "#fff !important" }} />
+                      }
+                      label="Valid Period"
+                      size="small"
+                      sx={{
+                        background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+                        color: "#fff",
+                        fontWeight: 600,
+                        fontSize: "11px",
+                        "& .MuiChip-icon": { color: "#fff" },
+                      }}
+                    />
+                  </Box>
+                </Fade>
+              )}
 
             {/* ── Image Upload ── */}
             <Divider sx={{ borderColor: "#e2e8f0" }} />
@@ -490,11 +687,13 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                       alt="preview"
                       style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }}
                     />
-                    {/* overlay actions */}
                     <Box
                       sx={{
                         position: "absolute",
-                        top: 0, left: 0, right: 0, bottom: 0,
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
                         background: "rgba(0,0,0,0)",
                         display: "flex",
                         alignItems: "center",
@@ -505,33 +704,47 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                         "&:hover .img-actions": { opacity: 1 },
                       }}
                     >
-                      <Box className="img-actions" sx={{ opacity: 0, transition: "opacity 0.2s", display: "flex", gap: 1 }}>
+                      <Box
+                        className="img-actions"
+                        sx={{ opacity: 0, transition: "opacity 0.2s", display: "flex", gap: 1 }}
+                      >
                         <Button
                           component="label"
                           variant="contained"
                           size="small"
-                          sx={{ borderRadius: "10px", background: "#6366f1", textTransform: "none", fontWeight: 600, fontSize: "12px" }}
+                          sx={{
+                            borderRadius: "10px",
+                            background: "#6366f1",
+                            textTransform: "none",
+                            fontWeight: 600,
+                            fontSize: "12px",
+                          }}
                         >
                           Change
                           <input type="file" hidden accept="image/*" onChange={handleImageChange} />
                         </Button>
                         <IconButton
                           onClick={removeImage}
-                          sx={{ background: "#ef4444", color: "#fff", borderRadius: "10px", "&:hover": { background: "#dc2626" } }}
+                          sx={{
+                            background: "#ef4444",
+                            color: "#fff",
+                            borderRadius: "10px",
+                            "&:hover": { background: "#dc2626" },
+                          }}
                           size="small"
                         >
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
                       </Box>
                     </Box>
-                    {/* badge */}
                     <Chip
                       icon={<CheckCircleIcon sx={{ fontSize: "14px !important" }} />}
                       label="Image uploaded"
                       size="small"
                       sx={{
                         position: "absolute",
-                        top: 10, right: 10,
+                        top: 10,
+                        right: 10,
                         background: "#059669",
                         color: "#fff",
                         fontWeight: 600,
@@ -639,5 +852,4 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     </Dialog>
   );
 };
-
 export default AddAdminOffers;
