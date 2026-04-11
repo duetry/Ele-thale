@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Alert, Button, Snackbar } from '@mui/material';
 import { Search, Tag, TrendingUp } from 'lucide-react';
 import { getCouponCodeList } from '@/app/features/adminPanel/adminPanelSlice';
-import { validateCoupon } from '@/app/features/auth/authSlice';
+import { selectUser, selectUserId, validateCoupon } from '@/app/features/auth/authSlice';
 
 const StatCard = ({ icon: Icon, label, value, trend }) => (
   <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
@@ -41,7 +41,11 @@ const CouponDetails = () => {
   });
 
   const adminState = useSelector((state) => state?.adminPanel);
-
+  const user = useSelector(selectUser);
+  const userId = useSelector(selectUserId);
+  console.log("adminState" , adminState)
+  console.log("user" , user)
+  console.log("userId" , userId)
   if (!adminState) {
     return (
       <Alert severity="error">
@@ -56,10 +60,11 @@ const CouponDetails = () => {
     couponError = null,
   } = adminState;
 
-  useEffect(() => {
-    setMounted(true);
-    dispatch(getCouponCodeList());
-  }, [dispatch]);
+useEffect(() => {
+  // if (user?.id) {
+    dispatch(getCouponCodeList({ shopOwnerId: userId }));
+  // }
+}, [dispatch, userId]);
 
   if (!mounted || couponLoading) {
     return (
@@ -70,7 +75,11 @@ const CouponDetails = () => {
   }
 
   if (couponError) {
-    return <Alert severity="error">{couponError}</Alert>;
+    return <Alert severity="error">
+  {typeof couponError === "string"
+    ? couponError
+    : couponError?.message || "Something went wrong"}
+</Alert>
   }
 
   const rows = Array.isArray(couponCodes)
@@ -108,7 +117,7 @@ const CouponDetails = () => {
     )
       .unwrap()
       .then(() => {
-        dispatch(getCouponCodeList());
+        dispatch(getCouponCodeList({ shopOwnerId: userId }));
         setToast({
           open: true,
           message: 'Coupon validated successfully 🎉',
@@ -117,10 +126,10 @@ const CouponDetails = () => {
       })
       .catch((err) => {
         setToast({
-          open: true,
-          message: err,
-          severity: 'error',
-        });
+    open: true,
+    message: typeof err === "string" ? err : err?.message || "Error occurred",
+    severity: 'error',
+  });
       });
   };
 

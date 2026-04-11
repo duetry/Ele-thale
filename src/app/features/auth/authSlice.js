@@ -41,7 +41,7 @@ const removeFromStorage = (key) => {
    ASYNC THUNKS
    ========================================================= */
 
-// 1️⃣ Login
+// LOGIN
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ phoneNumber, password }, { rejectWithValue }) => {
@@ -60,10 +60,11 @@ export const loginUser = createAsyncThunk(
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
-
+console.log("data" , data?.user_id)
       if (data.token) {
         setToStorage('authToken', data.token);
         setToStorage('user', JSON.stringify(data.user));
+        setToStorage('userId', data?.user_id); // ✅ ADDED ONLY
       }
 
       return data;
@@ -73,17 +74,18 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// 2️⃣ Logout
+// LOGOUT
 export const logoutUser = createAsyncThunk(
   'auth/logoutUser',
   async () => {
     removeFromStorage('authToken');
     removeFromStorage('user');
+    removeFromStorage('userId'); // ✅ ADDED ONLY
     return true;
   }
 );
 
-// 3️⃣ Verify Token
+// VERIFY TOKEN
 export const verifyToken = createAsyncThunk(
   'auth/verifyToken',
   async (_, { rejectWithValue }) => {
@@ -101,6 +103,7 @@ export const verifyToken = createAsyncThunk(
       if (!response.ok) {
         removeFromStorage('authToken');
         removeFromStorage('user');
+        removeFromStorage('userId'); // ✅ ADDED ONLY
         throw new Error('Token invalid');
       }
 
@@ -111,7 +114,7 @@ export const verifyToken = createAsyncThunk(
   }
 );
 
-// 4️⃣ Validate Coupon
+// VALIDATE COUPON
 export const validateCoupon = createAsyncThunk(
   'auth/validateCoupon',
   async ({ couponId, userId }, { rejectWithValue }) => {
@@ -145,6 +148,8 @@ export const validateCoupon = createAsyncThunk(
     }
   }
 );
+
+// SEND OTP
 export const sentOtp = createAsyncThunk(
   'auth/sentOtp',
   async ({ phoneNumber }, { rejectWithValue }) => {
@@ -153,24 +158,24 @@ export const sentOtp = createAsyncThunk(
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
-          phoneno: phoneNumber, // ✅ REQUIRED BY API
+          phoneno: phoneNumber,
         }),
       });
 
       const data = await response.json();
 
-
       if (!response.ok) {
         throw new Error(data.message || 'Failed to send OTP');
       }
 
-    
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Something went wrong');
     }
   }
 );
+
+// VERIFY OTP
 export const verifyOtp = createAsyncThunk(
   'auth/verifyOtp',
   async ({ phoneNumber, otp }, { rejectWithValue }) => {
@@ -185,10 +190,13 @@ export const verifyOtp = createAsyncThunk(
       });
 
       const data = await response.json();
-  if (data.token) {
+
+      if (data.token) {
         setToStorage('authToken', data.token);
         setToStorage('user', JSON.stringify(data.user));
+        setToStorage('userId', data.user_id); // ✅ ADDED ONLY
       }
+
       if (!response.ok) {
         throw new Error(data.message || 'Invalid OTP');
       }
@@ -200,9 +208,8 @@ export const verifyOtp = createAsyncThunk(
   }
 );
 
-
 /* =========================================================
-   INITIAL STATE (SSR SAFE)
+   INITIAL STATE
    ========================================================= */
 
 const initialState = {
@@ -210,6 +217,8 @@ const initialState = {
     const user = getFromStorage('user');
     return user ? JSON.parse(user) : null;
   })(),
+
+  userId: getFromStorage('userId'), // ✅ ADDED ONLY
 
   token: getFromStorage('authToken'),
   isAuthenticated: !!getFromStorage('authToken'),
@@ -222,7 +231,6 @@ const initialState = {
   logoutError: null,
   verifyError: null,
 
-  // Coupon
   couponLoading: false,
   couponSuccess: null,
   couponError: null,
@@ -253,32 +261,32 @@ const authSlice = createSlice({
     },
     clearAuth: (state) => {
       state.user = null;
+      state.userId = null; // ✅ ADDED ONLY
       state.token = null;
       state.isAuthenticated = false;
       removeFromStorage('authToken');
       removeFromStorage('user');
+      removeFromStorage('userId'); // ✅ ADDED ONLY
     },
   },
   extraReducers: (builder) => {
     builder
-      // LOGIN
       .addCase(loginUser.pending, (state) => {
         state.loginLoading = true;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loginLoading = false;
-        state.user = action.payload || null;
+        state.user = action.payload || null; // ❗ UNCHANGED
+        state.userId = action.payload?.user?.id || null; // ✅ ADDED
         state.token = action.payload.token || null;
         state.isAuthenticated = true;
         state.showLoginModal = false;
       })
       .addCase(loginUser.rejected, (state, action) => {
-
         state.loginLoading = false;
         state.loginError = action.payload;
       })
 
-      // VALIDATE COUPON
       .addCase(validateCoupon.pending, (state) => {
         state.couponLoading = true;
         state.couponError = null;
@@ -292,7 +300,7 @@ const authSlice = createSlice({
         state.couponLoading = false;
         state.couponError = action.payload;
       })
-      // VALIDATE COUPON
+
       .addCase(sentOtp.pending, (state) => {
         state.couponLoading = true;
         state.couponError = null;
@@ -306,6 +314,7 @@ const authSlice = createSlice({
         state.couponLoading = false;
         state.couponError = action.payload;
       })
+
       .addCase(verifyOtp.pending, (state) => {
         state.couponLoading = true;
         state.couponError = null;
@@ -313,7 +322,8 @@ const authSlice = createSlice({
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.loginLoading = false;
-        state.user = action.payload || null;
+        state.user = action.payload || null; // ❗ UNCHANGED
+        state.userId = action.payload?.user?.id || null; // ✅ ADDED
         state.token = action.payload.token || null;
         state.isAuthenticated = true;
         state.showLoginModal = false;
@@ -326,7 +336,7 @@ const authSlice = createSlice({
 });
 
 /* =========================================================
-   EXPORTS
+   EXPORTS (UNCHANGED + ONE ADDITION)
    ========================================================= */
 
 export const {
@@ -339,6 +349,7 @@ export const {
 
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectUser = (state) => state.auth.user;
+export const selectUserId = (state) => state.auth.userId; // ✅ NEW
 export const selectToken = (state) => state.auth.token;
 
 export const selectLoginLoading = (state) => state.auth.loginLoading;

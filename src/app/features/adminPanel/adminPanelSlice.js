@@ -86,31 +86,23 @@ export const getSearchLog = createAsyncThunk(
 
 // 3️⃣ GET Coupon Code List (with or without phoneno)
 export const getCouponCodeList = createAsyncThunk(
-  "admin/getCouponCodeList",
-  async (phoneno = null, { rejectWithValue }) => {
+  'admin/getCouponCodeList',
+  async ({ shopOwnerId }, { rejectWithValue }) => {
     try {
-      const token = getFromStorage("authToken");
-      let url = `${API_BASE}/GET_CouponCode_List`;
-      if (phoneno) {
-        url += `?phoneno=${phoneno}`;
-      }
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: getHeaders(token),
+      const response = await fetch(`${API_BASE}/GET_CouponCode_List`, {
+        method: 'POST', // or GET based on API
+        headers: getHeaders(),
+        body: JSON.stringify({
+          shopOwnerId,
+        }),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch coupon codes");
-      }
-
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || "Something went wrong");
+      return rejectWithValue(error.message);
     }
-  },
+  }
 );
 export const getLocationList = createAsyncThunk(
   "admin/getLocationList",
