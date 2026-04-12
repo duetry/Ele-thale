@@ -274,14 +274,14 @@ const authSlice = createSlice({
       .addCase(loginUser.pending, (state) => {
         state.loginLoading = true;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
-        state.loginLoading = false;
-        state.user = action.payload || null; // ❗ UNCHANGED
-        state.userId = action.payload?.user?.id || null; // ✅ ADDED
-        state.token = action.payload.token || null;
-        state.isAuthenticated = true;
-        state.showLoginModal = false;
-      })
+   .addCase(loginUser.fulfilled, (state, action) => {
+  state.loginLoading = false;
+  state.user = action.payload || null; // unchanged
+  state.userId = action.payload?.user_id || null; // ✅ FIXED
+  state.token = action.payload.token || null;
+  state.isAuthenticated = true;
+  state.showLoginModal = false;
+})
       .addCase(loginUser.rejected, (state, action) => {
         state.loginLoading = false;
         state.loginError = action.payload;
@@ -321,13 +321,13 @@ const authSlice = createSlice({
         state.couponSuccess = null;
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
-        state.loginLoading = false;
-        state.user = action.payload || null; // ❗ UNCHANGED
-        state.userId = action.payload?.user?.id || null; // ✅ ADDED
-        state.token = action.payload.token || null;
-        state.isAuthenticated = true;
-        state.showLoginModal = false;
-      })
+  state.loginLoading = false;
+  state.user = action.payload || null; // unchanged
+  state.userId = action.payload?.user_id || null; // ✅ FIXED
+  state.token = action.payload.token || null;
+  state.isAuthenticated = true;
+  state.showLoginModal = false;
+})
       .addCase(verifyOtp.rejected, (state, action) => {
         state.couponLoading = false;
         state.couponError = action.payload;

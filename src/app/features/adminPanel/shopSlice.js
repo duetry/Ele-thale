@@ -61,7 +61,7 @@ export const createShop = createAsyncThunk(
     try {
       const token = getFromStorage("authToken");
 
-      const response = await fetch(`${API_BASE}/Shop`, {
+      const response = await fetch(`${API_BASE}/GET_Stores`, {
         method: "POST",
         headers: getHeaders(token),
         body: JSON.stringify(payload),
@@ -87,7 +87,7 @@ export const updateShop = createAsyncThunk(
     try {
       const token = getFromStorage("authToken");
 
-      const response = await fetch(`${API_BASE}/Shop`, {
+      const response = await fetch(`${API_BASE}/GET_Stores`, {
         method: "PUT",
         headers: getHeaders(token),
         body: JSON.stringify(payload),
@@ -113,7 +113,7 @@ export const deleteShop = createAsyncThunk(
     try {
       const token = getFromStorage("authToken");
 
-      const response = await fetch(`${API_BASE}/Shop`, {
+      const response = await fetch(`${API_BASE}/GET_Stores`, {
         method: "DELETE",
         headers: getHeaders(token),
         body: JSON.stringify({

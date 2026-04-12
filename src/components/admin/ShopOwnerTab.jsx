@@ -113,7 +113,7 @@ const ShopOwnerTab = () => {
             setShowAdd(true);
           }}
         >
-          New Shop
+          Shop Owner
         </Button>
       </Box>
 

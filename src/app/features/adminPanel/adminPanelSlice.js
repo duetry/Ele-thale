@@ -89,21 +89,51 @@ export const getCouponCodeList = createAsyncThunk(
   'admin/getCouponCodeList',
   async ({ shopOwnerId }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_BASE}/GET_CouponCode_List`, {
-        method: 'POST', // or GET based on API
-        headers: getHeaders(),
-        body: JSON.stringify({
-          shopOwnerId,
-        }),
-      });
+      const token = getFromStorage("authToken");
+
+      const response = await fetch(
+        `${API_BASE}/GET_CouponCode_List?shopOwnerId=${shopOwnerId}`, // ✅ query param
+        {
+          method: 'GET', // ✅ changed to GET
+          headers: getHeaders(token), // unchanged
+        }
+      );
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch coupon codes");
+      }
+
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
+export const unlockCoupon = createAsyncThunk(
+  'admin/unlockCoupon',
+  async ({ productId }, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage('authToken');
+      const response = await fetch(
+        `${API_BASE}/GET_CouponCode?productId=${productId}`,
+        {
+          method: 'GET',
+          headers: getHeaders(token),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to unlock coupon');
+      }
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
 export const getLocationList = createAsyncThunk(
   "admin/getLocationList",
   async (phoneno = null, { rejectWithValue }) => {
@@ -367,6 +397,11 @@ const initialState = {
   postSearchLoading: false,
   postSearchError: null,
   postSearchSuccess: false,
+
+  // Coupon
+unlockedCoupon: null,
+unlockLoading: false,
+unlockError: null,
 };
 
 /* =========================================================
@@ -552,7 +587,22 @@ const adminPanelSlice = createSlice({
       .addCase(getUserTracking.rejected, (state, action) => {
         state.userTrackingLoading = false;
         state.userTrackingError = action.payload;
-      });
+      })
+
+
+      .addCase(unlockCoupon.pending, (state) => {
+  state.unlockLoading = true;
+  state.unlockError = null;
+  state.unlockedCoupon = null;
+})
+.addCase(unlockCoupon.fulfilled, (state, action) => {
+  state.unlockLoading = false;
+  state.unlockedCoupon = action.payload?.data;
+})
+.addCase(unlockCoupon.rejected, (state, action) => {
+  state.unlockLoading = false;
+  state.unlockError = action.payload;
+})
   },
 });
 
@@ -603,4 +653,10 @@ export const selectPostSearchError = (state) =>
 export const selectPostSearchSuccess = (state) =>
   state.adminPanel.postSearchSuccess;
 export const selectSelectedLocation = (state) => state.adminPanel.selectedLocation;
+
+
+export const selectUnlockedCoupon = (state) => state.adminPanel.unlockedCoupon;
+export const selectUnlockLoading = (state) => state.adminPanel.unlockLoading;
+export const selectUnlockError = (state) => state.adminPanel.unlockError;
+
 export default adminPanelSlice.reducer;

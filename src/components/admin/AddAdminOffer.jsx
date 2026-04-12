@@ -40,6 +40,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { getShops, selectShops } from "@/app/features/adminPanel/shopSlice";
 
 // ─── Styled helpers ──────────────────────────────────────────────────────────
 
@@ -84,6 +85,13 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const locationData = useSelector((state) => state?.adminPanel?.locationData);
+  const shops = useSelector(selectShops);
+
+  // ── Fetch lookup lists on mount ─────────────────────────────────────────
+  useEffect(() => {
+    dispatch(getLocationList());
+    dispatch(getShops());
+  }, []);
 
   const formik = useFormik({
     initialValues: {
@@ -96,9 +104,14 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       Brand: editData?.Brand || "",
       Type: editData?.Type || "",
       Imagefile: null,
-      Location: editData?.Location
-        ? locationData?.find((l) => l.LocationId === editData.Location) || null
-        : null,
+      // ── Store, Location, Power are patched asynchronously below ──
+      // initialValues sets scalar/primitive defaults only; the object
+      // lookups require shops/locationData to have loaded first, which
+      // happens after this formik initialisation. The useEffect below
+      // handles that once the Redux lists are populated.
+      Store: null,
+      Location: null,
+      Power: editData?.Power ?? "",
       OfferStartTime: editData?.OfferStartTime || "",
       OfferEndTime: editData?.OfferEndTime || "",
     },
@@ -115,6 +128,11 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
         .max(100, "Cannot exceed 100%"),
       Finalprice: Yup.number().required("Required").min(0, "Cannot be negative"),
       Location: Yup.object().nullable().required("Location is required"),
+      Store: Yup.object().nullable().required("Store is required"),
+      Power: Yup.number()
+        .required("Required")
+        .min(0, "Min 0")
+        .max(10, "Max 10"),
       OfferStartTime: Yup.string().required("Start date & time is required"),
       OfferEndTime: Yup.string()
         .nullable()
@@ -145,6 +163,8 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           LocationName: values.Location?.Name || "",
           OfferStartTime: values.OfferStartTime,
           OfferEndTime: values.OfferEndTime || null,
+          Power: values.Power ?? null,
+          Storeid: values.Store?.Storeid || "",
         };
 
         if (editData?.Productid) {
@@ -172,9 +192,44 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     },
   });
 
+  // ── KEY FIX ─────────────────────────────────────────────────────────────
+  // Root cause: enableReinitialize only re-runs when `editData` changes.
+  // By the time shops/locationData resolve from the API the form is already
+  // mounted and won't reinitialise again — so the find() calls in
+  // initialValues always returned null on the first render.
+  //
+  // Solution: watch shops, locationData, and editData independently and
+  // patch only the three async-dependent fields via setFieldValue.
+  // The guard conditions prevent infinite loops and unnecessary re-renders.
   useEffect(() => {
-    dispatch(getLocationList());
-  }, []);
+    if (!editData) return;
+
+    // Store
+    if (shops?.length && editData.Storeid) {
+      const matched = shops.find((s) => s.Storeid === editData.Storeid) || null;
+      if (matched && formik.values.Store?.Storeid !== matched.Storeid) {
+        formik.setFieldValue("Store", matched);
+      }
+    }
+
+    // Location — API returns "Locationid" (lowercase i), not "Location"
+    if (locationData?.length && editData.Locationid) {
+      const matched = locationData.find((l) => l.LocationId === editData.Locationid) || null;
+      if (matched && formik.values.Location?.LocationId !== matched.LocationId) {
+        formik.setFieldValue("Location", matched);
+      }
+    }
+
+    // Power — only patch if formik still holds the blank default
+    if (
+      editData.Power !== undefined &&
+      editData.Power !== null &&
+      formik.values.Power === ""
+    ) {
+      formik.setFieldValue("Power", editData.Power);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shops, locationData, editData]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -331,7 +386,102 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               />
             </Box>
 
-            {/* Row 2: Type | Description */}
+            {/* Row 2: Shop Autocomplete | Power */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Autocomplete
+                options={shops || []}
+                getOptionLabel={(option) => option?.Storename || ""}
+                isOptionEqualToValue={(option, value) => option?.Storeid === value?.Storeid}
+                value={formik.values.Store}
+                onChange={(_, newValue) => formik.setFieldValue("Store", newValue)}
+                onBlur={() => formik.setFieldTouched("Store", true)}
+                fullWidth
+                renderOption={(props, option) => (
+                  <Box
+                    component="li"
+                    {...props}
+                    sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, px: 1.5 }}
+                  >
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "8px",
+                        background: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <StorefrontIcon sx={{ fontSize: 16, color: "#7c3aed" }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#1e293b" }}>
+                        {option.Storename}
+                      </Typography>
+                      {option.Storeid && (
+                        <Typography sx={{ fontSize: "11px", color: "#94a3b8" }}>
+                          ID: {option.Storeid}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Select Shop"
+                    placeholder="Search shop..."
+                    error={formik.touched.Store && Boolean(formik.errors.Store)}
+                    helperText={formik.touched.Store && formik.errors.Store}
+                    sx={fieldSx}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          <InputAdornment position="start">
+                            <StorefrontIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                          </InputAdornment>
+                          {params.InputProps.startAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                PaperComponent={({ children, ...paperProps }) => (
+                  <Box
+                    {...paperProps}
+                    sx={{
+                      borderRadius: "14px",
+                      boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+                      border: "1px solid #e2e8f0",
+                      overflow: "hidden",
+                      mt: 0.5,
+                      background: "#fff",
+                    }}
+                  >
+                    {children}
+                  </Box>
+                )}
+              />
+
+              <TextField
+                label="Power (0 – 10)"
+                name="Power"
+                type="number"
+                value={formik.values.Power}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Power && Boolean(formik.errors.Power)}
+                helperText={formik.touched.Power && formik.errors.Power}
+                fullWidth
+                sx={fieldSx}
+                inputProps={{ min: 0, max: 10 }}
+              />
+            </Box>
+
+            {/* Row 3: Type | Description */}
             <Box sx={{ display: "flex", gap: 2 }}>
               <TextField
                 label="Type"
@@ -367,7 +517,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               </TextField>
             </Box>
 
-            {/* Row 3: Location Autocomplete */}
+            {/* Row 4: Location Autocomplete */}
             <Autocomplete
               options={locationData || []}
               getOptionLabel={(option) => option?.Name || ""}
@@ -445,7 +595,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               Pricing Details
             </Box>
 
-            {/* Row 4: Price | Discount | Final Price */}
+            {/* Row 5: Price | Discount | Final Price */}
             <Box sx={{ display: "flex", gap: 2 }}>
               <TextField
                 label="Original Price"
@@ -513,7 +663,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
               Offer Validity
             </Box>
 
-            {/* Row 5: Start Time | End Time */}
+            {/* Row 6: Start Time | End Time */}
             <Box sx={{ display: "flex", gap: 2 }}>
               <TextField
                 label="Offer Start Date & Time"
@@ -533,9 +683,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                       <AccessTimeIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
                     </InputAdornment>
                   ),
-                  inputProps: {
-                    style: { colorScheme: "light" },
-                  },
+                  inputProps: { style: { colorScheme: "light" } },
                 }}
               />
               <TextField
@@ -643,7 +791,9 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                     </Box>
                     <Chip
                       icon={
-                        <CheckCircleIcon sx={{ fontSize: "14px !important", color: "#fff !important" }} />
+                        <CheckCircleIcon
+                          sx={{ fontSize: "14px !important", color: "#fff !important" }}
+                        />
                       }
                       label="Valid Period"
                       size="small"
@@ -852,4 +1002,5 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     </Dialog>
   );
 };
+
 export default AddAdminOffers;

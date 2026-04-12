@@ -305,12 +305,15 @@ export default function Navbar() {
   /* =========================
      NAV CONFIG
      ========================= */
-  const navItems = [
-    { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
-    ...(mounted && user?.usertype === 'admin'
-      ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
-      : []),
-  ];
+
+
+     console.log("user?.usertype" , user?.usertype)
+const navItems = [
+  { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
+  ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+    ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
+    : []),
+];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-md border-b border-orange-500/20 shadow-2xl">
