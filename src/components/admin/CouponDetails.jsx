@@ -61,18 +61,18 @@ const CouponDetails = () => {
   } = adminState;
 
 useEffect(() => {
-  // if (user?.id) {
+  if (userId) {
     dispatch(getCouponCodeList({ shopOwnerId: userId }));
-  // }
+  }
 }, [dispatch, userId]);
 
-  if (!mounted || couponLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // if (!mounted || couponLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center p-12">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   );
+  // }
 
   if (couponError) {
     return <Alert severity="error">
@@ -133,6 +133,9 @@ useEffect(() => {
       });
   };
 
+useEffect(() => {
+  setMounted(true);
+}, []);
   return (
     <div className="space-y-6">
       {/* Header */}

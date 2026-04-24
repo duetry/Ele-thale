@@ -113,13 +113,13 @@ export const deleteShop = createAsyncThunk(
     try {
       const token = getFromStorage("authToken");
 
-      const response = await fetch(`${API_BASE}/GET_Stores`, {
-        method: "DELETE",
-        headers: getHeaders(token),
-        body: JSON.stringify({
-          shopId: shopId,
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE}/GET_Stores?storeId=${shopId}`, // ✅ query param
+        {
+          method: "DELETE",
+          headers: getHeaders(token),
+        }
+      );
 
       const data = await response.json();
 
