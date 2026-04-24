@@ -501,7 +501,6 @@
 //   );
 // }
 
-
 // "use client";
 
 // import React, { useEffect, useState } from "react";
@@ -630,11 +629,11 @@
 
 //         {/* ===================== BANNER CAROUSEL ===================== */}
 //         {bestOfferBanner?.length > 0 && (
-//           <div 
-//             style={{ 
-//               position: "relative", 
-//               overflow: "hidden", 
-//               borderRadius: 24, 
+//           <div
+//             style={{
+//               position: "relative",
+//               overflow: "hidden",
+//               borderRadius: 24,
 //               marginBottom: 40,
 //               cursor: "pointer"
 //             }}
@@ -664,10 +663,10 @@
 //                 };
 
 //                 return (
-//                   <div 
-//                     key={index} 
-//                     style={{ 
-//                       minWidth: "100%", 
+//                   <div
+//                     key={index}
+//                     style={{
+//                       minWidth: "100%",
 //                       height: 380,
 //                       position: "relative"
 //                     }}
@@ -676,9 +675,9 @@
 //                     <img
 //                       src={banner.Imageurl || banner.image}
 //                       alt={banner.ProductName || banner.title || "Best Offer Banner"}
-//                       style={{ 
-//                         width: "100%", 
-//                         height: "100%", 
+//                       style={{
+//                         width: "100%",
+//                         height: "100%",
 //                         objectFit: "cover",
 //                         pointerEvents: "none",
 //                         transition: "transform 0.3s ease",
@@ -725,15 +724,15 @@
 //                 );
 //               })}
 //             </div>
-            
+
 //             {/* Navigation Dots */}
 //             <div
 //               style={{
-//                 position: "absolute", 
-//                 bottom: 16, 
+//                 position: "absolute",
+//                 bottom: 16,
 //                 left: "50%",
-//                 transform: "translateX(-50%)", 
-//                 display: "flex", 
+//                 transform: "translateX(-50%)",
+//                 display: "flex",
 //                 gap: 8,
 //                 zIndex: 10,
 //               }}
@@ -746,9 +745,9 @@
 //                     setCurrentBanner(i);
 //                   }}
 //                   style={{
-//                     width: 10, 
-//                     height: 10, 
-//                     borderRadius: "50%", 
+//                     width: 10,
+//                     height: 10,
+//                     borderRadius: "50%",
 //                     cursor: "pointer",
 //                     background: currentBanner === i ? "#fff" : "rgba(255,255,255,0.6)",
 //                     border: "2px solid rgba(255,255,255,0.8)",
@@ -1135,7 +1134,6 @@
 //     </div>
 //   );
 // }
-
 
 // "use client";
 
@@ -1803,7 +1801,11 @@ export default function BillboardBanners() {
   /* ------------------ FETCH WHEN LOCATION CHANGES ------------------ */
   useEffect(() => {
     if (!selectedLocation?.LocationId) return;
-    dispatch(fetchBestOfferBillboards({ LocationId: String(selectedLocation.LocationId) }));
+    dispatch(
+      fetchBestOfferBillboards({
+        LocationId: String(selectedLocation.LocationId),
+      }),
+    );
   }, [selectedLocation, dispatch]);
 
   /* ------------------ BANNER AUTO SLIDE ------------------ */
@@ -1812,7 +1814,7 @@ export default function BillboardBanners() {
 
     const interval = setInterval(() => {
       setCurrentBanner((prev) =>
-        prev === bestOfferBanner.length - 1 ? 0 : prev + 1
+        prev === bestOfferBanner.length - 1 ? 0 : prev + 1,
       );
     }, 4000);
 
@@ -1849,7 +1851,12 @@ export default function BillboardBanners() {
       <div style={{ width: "100%", marginTop: 60, padding: 20 }}>
         <div
           className="skeleton"
-          style={{ width: "100%", height: 380, borderRadius: 24, marginBottom: 40 }}
+          style={{
+            width: "100%",
+            height: 380,
+            borderRadius: 24,
+            marginBottom: 40,
+          }}
         />
         <div
           style={{
@@ -1859,11 +1866,20 @@ export default function BillboardBanners() {
           }}
         >
           {[...Array(8)].map((_, i) => (
-            <div key={i} style={{ padding: 16, borderRadius: 16, background: "#fff" }}>
+            <div
+              key={i}
+              style={{ padding: 16, borderRadius: 16, background: "#fff" }}
+            >
               <div className="skeleton" style={{ height: 180 }} />
               <div className="skeleton" style={{ height: 20, marginTop: 12 }} />
-              <div className="skeleton" style={{ height: 16, marginTop: 8, width: "70%" }} />
-              <div className="skeleton" style={{ height: 30, marginTop: 16, width: "40%" }} />
+              <div
+                className="skeleton"
+                style={{ height: 16, marginTop: 8, width: "70%" }}
+              />
+              <div
+                className="skeleton"
+                style={{ height: 30, marginTop: 16, width: "40%" }}
+              />
               <div className="skeleton" style={{ height: 40, marginTop: 16 }} />
             </div>
           ))}
@@ -1893,7 +1909,6 @@ export default function BillboardBanners() {
   return (
     <div style={{ width: "100%", background: "#fff", marginTop: 60 }}>
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: 20 }}>
-
         {/* ===================== STORE INFO BANNER ===================== */}
         {locationData && (
           <div
@@ -1945,8 +1960,22 @@ export default function BillboardBanners() {
 
             {/* Store Details */}
             <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: "#14532d", margin: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: "#14532d",
+                    margin: 0,
+                  }}
+                >
                   {storeName}
                 </h2>
 
@@ -1984,9 +2013,25 @@ export default function BillboardBanners() {
                 )}
               </div>
 
-              <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+              <div
+                style={{
+                  marginTop: 6,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 3,
+                }}
+              >
                 {storeAddress && (
-                  <p style={{ fontSize: 13, color: "#4b7c5e", margin: 0, display: "flex", alignItems: "flex-start", gap: 5 }}>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "#4b7c5e",
+                      margin: 0,
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 5,
+                    }}
+                  >
                     <span>📍</span> {storeAddress}
                   </p>
                 )}
@@ -2033,8 +2078,10 @@ export default function BillboardBanners() {
               {bestOfferBanner.map((banner, index) => {
                 const bannerProduct = {
                   Productid: banner.Productid || banner.id || `banner-${index}`,
-                  ProductName: banner.ProductName || banner.title || "Special Offer",
-                  Storeid: banner.Storeid || banner.storeId || locationData?.Storeid,
+                  ProductName:
+                    banner.ProductName || banner.title || "Special Offer",
+                  Storeid:
+                    banner.Storeid || banner.storeId || locationData?.Storeid,
                   Imageurl: banner.Imageurl || banner.image,
                   Price: banner.Price,
                   Finalprice: banner.Finalprice,
@@ -2047,12 +2094,20 @@ export default function BillboardBanners() {
                 return (
                   <div
                     key={index}
-                    style={{ minWidth: "100%", height: 380, position: "relative" }}
+                    style={{
+                      minWidth: "100%",
+                      height: 380,
+                      position: "relative",
+                    }}
                     onClick={() => handleUnlockOffer(bannerProduct)}
                   >
                     <img
                       src={banner.Imageurl || banner.image}
-                      alt={banner.ProductName || banner.title || "Best Offer Banner"}
+                      alt={
+                        banner.ProductName ||
+                        banner.title ||
+                        "Best Offer Banner"
+                      }
                       style={{
                         width: "100%",
                         height: "100%",
@@ -2139,13 +2194,15 @@ export default function BillboardBanners() {
                   }}
                   onMouseEnter={(e) => {
                     if (currentBanner !== i) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.9)";
+                      e.currentTarget.style.background =
+                        "rgba(255,255,255,0.9)";
                       e.currentTarget.style.transform = "scale(1.15)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (currentBanner !== i) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.6)";
+                      e.currentTarget.style.background =
+                        "rgba(255,255,255,0.6)";
                       e.currentTarget.style.transform = "scale(1)";
                     }
                   }}
@@ -2220,8 +2277,9 @@ export default function BillboardBanners() {
                 margin: "0 0 28px",
               }}
             >
-              We couldn't find any active deals for your selected location. Switch
-              to a nearby area — great offers might be just around the corner!
+              We couldn't find any active deals for your selected location.
+              Switch to a nearby area — great offers might be just around the
+              corner!
             </p>
             <div
               style={{
@@ -2283,19 +2341,19 @@ export default function BillboardBanners() {
               const showEndTime = isActive && endTime;
 
               const discountPercent = Math.round(
-                ((item.Price - item.Finalprice) / item.Price) * 100
+                ((item.Price - item.Finalprice) / item.Price) * 100,
               );
 
               const cardBg = isExpired
                 ? "#fce4ec"
                 : isUpcoming
-                ? "#fffbeb"
-                : "#c7f4c7";
+                  ? "#fffbeb"
+                  : "#c7f4c7";
               const accentColor = isExpired
                 ? "#9f1239"
                 : isUpcoming
-                ? "#d97706"
-                : "#16a34a";
+                  ? "#d97706"
+                  : "#16a34a";
               const timeBadgeBg = "#fff0f5";
               const timeBadgeBorder = "#fbcfe8";
               const timeBadgeText = "#be185d";
@@ -2452,7 +2510,15 @@ export default function BillboardBanners() {
 
                   {/* Store name from locationData */}
                   {storeName && (
-                    <p style={{ fontSize: 12, color: "#16a34a", marginTop: 2, fontWeight: 600, marginBottom: 0 }}>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "#16a34a",
+                        marginTop: 2,
+                        fontWeight: 600,
+                        marginBottom: 0,
+                      }}
+                    >
                       🏪 {storeName}
                     </p>
                   )}
@@ -2665,8 +2731,8 @@ export default function BillboardBanners() {
                     {isExpired
                       ? "Offer Expired"
                       : isUpcoming
-                      ? "Coming Soon"
-                      : "View Store"}
+                        ? "Coming Soon"
+                        : "View Store"}
                   </button>
                 </div>
               );
