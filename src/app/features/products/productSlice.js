@@ -310,7 +310,7 @@ const productSlice = createSlice({
 })
 .addCase(fetchProductOffer.fulfilled, (state, action) => {
   state.productOfferLoading = false;
-  state.productOffer = action.payload.data; // adjust if API structure differs
+  state.productOffer = action.payload.data[0] ?? []; // adjust if API structure differs
 })
 .addCase(fetchProductOffer.rejected, (state, action) => {
   state.productOfferLoading = false;

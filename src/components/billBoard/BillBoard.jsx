@@ -1780,7 +1780,7 @@ export default function BillboardBanners() {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const selectedLocation = useSelector(setSelectedLocation);
 
-  const locationData = useSelector((state) => state?.products?.productOffer[0]);
+  const locationData = useSelector((state) => state?.products?.productOffer);
 
   // Derived store info from locationData
   const storeName = locationData?.Storename || "";
