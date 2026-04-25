@@ -325,7 +325,7 @@ const navItems = [
             <span className="text-white font-bold text-lg">Offer go down</span>
 
             {/* Location Dropdown */}
-            {mounted && (
+           {mounted && !(user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER') && (
               <div className="relative">
                 <button
                   onClick={() => setLocationDropdownOpen((prev) => !prev)}

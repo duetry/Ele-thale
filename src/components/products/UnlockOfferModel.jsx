@@ -1153,7 +1153,11 @@ export default function UnlockOfferModal({ product, couponCode, onClose }) {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', background: 'white', borderRadius: '10px', fontSize: '14px', color: '#4B5563' }}>
                 <Clock size={18} color="#F59E0B" />
-                <span>9:00 AM - 9:00 PM</span>
+               <span>
+  {couponCode?.StoreTime ||
+    `${couponCode?.StartTime} - ${couponCode?.EndTime}` ||
+    'N/A'}
+</span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', background: 'white', borderRadius: '10px', fontSize: '14px', color: '#4B5563' }}>
@@ -1168,9 +1172,7 @@ export default function UnlockOfferModal({ product, couponCode, onClose }) {
                 📍 Location
               </div>
               <div style={{ background: 'white', padding: '14px', borderRadius: '10px', fontSize: '14px', color: '#4B5563', lineHeight: '1.6', marginBottom: '12px' }}>
-                {couponCode?.Storeaddress || (
-                  <>JC69+477, Veerachi S St, Manapparai,<br />Tamil Nadu 621307</>
-                )}
+              {couponCode?.Storeaddress || 'Address not available'}
               </div>
 
               {/* ① MAP BUTTON — always visible */}
