@@ -157,6 +157,7 @@ const shopSlice = createSlice({
       state.error = null;
       state.success = false;
     },
+    resetShops: () => initialState,
   },
   extraReducers: (builder) => {
     builder
@@ -203,7 +204,7 @@ const shopSlice = createSlice({
    EXPORTS
    ========================================================= */
 
-export const { clearShopStatus } = shopSlice.actions;
+export const { clearShopStatus, resetShops } = shopSlice.actions;
 
 export const selectShops = (state) => state.shop.shops;
 export const selectShopLoading = (state) => state.shop.loading;

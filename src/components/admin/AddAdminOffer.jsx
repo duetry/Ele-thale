@@ -100,7 +100,6 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       Isactive: editData?.Isactive === "true" ?? true,
       ProductName: editData?.ProductName || "",
       Price: editData?.Price || "",
-      Discount: editData?.Discount || "",
       Brand: editData?.Brand || "",
       Type: editData?.Type || "",
       Imagefile: null,
@@ -114,18 +113,15 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       Power: editData?.Power ?? "",
       OfferStartTime: editData?.OfferStartTime || "",
       OfferEndTime: editData?.OfferEndTime || "",
+      CoupounActive: editData?.CoupounActive === "true" || editData?.CoupounActive === true || !editData ? true : false,
     },
     enableReinitialize: true,
     validationSchema: Yup.object({
       Description: Yup.string().required("Required"),
       ProductName: Yup.string().required("Required"),
-      Brand: Yup.string().required("Required"),
+      Brand: Yup.string(),
       Type: Yup.string().required("Required"),
       Price: Yup.number().required("Required").min(1, "Must be > 0"),
-      Discount: Yup.number()
-        .required("Required")
-        .min(0, "Cannot be negative")
-        .max(100, "Cannot exceed 100%"),
       Finalprice: Yup.number().required("Required").min(0, "Cannot be negative"),
       Location: Yup.object().nullable().required("Location is required"),
       Store: Yup.object().nullable().required("Store is required"),
@@ -155,7 +151,6 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           Isactive: values.Isactive,
           ProductName: values.ProductName,
           Price: values.Price,
-          Discount: values.Discount,
           Brand: values.Brand,
           Type: values.Type,
           Imageurl: image,
@@ -165,6 +160,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           OfferEndTime: values.OfferEndTime || null,
           Power: values.Power ?? null,
           Storeid: values.Store?.Storeid || "",
+          CoupounActive: values.CoupounActive,
         };
 
         if (editData?.Productid) {
@@ -227,6 +223,14 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       formik.values.Power === ""
     ) {
       formik.setFieldValue("Power", editData.Power);
+    }
+
+    // CoupounActive
+    if (editData.CoupounActive !== undefined && editData.CoupounActive !== null) {
+      const val = editData.CoupounActive === "true" || editData.CoupounActive === true;
+      if (formik.values.CoupounActive !== val) {
+        formik.setFieldValue("CoupounActive", val);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shops, locationData, editData]);
@@ -319,6 +323,33 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
             />
             <Typography sx={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>
               {formik.values.Isactive ? "Active" : "Inactive"}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              background: "rgba(255,255,255,0.15)",
+              borderRadius: "20px",
+              px: 1.5,
+              py: 0.5,
+            }}
+          >
+            <Switch
+              checked={formik.values.CoupounActive}
+              onChange={(e) => formik.setFieldValue("CoupounActive", e.target.checked)}
+              size="small"
+              sx={{
+                "& .MuiSwitch-switchBase.Mui-checked": { color: "#fff" },
+                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                  backgroundColor: "rgba(255,255,255,0.5)",
+                },
+              }}
+            />
+            <Typography sx={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>
+              {formik.values.CoupounActive ? "Coupon On" : "Coupon Off"}
             </Typography>
           </Box>
 
@@ -616,25 +647,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                   ),
                 }}
               />
-              <TextField
-                label="Discount"
-                name="Discount"
-                type="number"
-                value={formik.values.Discount}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.Discount && Boolean(formik.errors.Discount)}
-                helperText={formik.touched.Discount && formik.errors.Discount}
-                fullWidth
-                sx={fieldSx}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <PercentIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
+
               <TextField
                 label="Final Price"
                 name="Finalprice"

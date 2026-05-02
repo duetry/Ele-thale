@@ -31,7 +31,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 const ShopTabAdd = ({ open, handleClose, editData }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState(editData?.ImageBase64 || "");
+  const [preview, setPreview] = useState(editData?.ImageBase64 || editData?.ImageUrl || editData?.Imageurl || "");
 
   const shopOwners = useSelector(selectShopOwners);
 
@@ -39,12 +39,14 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
     dispatch(getShopOwner());
   }, [dispatch]);
   useEffect(() => {
-  if (editData?.ImageBase64) {
-    setPreview(editData.ImageBase64); // edit mode
-  } else {
-    setPreview(""); // new mode → clear preview
-  }
-}, [editData, open]);
+    if (editData?.ImageBase64) {
+      setPreview(editData.ImageBase64); // newly uploaded base64
+    } else if (editData?.ImageUrl || editData?.Imageurl) {
+      setPreview(editData.ImageUrl || editData.Imageurl); // existing URL from API
+    } else {
+      setPreview(""); // new mode → clear preview
+    }
+  }, [editData, open]);
 
   const formik = useFormik({
     initialValues: {
@@ -59,7 +61,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       StartTime: editData?.StartTime || "",
       EndTime: editData?.EndTime || "",
       ImageBase64: editData?.ImageBase64 || "",
-      ImageUrl: editData?.ImageUrl || "",
+      ImageUrl: editData?.ImageUrl || editData?.Imageurl || "",
       IsActive: editData?.Deleted === "false",
     },
     enableReinitialize: true,
@@ -77,7 +79,12 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       Rating: Yup.string().required("Required"),
       StartTime: Yup.string().required("Required"),
       EndTime: Yup.string().required("Required"),
-      ImageBase64: Yup.string().required("Image required"),
+      // Only require base64 if there's no existing ImageUrl
+      ImageBase64: Yup.string().when("ImageUrl", {
+        is: (val) => !val,
+        then: (schema) => schema.required("Image required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
     }),
 
     onSubmit: async (values, { resetForm }) => {
@@ -130,7 +137,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" TransitionComponent={Transition}>
-      
+
       {/* Header */}
       <Box sx={{
         background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
@@ -227,7 +234,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
             />
 
             <TextField
-              label="Location"
+              label="Location Link"
               name="StoreLocation"
               value={formik.values.StoreLocation}
               onChange={formik.handleChange}

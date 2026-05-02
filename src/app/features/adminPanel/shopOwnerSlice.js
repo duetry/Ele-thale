@@ -157,6 +157,7 @@ const shopOwnerSlice = createSlice({
       state.error = null;
       state.success = false;
     },
+    resetShopOwners: () => initialState,
   },
   extraReducers: (builder) => {
     builder
@@ -199,7 +200,7 @@ const shopOwnerSlice = createSlice({
    EXPORTS
    ========================================================= */
 
-export const { clearShopOwnerStatus } = shopOwnerSlice.actions;
+export const { clearShopOwnerStatus, resetShopOwners } = shopOwnerSlice.actions;
 
 export const selectShopOwners = (state) => state.shopOwner.shopOwners;
 export const selectShopOwnerLoading = (state) => state.shopOwner.loading;

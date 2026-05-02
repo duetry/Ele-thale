@@ -14,9 +14,12 @@ import {
   Chip,
   Avatar,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 
 import ShopTabAdd from './ShopTabAdd';
 
@@ -25,6 +28,7 @@ import { getShops, deleteShop, selectShops } from '@/app/features/adminPanel/sho
 const ShopTab = () => {
   const [showAdd, setShowAdd]         = useState(false);
   const [selectedShop, setSelectedShop] = useState(null);
+  const [searchQuery, setSearchQuery]   = useState('');
   const [openDelete, setOpenDelete]   = useState(false);
   const [deleteId, setDeleteId]       = useState(null);
 
@@ -40,6 +44,13 @@ const ShopTab = () => {
       ...item,
       id: item.Storeid || index,
     })) || [];
+
+  const filteredRows = rows.filter((row) =>
+    Object.values(row).some(
+      (value) =>
+        value && value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
   const confirmDelete = async () => {
     await dispatch(deleteShop(deleteId));
@@ -217,7 +228,21 @@ const ShopTab = () => {
   return (
     <Box sx={{ width: '100%' }}>
       {/* Add Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2 }}>
+        <TextField
+          size="small"
+          placeholder="Search shops..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ width: 300 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: 'gray', fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+        />
         <Button
           variant="contained"
           onClick={() => {
@@ -232,7 +257,7 @@ const ShopTab = () => {
       {/* Table */}
       <Box sx={{ height: 500 }}>
         <DataGrid
-          rows={rows}
+          rows={filteredRows}
           columns={columns}
           pageSize={5}
           rowsPerPageOptions={[5]}

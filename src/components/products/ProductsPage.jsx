@@ -94,7 +94,7 @@
 //   return (
 //     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)' }}>
 //       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 20px' }}>
-        
+
 //         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
 //           <div style={{ fontSize: '48px', fontWeight: '800', background: 'linear-gradient(135deg, #1F2937 0%, #4B5563 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '12px' }}>
 //             Discover Our Collection
@@ -136,9 +136,9 @@
 //                     onMouseEnter={() => setHoveredCategory(cat)}
 //                     onMouseLeave={() => setHoveredCategory(null)}
 //                     style={{ position: 'relative', height: '180px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', border: sel ? '3px solid #1F2937' : '3px solid transparent', boxShadow: hov ? '0 10px 30px rgba(0,0,0,0.15)' : '0 4px 15px rgba(0,0,0,0.08)', transform: hov ? 'translateY(-4px)' : 'translateY(0)', transition: 'all 0.3s ease' }}>
-                    
+
 //                     <img src={categoryStructure[cat].image} alt={cat} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: sel ? 'brightness(0.8)' : 'brightness(0.6)' }} />
-                    
+
 //                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2))', display: 'flex', alignItems: 'flex-end', padding: '20px' }}>
 //                       <div style={{ color: 'white', fontSize: '24px', fontWeight: '700' }}>{cat}</div>
 //                     </div>
@@ -171,9 +171,9 @@
 //                       onMouseEnter={() => setHoveredSubCategory(sub.name)}
 //                       onMouseLeave={() => setHoveredSubCategory(null)}
 //                       style={{ position: 'relative', height: '140px', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', border: sel ? '2px solid #D97706' : '2px solid #E5E7EB', boxShadow: hov ? '0 6px 20px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)', transform: hov ? 'translateY(-3px)' : 'translateY(0)', transition: 'all 0.3s ease' }}>
-                      
+
 //                       <img src={sub.image} alt={sub.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: sel ? 'brightness(0.8)' : 'brightness(0.7)' }} />
-                      
+
 //                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', display: 'flex', alignItems: 'flex-end', padding: '12px' }}>
 //                         <div style={{ color: 'white', fontSize: '14px', fontWeight: '600' }}>{sub.name}</div>
 //                       </div>
@@ -194,10 +194,10 @@
 //                 onMouseEnter={() => setHoveredCard(product.ProductId)}
 //                 onMouseLeave={() => setHoveredCard(null)}
 //                 style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: h ? '0 12px 40px rgba(0,0,0,0.12)' : '0 4px 15px rgba(0,0,0,0.08)', transition: 'all 0.3s ease', transform: h ? 'translateY(-6px)' : 'translateY(0)', cursor: 'pointer' }}>
-                
+
 //                 <div style={{ position: 'relative', height: '240px', overflow: 'hidden' }}>
 //                   <img src={product.ImageUrl} alt={product.Name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: h ? 'scale(1.1)' : 'scale(1)' }} />
-                  
+
 //                   <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
 //                     {product.IsBestOffer && <div style={{ background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)', color: 'white', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', display: 'inline-block', boxShadow: '0 2px 8px rgba(220,38,38,0.3)' }}>🔥 {product.Discount}% OFF</div>}
 //                     {product.IsForYou && <div style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)', color: 'white', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', display: 'inline-block', boxShadow: '0 2px 8px rgba(124,58,237,0.3)' }}>✨ For You</div>}
@@ -322,7 +322,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const categoryId = selectedCategory || null;
     const subcategoryId = selectedSubCategory || null;
-    
+
     dispatch(fetchProducts({
       categoryId,
       subcategoryId,
@@ -340,7 +340,7 @@ export default function ProductsPage() {
   // Handle category selection
   const handleCategoryClick = (category) => {
     dispatch({ type: 'products/setSelectedCategory', payload: category.Categoryid });
-    
+
     // Fetch subcategories for this category
     dispatch(fetchSubcategories(category.Categoryid));
   };
@@ -362,11 +362,11 @@ export default function ProductsPage() {
 
 
 
-  console.log("products" , products)
+  console.log("products", products)
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)', marginTop:"6rem" }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)', marginTop: "6rem" }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 20px' }}>
-        
+
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
           <div style={{ fontSize: '48px', fontWeight: '800', background: 'linear-gradient(135deg, #1F2937 0%, #4B5563 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '12px' }}>
             Discover Our Collection
@@ -376,7 +376,7 @@ export default function ProductsPage() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 24px', background: 'white', borderRadius: '50px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', marginBottom: '40px' }}>
           <Search size={24} color="#6B7280" />
-          <input 
+          <input
             type="text"
             placeholder="Search products..."
             value={searchQuery}
@@ -416,14 +416,14 @@ export default function ProductsPage() {
                 const hov = hoveredCategory === cat.Categoryid;
                 return (
                   <div key={cat.Categoryid}>
-                    <div 
+                    <div
                       onClick={() => handleCategoryClick(cat)}
                       onMouseEnter={() => setHoveredCategory(cat.Categoryid)}
                       onMouseLeave={() => setHoveredCategory(null)}
                       style={{ position: 'relative', height: '180px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', border: sel ? '3px solid #1F2937' : '3px solid transparent', boxShadow: hov ? '0 10px 30px rgba(0,0,0,0.15)' : '0 4px 15px rgba(0,0,0,0.08)', transform: hov ? 'translateY(-4px)' : 'translateY(0)', transition: 'all 0.3s ease' }}>
-                      
+
                       <img src={cat.Imageurl} alt={cat.Categoryname} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: sel ? 'brightness(0.8)' : 'brightness(0.6)' }} />
-                      
+
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2))', display: 'flex', alignItems: 'flex-end', padding: '20px' }}>
                         <div style={{ color: 'white', fontSize: '24px', fontWeight: '700' }}>{cat.Categoryname}</div>
                       </div>
@@ -456,15 +456,15 @@ export default function ProductsPage() {
                     const sel = selectedSubCategory === sub.Subcategoryid;
                     const hov = hoveredSubCategory === sub.Subcategoryid;
                     return (
-                      <div 
+                      <div
                         key={sub.Subcategoryid}
                         onClick={() => handleSubCategoryClick(sub.Subcategoryid)}
                         onMouseEnter={() => setHoveredSubCategory(sub.Subcategoryid)}
                         onMouseLeave={() => setHoveredSubCategory(null)}
                         style={{ position: 'relative', height: '140px', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', border: sel ? '2px solid #D97706' : '2px solid #E5E7EB', boxShadow: hov ? '0 6px 20px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.06)', transform: hov ? 'translateY(-3px)' : 'translateY(0)', transition: 'all 0.3s ease' }}>
-                        
+
                         <img src={sub.Imageurl} alt={sub.Subcategoryname} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: sel ? 'brightness(0.8)' : 'brightness(0.7)' }} />
-                        
+
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', display: 'flex', alignItems: 'flex-end', padding: '12px' }}>
                           <div style={{ color: 'white', fontSize: '14px', fontWeight: '600' }}>{sub.Subcategoryname}</div>
                         </div>
@@ -486,17 +486,17 @@ export default function ProductsPage() {
             {products && products.map(product => {
               const h = hoveredCard === product.Productid;
               const originalPrice = product.Discountprice ? (product.Price / (1 - product.Discountprice / 100)).toFixed(2) : null;
-              
+
               return (
-                <div 
+                <div
                   key={product.Productid}
                   onMouseEnter={() => setHoveredCard(product.Productid)}
                   onMouseLeave={() => setHoveredCard(null)}
                   style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: h ? '0 12px 40px rgba(0,0,0,0.12)' : '0 4px 15px rgba(0,0,0,0.08)', transition: 'all 0.3s ease', transform: h ? 'translateY(-6px)' : 'translateY(0)', cursor: 'pointer' }}>
-                  
+
                   <div style={{ position: 'relative', height: '240px', overflow: 'hidden' }}>
                     <img src={product.Imageurl} alt={product.Productname} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: h ? 'scale(1.1)' : 'scale(1)' }} />
-                    
+
                     <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {product.Isbestoffer === 'true' && product.Discountprice && (
                         <div style={{ background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)', color: 'white', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', display: 'inline-block', boxShadow: '0 2px 8px rgba(220,38,38,0.3)' }}>
@@ -551,31 +551,44 @@ export default function ProductsPage() {
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '16px' }}>
                       <div style={{ fontSize: '24px', fontWeight: '700', color: '#1F2937' }}>₹{parseFloat(product.Price).toFixed(2)}</div>
                       {originalPrice && product.Discountprice > 0 && (
-                        <div style={{ fontSize: '16px', color: '#9CA3AF', textDecoration: 'line-through' }}>₹{originalPrice}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ fontSize: '16px', color: '#9CA3AF', textDecoration: 'line-through' }}>₹{originalPrice}</div>
+                          <div style={{
+                            background: '#e6f4ea',
+                            color: '#1e7e34',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            border: '1px solid #c3e6cb'
+                          }}>
+                            Save ₹{(parseFloat(originalPrice) - parseFloat(product.Price)).toFixed(2)}
+                          </div>
+                        </div>
                       )}
                     </div>
 
                     <div style={{ display: 'flex', gap: '12px' }}>
-                      <button 
+                      <button
                         onClick={(e) => {
+                          e.stopPropagation();
+                          dispatch(fetchProductOffer(product.Productid))
+                            .unwrap()
+                            .then((res) => {
+                              setCouponCode(res)
+                              setSelectedProduct(product);
+                              setShowOffer(true);
+                            })
+                            .catch((err) => {
+                              console.error('Offer API failed:', err);
+                              setSelectedProduct(product);
+                              setCouponCode(null);
+                              setShowOffer(true);
+                            });
+                        }}
 
-                          console.log("product" , product)
-                             e.stopPropagation();
-
-    dispatch(fetchProductOffer(product.Productid))
-      .unwrap()
-      .then((res) => {
-        setCouponCode(res)
-        setSelectedProduct(product); // send data to popup
-        setShowOffer(true);           // open popup
-      })
-      .catch((err) => {
-        console.error('Offer API failed:', err);
-      });
-  }}
-                    
                         style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #1F2937 0%, #374151 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', boxShadow: h ? '0 4px 12px rgba(0,0,0,0.2)' : 'none', transform: h ? 'translateY(-1px)' : 'translateY(0)' }}>
-                        Unlock Offer
+                        {(product.CoupounActive === "true" || product.CoupounActive === true) ? "Unlock Offer" : "View Store"}
                       </button>
                     </div>
                   </div>
@@ -594,10 +607,10 @@ export default function ProductsPage() {
         )}
 
         {/* Unlock Offer Modal */}
-        <UnlockOfferModal 
-          product={selectedProduct} 
-          couponCode={couponCode} 
-          onClose={() => setSelectedProduct(null)} 
+        <UnlockOfferModal
+          product={selectedProduct}
+          couponCode={couponCode}
+          onClose={() => setSelectedProduct(null)}
         />
       </div>
     </div>

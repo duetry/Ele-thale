@@ -35,21 +35,6 @@
 //   console.log("selectUser 12" , user?.role === "admin")
 //   console.log("selectUser 12" , user?.role)
 
-//   /* =========================
-//      AUTH-GUARDED HANDLERS
-//      ========================= */
-
-//   const handleForyouClick = () => {
-//     if (isAuthenticated) {
-//       router.push('/');
-//     } else {
-//       setShowLogin(true);
-//     }
-//   };
-
-//   const handleSpecialOfferClick = () => {
-//     if (isAuthenticated) {
-//       router.push('/specialOffer');
 //     } else {
 //       setShowLogin(true);
 //     }
@@ -212,7 +197,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import LoginPopup from '../LoginPopup';
 import { clearAuth, selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
 import {
-  
+
   getLocationList,
   setSelectedLocation,
   selectSelectedLocation,
@@ -221,6 +206,10 @@ import {
 } from '@/app/features/adminPanel/adminPanelSlice';
 import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlice';
 import toast, { Toaster } from 'react-hot-toast';
+
+import { resetAdminState } from '@/app/features/adminPanel/adminPanelSlice';
+import { resetShops } from '@/app/features/adminPanel/shopSlice';
+import { resetShopOwners } from '@/app/features/adminPanel/shopOwnerSlice';
 
 export default function Navbar() {
   const router = useRouter();
@@ -265,7 +254,7 @@ export default function Navbar() {
     };
 
     initLocation();
-  }, [dispatch]);
+  }, [dispatch, isAuthenticated]);
 
   /* =========================
      LOCATION CHANGE HANDLER
@@ -298,6 +287,9 @@ export default function Navbar() {
 
   const handleLogout = () => {
     dispatch(clearAuth());
+    dispatch(resetAdminState());
+    dispatch(resetShops());
+    dispatch(resetShopOwners());
     router.push('/');
     toast.success('Logged out successfully 👋');
   };
@@ -307,202 +299,209 @@ export default function Navbar() {
      ========================= */
 
 
-     console.log("user?.usertype" , user?.usertype)
-const navItems = [
-  { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
-  ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
-    ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
-    : []),
-];
+  console.log("user?.usertype", user?.usertype)
+  const navItems = [
+    ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+      ? []
+      : [{ name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick }]),
+    ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+      ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
+      : []),
+  ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-md border-b border-orange-500/20 shadow-2xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
+      {/* ── TOP BAR (Amazon dark navy) ── */}
+      <div style={{ background: '#131921', borderBottom: '1px solid #3a3a3a' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px', display: 'flex', alignItems: 'center', height: 60, gap: 8 }}>
 
-          {/* ── Logo + Location ── */}
-          <div className="flex items-center gap-4">
-            <span className="text-white font-bold text-lg">Offer go down</span>
-
-            {/* Location Dropdown */}
-           {mounted && !(user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER') && (
-              <div className="relative">
-                <button
-                  onClick={() => setLocationDropdownOpen((prev) => !prev)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 border border-orange-500/30 hover:border-orange-500/50 transition-all duration-300 cursor-pointer"
-                >
-                  <MapPin className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-100 max-w-[120px] truncate">
-                    {selectedLocation?.Name || 'Select Location'}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-orange-400 transition-transform duration-200 ${
-                      locationDropdownOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                {/* Dropdown */}
-                {locationDropdownOpen && (
-                  <>
-                    {/* Backdrop */}
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setLocationDropdownOpen(false)}
-                    />
-                    <div className="absolute left-0 top-full mt-2 z-20 min-w-[180px] bg-slate-800 border border-orange-500/20 rounded-2xl shadow-2xl overflow-hidden">
-                      <div className="px-4 py-2.5 border-b border-slate-700">
-                        <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider">
-                          Select Location
-                        </p>
-                      </div>
-                      <div className="py-1 max-h-60 overflow-y-auto">
-                        {(locationData || []).map((loc) => (
-                          <button
-                            key={loc.LocationId}
-                            onClick={() => handleLocationChange(loc)}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 hover:bg-orange-500/10 ${
-                              selectedLocation?.LocationId === loc.LocationId
-                                ? 'bg-orange-500/15 text-orange-300'
-                                : 'text-gray-200'
-                            }`}
-                          >
-                            <div
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                                selectedLocation?.LocationId === loc.LocationId
-                                  ? 'bg-orange-500/30'
-                                  : 'bg-slate-700'
-                              }`}
-                            >
-                              <MapPin
-                                className={`w-3.5 h-3.5 ${
-                                  selectedLocation?.LocationId === loc.LocationId
-                                    ? 'text-orange-400'
-                                    : 'text-gray-400'
-                                }`}
-                              />
-                            </div>
-                            <span className="text-sm font-medium">{loc.Name}</span>
-                            {selectedLocation?.LocationId === loc.LocationId && (
-                              <span className="ml-auto w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
-                            )}
-                          </button>
-                        ))}
-                        {(!locationData || locationData.length === 0) && (
-                          <p className="px-4 py-3 text-sm text-gray-500 text-center">
-                            No locations found
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8, flexShrink: 0 }}>
+            <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', lineHeight: 1 }}>
+              offer<span style={{ color: '#FF9900' }}>go</span>down
+            </span>
           </div>
 
-          {/* ── Desktop Nav ── */}
-          <div className="hidden md:flex items-center space-x-2">
+          {/* Location Dropdown */}
+          {mounted && !(user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER') && (
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <button
+                id="navbar-location-btn"
+                onClick={() => setLocationDropdownOpen((prev) => !prev)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '6px 8px', borderRadius: 3,
+                  border: '1px solid transparent',
+                  background: 'transparent', cursor: 'pointer',
+                  transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+              >
+                <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.2 }}>Location to</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {selectedLocation?.Name || 'Select Location'}
+                  </div>
+                </div>
+                <ChevronDown style={{ width: 12, height: 12, color: '#fff', marginLeft: 2, transition: 'transform 0.2s', transform: locationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+              </button>
+
+              {locationDropdownOpen && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setLocationDropdownOpen(false)} />
+                  <div style={{
+                    position: 'absolute', left: 0, top: '100%', marginTop: 4, zIndex: 20,
+                    minWidth: 200, background: '#fff', border: '1px solid #ddd',
+                    borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', overflow: 'hidden',
+                  }}>
+                    <div style={{ padding: '10px 16px', borderBottom: '1px solid #eee', background: '#f5f5f5' }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: '#131921', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>Choose a location</p>
+                    </div>
+                    <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+                      {(locationData || []).map((loc) => (
+                        <button
+                          key={loc.LocationId}
+                          onClick={() => handleLocationChange(loc)}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '10px 16px', textAlign: 'left', border: 'none', cursor: 'pointer',
+                            background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#fff',
+                            borderLeft: selectedLocation?.LocationId === loc.LocationId ? '3px solid #FF9900' : '3px solid transparent',
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#f5f5f5'; }}
+                          onMouseLeave={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#fff'; }}
+                        >
+                          <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, fontWeight: 500, color: '#131921' }}>{loc.Name}</span>
+                          {selectedLocation?.LocationId === loc.LocationId && (
+                            <span style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: '#FF9900', flexShrink: 0 }} />
+                          )}
+                        </button>
+                      ))}
+                      {(!locationData || locationData.length === 0) && (
+                        <p style={{ padding: '12px 16px', fontSize: 13, color: '#888', textAlign: 'center', margin: 0 }}>No locations found</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Desktop Nav Items */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {navItems.map((item) => (
               <button
+                id={`navbar-${item.name.replace(/\s+/g, '-').toLowerCase()}`}
                 key={item.name}
                 onClick={item.onClick}
-                className="relative group px-5 py-2.5 rounded-xl text-gray-200 hover:text-white transition-all duration-300 flex items-center gap-2 overflow-hidden"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 10px', borderRadius: 3,
+                  border: '1px solid transparent', background: 'transparent',
+                  color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-600/0 via-orange-500/0 to-orange-600/0 group-hover:from-orange-600/20 group-hover:via-orange-500/30 group-hover:to-orange-600/20 rounded-xl transition-all duration-300" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
-                </div>
-                <item.icon className="w-5 h-5 relative z-10 text-orange-400 group-hover:text-orange-300 transition-colors" />
-                <span className="relative z-10 font-semibold text-sm">{item.name}</span>
+                <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.name}</span>
               </button>
             ))}
 
-            {/* Only render after mount to avoid hydration mismatch */}
+            {/* Logout */}
             {mounted && isAuthenticated && (
               <button
+                id="navbar-logout-btn"
                 onClick={handleLogout}
-                className="px-5 py-2.5 rounded-xl text-red-400 hover:text-red-300 flex items-center gap-2 border border-red-500/30 hover:border-red-500/50 transition-all"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px', borderRadius: 3,
+                  border: '1px solid transparent', background: 'transparent',
+                  color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
               >
-                <LogOut className="w-5 h-5" />
-                <span className="font-semibold text-sm">Logout</span>
+                <LogOut style={{ width: 16, height: 16, color: '#FF9900' }} />
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Logout</span>
               </button>
             )}
           </div>
 
-          {/* ── Mobile Toggle ── */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-200 p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
+          {/* Mobile Toggle */}
+          <button
+            id="navbar-mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{ display: 'none', color: '#fff', padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            className="md-hidden-toggle"
+          >
+            {mobileMenuOpen ? <X style={{ width: 22, height: 22 }} /> : <Menu style={{ width: 22, height: 22 }} />}
+          </button>
         </div>
       </div>
 
-      {/* ── Mobile Menu ── */}
+      {/* ── MOBILE MENU ── */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-900/98 backdrop-blur-lg border-t border-orange-500/20 shadow-xl">
-          <div className="px-4 py-4 space-y-2">
-
-            {/* Mobile Location Grid */}
-            {mounted && (
-              <div className="mb-3">
-                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider px-1 mb-2">
-                  Location
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(locationData || []).map((loc) => (
-                    <button
-                      key={loc.LocationId}
-                      onClick={() => {
-                        handleLocationChange(loc);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                        selectedLocation?.LocationId === loc.LocationId
-                          ? 'bg-orange-500/20 border-orange-500/50 text-orange-300'
-                          : 'bg-slate-800 border-slate-700 text-gray-300 hover:bg-slate-700'
-                      }`}
-                    >
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{loc.Name}</span>
-                    </button>
-                  ))}
-                </div>
+        <div style={{ background: '#131921', borderTop: '1px solid #3a3a3a', padding: '12px 16px' }}>
+          {mounted && (
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#FF9900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Location</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {(locationData || []).map((loc) => (
+                  <button
+                    key={loc.LocationId}
+                    onClick={() => { handleLocationChange(loc); setMobileMenuOpen(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '8px 10px', borderRadius: 3,
+                      border: selectedLocation?.LocationId === loc.LocationId ? '1px solid #FF9900' : '1px solid #444',
+                      background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#232f3e',
+                      color: selectedLocation?.LocationId === loc.LocationId ? '#131921' : '#ccc',
+                      cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                    }}
+                  >
+                    <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{loc.Name}</span>
+                  </button>
+                ))}
               </div>
-            )}
-
-            <div className="border-t border-slate-700/50 pt-2">
-              {navItems.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => {
-                    item.onClick();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-200 hover:bg-white/10 active:scale-95 transition-all duration-200 border border-transparent hover:border-orange-500/20"
-                >
-                  <item.icon className="w-5 h-5 text-orange-400" />
-                  <span className="font-medium">{item.name}</span>
-                </button>
-              ))}
-
-              {mounted && isAuthenticated && (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 active:scale-95 transition-all duration-200 border border-red-500/30"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span className="font-medium">Logout</span>
-                </button>
-              )}
             </div>
+          )}
+          <div style={{ borderTop: '1px solid #3a3a3a', paddingTop: 8 }}>
+            {navItems.map((item) => (
+              <button
+                key={item.name}
+                onClick={() => { item.onClick(); setMobileMenuOpen(false); }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 8px', border: 'none', background: 'transparent',
+                  color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
+                }}
+              >
+                <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
+                <span>{item.name}</span>
+              </button>
+            ))}
+            {mounted && isAuthenticated && (
+              <button
+                onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 8px', border: 'none', background: 'transparent',
+                  color: '#ff6b6b', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
+                }}
+              >
+                <LogOut style={{ width: 16, height: 16 }} />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -515,9 +514,10 @@ const navItems = [
         toastOptions={{
           duration: 2500,
           style: {
-            background: '#0f172a',
+            background: '#232f3e',
             color: '#fff',
-            border: '1px solid #f97316',
+            border: '1px solid #FF9900',
+            borderRadius: 4,
           },
         }}
       />
