@@ -31,7 +31,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 const ShopTabAdd = ({ open, handleClose, editData }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState(editData?.ImageBase64 || "");
+  const [preview, setPreview] = useState(editData?.Imageurl || "");
 
   const shopOwners = useSelector(selectShopOwners);
 
@@ -39,8 +39,8 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
     dispatch(getShopOwner());
   }, [dispatch]);
   useEffect(() => {
-  if (editData?.ImageBase64) {
-    setPreview(editData.ImageBase64); // edit mode
+  if (editData?.Imageurl) {
+    setPreview(editData.Imageurl); // edit mode
   } else {
     setPreview(""); // new mode → clear preview
   }
@@ -59,7 +59,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       StartTime: editData?.StartTime || "",
       EndTime: editData?.EndTime || "",
       ImageBase64: editData?.ImageBase64 || "",
-      ImageUrl: editData?.ImageUrl || "",
+      ImageUrl: editData?.Imageurl || "",
       IsActive: editData?.Deleted === "false",
     },
     enableReinitialize: true,
@@ -77,7 +77,11 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       Rating: Yup.string().required("Required"),
       StartTime: Yup.string().required("Required"),
       EndTime: Yup.string().required("Required"),
-      ImageBase64: Yup.string().required("Image required"),
+      ImageBase64: Yup.string().when("ImageUrl", {
+        is: (url) => !url, // if no existing image
+        then: () => Yup.string().required("Image required"),
+        otherwise: () => Yup.string().nullable(),
+      }),
     }),
 
     onSubmit: async (values, { resetForm }) => {
@@ -227,7 +231,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
             />
 
             <TextField
-              label="Location"
+              label="Location Link"
               name="StoreLocation"
               value={formik.values.StoreLocation}
               onChange={formik.handleChange}

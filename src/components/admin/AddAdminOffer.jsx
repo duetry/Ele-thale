@@ -122,10 +122,10 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       Brand: Yup.string().required("Required"),
       Type: Yup.string().required("Required"),
       Price: Yup.number().required("Required").min(1, "Must be > 0"),
-      Discount: Yup.number()
-        .required("Required")
-        .min(0, "Cannot be negative")
-        .max(100, "Cannot exceed 100%"),
+      // Discount: Yup.number()
+      //   .required("Required")
+      //   .min(0, "Cannot be negative")
+      //   .max(100, "Cannot exceed 100%"),
       Finalprice: Yup.number().required("Required").min(0, "Cannot be negative"),
       Location: Yup.object().nullable().required("Location is required"),
       Store: Yup.object().nullable().required("Store is required"),
@@ -616,7 +616,8 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                   ),
                 }}
               />
-              <TextField
+
+              {/* <TextField
                 label="Discount"
                 name="Discount"
                 type="number"
@@ -634,7 +635,8 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                     </InputAdornment>
                   ),
                 }}
-              />
+              /> */}
+
               <TextField
                 label="Final Price"
                 name="Finalprice"

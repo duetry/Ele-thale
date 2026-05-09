@@ -1909,8 +1909,7 @@ export default function BillboardBanners() {
   return (
     <div style={{ width: "100%", background: "#fff", marginTop: 60 }}>
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: 20 }}>
-        {/* ===================== STORE INFO BANNER ===================== */}
-  
+        {/* ===================== STORE INFO BANNER ===================== */}  
 
         {/* ===================== BANNER CAROUSEL ===================== */}
         {bestOfferBanner?.length > 0 && (

@@ -110,7 +110,7 @@ const ShopOwnerTabAdd = ({ open, handleClose, editData }) => {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <StorefrontIcon sx={{ color: "#fff" }} />
           <Typography sx={{ color: "#fff", fontWeight: 700 }}>
-            {editData ? "Edit Shop" : "Create Shop"}
+            {editData ? "Edit ShopOwner" : "Create ShopOwner"}
           </Typography>
         </Box>
 
@@ -124,7 +124,7 @@ const ShopOwnerTabAdd = ({ open, handleClose, editData }) => {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
             <TextField
-              label="Shop Name"
+              label="Owner Name"
               name="Name"
               value={formik.values.Name}
               onChange={formik.handleChange}
@@ -203,7 +203,7 @@ const ShopOwnerTabAdd = ({ open, handleClose, editData }) => {
             variant="contained"
             loading={loading}
           >
-            {editData ? "Update Shop" : "Create Shop"}
+            {editData ? "Update" : "Create"}
           </LoadingButton>
         </Box>
       </form>

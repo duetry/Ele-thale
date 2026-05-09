@@ -42,7 +42,7 @@ const AdminOffers = () => {
     { field: 'Type', headerName: 'Type', width: 150 },
     { field: 'Price', headerName: 'Price', width: 100 },
     { field: 'Finalprice', headerName: 'Final Price', width: 120 },
-    { field: 'Discount', headerName: 'Discount', width: 100 },
+    // { field: 'Discount', headerName: 'Discount', width: 100 },
     { field: 'Description', headerName: 'Type', width: 100 },
     { field: 'Isactive', headerName: 'Active', width: 100 },
     {
