@@ -124,7 +124,7 @@ const ShopOwnerTabAdd = ({ open, handleClose, editData }) => {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
             <TextField
-              label="Owner Name"
+              label="Shop Owner Name"
               name="Name"
               value={formik.values.Name}
               onChange={formik.handleChange}
@@ -135,7 +135,7 @@ const ShopOwnerTabAdd = ({ open, handleClose, editData }) => {
             />
 
             <TextField
-              label="Username"
+              label="Shop Owner Username"
               name="Username"
               value={formik.values.Username}
               onChange={formik.handleChange}

@@ -1194,7 +1194,8 @@ export default function UnlockOfferModal({ product, couponCode, onClose }) {
             </div>
 
             {/* ── UNLOCK SECTION — below the map button ── */}
-            <div style={{ borderTop: '1.5px dashed #BAE6FD', paddingTop: '20px' }}>
+            {(product.CoupounActive === "true" || product.CoupounActive === true) && (
+              <div style={{ borderTop: '1.5px dashed #BAE6FD', paddingTop: '20px' }}>
               {!unlockedData ? (
                 <>
                   {/* ② UNLOCK BUTTON — below map */}
@@ -1282,6 +1283,7 @@ export default function UnlockOfferModal({ product, couponCode, onClose }) {
                 </div>
               )}
             </div>
+          )}
 
           </div>
         </div>

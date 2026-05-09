@@ -15,30 +15,45 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '@/app/features/auth/authSlice';
 import { selectShops } from '@/app/features/adminPanel/shopSlice';
 
+import { useRouter } from 'next/navigation';
+
 const AdminPanel = () => {
   const user = useSelector(selectUser);
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('users');
+
+  // ✅ Auth Check
+  useEffect(() => {
+    if (!user || (user.usertype !== 'admin' && user.usertype !== 'SHOP_OWNER')) {
+      router.push('/');
+    }
+  }, [user, router]);
 
   // ✅ Fix default tab based on role
   useEffect(() => {
     if (user?.usertype === 'SHOP_OWNER') {
       setActiveTab('coupons');
-    } else {
+    } else if (user?.usertype === 'admin') {
       setActiveTab('users');
     }
   }, [user]);
- 
+
+  // Don't render anything if not authorized (prevents flash)
+  if (!user || (user.usertype !== 'admin' && user.usertype !== 'SHOP_OWNER')) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-2 py-20">
 
         {/* Header */}
-        <div className="mb-8">
+        {/* <div className="mb-1">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Admin Dashboard
           </h1>
-        </div>
+        </div> */}
 
         {/* Tabs */}
         <div className="bg-white rounded-2xl shadow-lg p-2 mb-6 inline-flex gap-2 border border-gray-100">
@@ -48,11 +63,10 @@ const AdminPanel = () => {
             <>
               <button
                 onClick={() => setActiveTab('users')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
-                  activeTab === 'users'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${activeTab === 'users'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <Users className="w-4 h-4 mr-2" />
                 User Details
@@ -60,50 +74,46 @@ const AdminPanel = () => {
 
               <button
                 onClick={() => setActiveTab('userTracking')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
-                  activeTab === 'userTracking'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${activeTab === 'userTracking'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <Activity className="w-4 h-4 mr-2" />
                 User Tracking
               </button>
 
               <button
-                onClick={() => setActiveTab('adminOffers')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
-                  activeTab === 'adminOffers'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                onClick={() => setActiveTab('shopOwner')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${activeTab === 'shopOwner'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <Dice6 className="w-4 h-4 mr-2" />
-                Products
+                Shops Owner
               </button>
 
               <button
                 onClick={() => setActiveTab('shop')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
-                  activeTab === 'shop'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${activeTab === 'shop'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <Store className="w-4 h-4 mr-2" />
                 Shop
               </button>
 
               <button
-                onClick={() => setActiveTab('shopOwner')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
-                  activeTab === 'shopOwner'
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                onClick={() => setActiveTab('adminOffers')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${activeTab === 'adminOffers'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <Dice6 className="w-4 h-4 mr-2" />
-                Shops Owner
+                Products
               </button>
             </>
           )}
@@ -112,11 +122,10 @@ const AdminPanel = () => {
           {user?.usertype === 'SHOP_OWNER' && (
             <button
               onClick={() => setActiveTab('coupons')}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
-                activeTab === 'coupons'
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${activeTab === 'coupons'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
+                }`}
             >
               <Tag className="w-4 h-4 mr-2" />
               Coupons

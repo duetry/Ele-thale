@@ -481,6 +481,10 @@ export default function LoginPopup({ close, onLoginSuccess }) {
       );
 
       if (loginUser.fulfilled.match(result)) {
+        const userType = result.payload?.usertype;
+        if (userType === 'admin' || userType === 'SHOP_OWNER') {
+          router.push('/admin');
+        }
         close();
         if (onLoginSuccess) onLoginSuccess();
       }

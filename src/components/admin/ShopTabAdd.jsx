@@ -31,7 +31,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 const ShopTabAdd = ({ open, handleClose, editData }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState(editData?.Imageurl || "");
+  const [preview, setPreview] = useState(editData?.ImageBase64 || editData?.ImageUrl || editData?.Imageurl || "");
 
   const shopOwners = useSelector(selectShopOwners);
 
@@ -39,12 +39,14 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
     dispatch(getShopOwner());
   }, [dispatch]);
   useEffect(() => {
-  if (editData?.Imageurl) {
-    setPreview(editData.Imageurl); // edit mode
-  } else {
-    setPreview(""); // new mode → clear preview
-  }
-}, [editData, open]);
+    if (editData?.ImageBase64) {
+      setPreview(editData.ImageBase64); // newly uploaded base64
+    } else if (editData?.ImageUrl || editData?.Imageurl) {
+      setPreview(editData.ImageUrl || editData.Imageurl); // existing URL from API
+    } else {
+      setPreview(""); // new mode → clear preview
+    }
+  }, [editData, open]);
 
   const formik = useFormik({
     initialValues: {
@@ -59,7 +61,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       StartTime: editData?.StartTime || "",
       EndTime: editData?.EndTime || "",
       ImageBase64: editData?.ImageBase64 || "",
-      ImageUrl: editData?.Imageurl || "",
+      ImageUrl: editData?.ImageUrl || editData?.Imageurl || "",
       IsActive: editData?.Deleted === "false",
     },
     enableReinitialize: true,
@@ -77,10 +79,11 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       Rating: Yup.string().required("Required"),
       StartTime: Yup.string().required("Required"),
       EndTime: Yup.string().required("Required"),
+      // Only require base64 if there's no existing ImageUrl
       ImageBase64: Yup.string().when("ImageUrl", {
-        is: (url) => !url, // if no existing image
-        then: () => Yup.string().required("Image required"),
-        otherwise: () => Yup.string().nullable(),
+        is: (val) => !val,
+        then: (schema) => schema.required("Image required"),
+        otherwise: (schema) => schema.notRequired(),
       }),
     }),
 
@@ -134,7 +137,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" TransitionComponent={Transition}>
-      
+
       {/* Header */}
       <Box sx={{
         background: "linear-gradient(135deg, #6366f1, #8b5cf6)",

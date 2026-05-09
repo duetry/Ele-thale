@@ -69,7 +69,7 @@ const UserDetailsTab = () => {
   }
 
   const rows = loginUsers[0].map((user, index) => ({
-    id: user.Phoneno || `user-${index}`,
+    id: `user-${user.Phoneno || index}-${index}`,
     Phoneno: user.Phoneno,
     Count: user.Count,
   }));
