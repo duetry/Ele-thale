@@ -33,9 +33,7 @@ export const fetchBestOfferBillboards = createAsyncThunk(
   'billboards/fetchBestOfferBillboards',
   async (params = {}, { rejectWithValue }) => {
     try {                                                        // ← missing try
-      console.log("THUNK params →", JSON.stringify(params));
       const LocationId = params?.LocationId;
-      console.log("THUNK LocationId →", LocationId);
 
       const url = LocationId
         ? `${API_BASE}/GET_Isbestoffer_Products?isbestoffer=true&LocationId=${LocationId}`
@@ -57,6 +55,60 @@ export const fetchBestOfferBillboards = createAsyncThunk(
     }
   }
 );
+export const fetchSuperDeals = createAsyncThunk(
+  'billboards/fetchSuperDeals',
+  async (params = {}, { rejectWithValue }) => {
+    try {                                                        // ← missing try
+      const LocationId = params?.LocationId;
+
+      const url = LocationId
+        ? `${API_BASE}/GET_Issupperdeal_Products?isbestoffer=true&LocationId=${LocationId}`
+        : `${API_BASE}/GET_Issupperdeal_Products?isbestoffer=true`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getHeaders(),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to fetch best offer billboards');
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
+
+
+// billBoardSlice.js — add this thunk
+
+export const requestExpiredOffer = createAsyncThunk(
+  'billboards/requestExpiredOffer',
+  async ({ Productid }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${API_BASE}/SupperdealRequest`,
+        {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ Productid }),
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to submit offer request');
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message || 'Something went wrong');
+    }
+  }
+);
 
 /* =========================================================
    INITIAL STATE
@@ -67,6 +119,16 @@ const initialState = {
   bestOfferBanner: [],
   bestOfferLoading: false,
   bestOfferError: null,
+
+  superDealBillboards: [],
+  superDealBanner: [],
+  superDealLoading: false,
+ superDealError: null,
+
+
+ requestOfferLoading: false,
+requestOfferError: null,
+requestOfferSuccess: false,
 };
 
 /* =========================================================
@@ -81,6 +143,11 @@ const billboardSlice = createSlice({
       state.bestOfferBillboards = [];
       state.bestOfferBanner = [];
       state.bestOfferError = null;
+    },
+    clearSuperDeals: (state) => {
+      state.superDealBillboards = [];
+      state.superDealBanner = [];
+      state.superDealError = null;
     },
   },
   extraReducers: (builder) => {
@@ -97,7 +164,34 @@ const billboardSlice = createSlice({
       .addCase(fetchBestOfferBillboards.rejected, (state, action) => {
         state.bestOfferLoading = false;
         state.bestOfferError = action.payload;
-      });
+      })
+      .addCase(fetchSuperDeals.pending, (state) => {
+        state.superDealLoading = true;
+        state.superDealError = null;
+      })
+      .addCase(fetchSuperDeals.fulfilled, (state, action) => {
+        state.superDealLoading = false;
+        state.superDealBillboards = action.payload.data?.card ?? [];
+        state.superDealBanner = action.payload.data?.banner ?? [];
+      })
+      .addCase(fetchSuperDeals.rejected, (state, action) => {
+        state.superDealLoading = false;
+        state.superDealError = action.payload;
+      })
+
+      .addCase(requestExpiredOffer.pending, (state) => {
+  state.requestOfferLoading = true;
+  state.requestOfferError = null;
+  state.requestOfferSuccess = false;
+})
+.addCase(requestExpiredOffer.fulfilled, (state) => {
+  state.requestOfferLoading = false;
+  state.requestOfferSuccess = true;
+})
+.addCase(requestExpiredOffer.rejected, (state, action) => {
+  state.requestOfferLoading = false;
+  state.requestOfferError = action.payload;
+});
   },
 });
 
@@ -105,6 +199,6 @@ const billboardSlice = createSlice({
    EXPORTS
    ========================================================= */
 
-export const { clearBestOfferBillboards } = billboardSlice.actions;
+export const { clearBestOfferBillboards ,clearSuperDeals} = billboardSlice.actions;
 
 export default billboardSlice.reducer;

@@ -6,6 +6,7 @@ import billboardReducer from '@/app/features/billBoard/billBoardSlice';
 import adminPanelReducer from '@/app/features/adminPanel/adminPanelSlice';
 import shopOwnerReducer from '@/app/features/adminPanel/shopOwnerSlice';
 import shopReducer from '@/app/features/adminPanel/shopSlice';
+import flashDealReducer from '@/app/features/adminPanel/flashDealSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,7 +15,8 @@ export const store = configureStore({
     billboards: billboardReducer,
   adminPanel: adminPanelReducer,
   shopOwner: shopOwnerReducer,
-  shop: shopReducer
+  shop: shopReducer,
+  flashDeal: flashDealReducer
   },
 });
 

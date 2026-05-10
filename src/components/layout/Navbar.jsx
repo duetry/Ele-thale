@@ -179,6 +179,711 @@
 //   );
 // }
 
+// 'use client';
+
+// import { useState, useEffect } from 'react';
+// import {
+//   MapPin,
+//   Gift,
+//   Menu,
+//   X,
+//   ShoppingBag,
+//   LogOut,
+//   ChevronDown
+// } from 'lucide-react';
+
+// import { useRouter } from 'next/navigation';
+// import { useDispatch, useSelector } from 'react-redux';
+// import LoginPopup from '../LoginPopup';
+// import { clearAuth, selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
+// import {
+
+//   getLocationList,
+//   setSelectedLocation,
+//   selectSelectedLocation,
+//   selectLocationList,
+//   userTracking,
+// } from '@/app/features/adminPanel/adminPanelSlice';
+// import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlice';
+// import toast, { Toaster } from 'react-hot-toast';
+
+// import { resetAdminState } from '@/app/features/adminPanel/adminPanelSlice';
+// import { resetShops } from '@/app/features/adminPanel/shopSlice';
+// import { resetShopOwners } from '@/app/features/adminPanel/shopOwnerSlice';
+
+// export default function Navbar() {
+//   const router = useRouter();
+//   const dispatch = useDispatch();
+
+//   const [mounted, setMounted] = useState(false);
+//   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+//   const [showLogin, setShowLogin] = useState(false);
+//   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+
+//   const isAuthenticated = useSelector(selectIsAuthenticated);
+//   const user = useSelector(selectUser);
+//   const locationData = useSelector(selectLocationList);
+//   const selectedLocation = useSelector(selectSelectedLocation);
+
+//   /* =========================
+//      MOUNT CHECK (fixes hydration)
+//      ========================= */
+//   useEffect(() => {
+//     setMounted(true);
+//   }, []);
+
+//   /* =========================
+//      LOAD LOCATIONS + INITIAL FETCH
+//      ========================= */
+//   useEffect(() => {
+//     const initLocation = async () => {
+//       try {
+//         const res = await dispatch(getLocationList()).unwrap();
+//         const locations = res?.data || [];
+//         const firstLocation = locations?.[0];
+
+//         if (firstLocation?.LocationId) {
+//           dispatch(setSelectedLocation(firstLocation));
+//           dispatch(fetchBestOfferBillboards({ LocationId: String(firstLocation.LocationId) }));
+//         } else {
+//           dispatch(fetchBestOfferBillboards({}));
+//         }
+//       } catch {
+//         dispatch(fetchBestOfferBillboards({}));
+//       }
+//     };
+
+//     initLocation();
+//   }, [dispatch, isAuthenticated]);
+
+//   /* =========================
+//      LOCATION CHANGE HANDLER
+//      ========================= */
+//   const handleLocationChange = (location) => {
+//     dispatch(setSelectedLocation(location));
+//     dispatch(fetchBestOfferBillboards({ LocationId: String(location.LocationId) }));
+//     setLocationDropdownOpen(false);
+//   };
+
+//   /* =========================
+//      AUTH-GUARDED HANDLERS
+//      ========================= */
+//   const handleSpecialOfferClick = () => {
+//     if (isAuthenticated) {
+//       router.push('/specialOffer');
+//       dispatch(userTracking('specialOffer'));
+//     } else {
+//       setShowLogin(true);
+//     }
+//   };
+
+//   const handleAdminClick = () => {
+//     if (isAuthenticated) {
+//       router.push('/admin');
+//     } else {
+//       setShowLogin(true);
+//     }
+//   };
+
+//   const handleLogout = () => {
+//     dispatch(clearAuth());
+//     dispatch(resetAdminState());
+//     dispatch(resetShops());
+//     dispatch(resetShopOwners());
+//     router.push('/');
+//     toast.success('Logged out successfully 👋');
+//   };
+
+//   /* =========================
+//      NAV CONFIG
+//      ========================= */
+
+
+//   console.log("user?.usertype", user?.usertype)
+//   const navItems = [
+//     ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+//       ? []
+//       : [{ name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick }]),
+//     ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+//       ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
+//       : []),
+//   ];
+
+//   return (
+//     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
+//       {/* ── TOP BAR (Amazon dark navy) ── */}
+//       <div style={{ background: '#131921', borderBottom: '1px solid #3a3a3a' }}>
+//         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px', display: 'flex', alignItems: 'center', height: 60, gap: 8 }}>
+
+//           {/* Logo */}
+//           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8, flexShrink: 0 }}>
+//             <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', lineHeight: 1 }}>
+//               offer<span style={{ color: '#FF9900' }}>go</span>down
+//             </span>
+//           </div>
+
+//           {/* Location Dropdown */}
+//           {mounted && !(user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER') && (
+//             <div style={{ position: 'relative', flexShrink: 0 }}>
+//               <button
+//                 id="navbar-location-btn"
+//                 onClick={() => setLocationDropdownOpen((prev) => !prev)}
+//                 style={{
+//                   display: 'flex', alignItems: 'center', gap: 4,
+//                   padding: '6px 8px', borderRadius: 3,
+//                   border: '1px solid transparent',
+//                   background: 'transparent', cursor: 'pointer',
+//                   transition: 'border-color 0.15s',
+//                 }}
+//                 onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
+//                 onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+//               >
+//                 <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
+//                 <div style={{ textAlign: 'left' }}>
+//                   <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.2 }}>Location to</div>
+//                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+//                     {selectedLocation?.Name || 'Select Location'}
+//                   </div>
+//                 </div>
+//                 <ChevronDown style={{ width: 12, height: 12, color: '#fff', marginLeft: 2, transition: 'transform 0.2s', transform: locationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+//               </button>
+
+//               {locationDropdownOpen && (
+//                 <>
+//                   <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setLocationDropdownOpen(false)} />
+//                   <div style={{
+//                     position: 'absolute', left: 0, top: '100%', marginTop: 4, zIndex: 20,
+//                     minWidth: 200, background: '#fff', border: '1px solid #ddd',
+//                     borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', overflow: 'hidden',
+//                   }}>
+//                     <div style={{ padding: '10px 16px', borderBottom: '1px solid #eee', background: '#f5f5f5' }}>
+//                       <p style={{ fontSize: 12, fontWeight: 700, color: '#131921', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>Choose a location</p>
+//                     </div>
+//                     <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+//                       {(locationData || []).map((loc) => (
+//                         <button
+//                           key={loc.LocationId}
+//                           onClick={() => handleLocationChange(loc)}
+//                           style={{
+//                             width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+//                             padding: '10px 16px', textAlign: 'left', border: 'none', cursor: 'pointer',
+//                             background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#fff',
+//                             borderLeft: selectedLocation?.LocationId === loc.LocationId ? '3px solid #FF9900' : '3px solid transparent',
+//                             transition: 'all 0.15s',
+//                           }}
+//                           onMouseEnter={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#f5f5f5'; }}
+//                           onMouseLeave={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#fff'; }}
+//                         >
+//                           <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
+//                           <span style={{ fontSize: 13, fontWeight: 500, color: '#131921' }}>{loc.Name}</span>
+//                           {selectedLocation?.LocationId === loc.LocationId && (
+//                             <span style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: '#FF9900', flexShrink: 0 }} />
+//                           )}
+//                         </button>
+//                       ))}
+//                       {(!locationData || locationData.length === 0) && (
+//                         <p style={{ padding: '12px 16px', fontSize: 13, color: '#888', textAlign: 'center', margin: 0 }}>No locations found</p>
+//                       )}
+//                     </div>
+//                   </div>
+//                 </>
+//               )}
+//             </div>
+//           )}
+
+//           {/* Spacer */}
+//           <div style={{ flex: 1 }} />
+
+//           {/* Desktop Nav Items */}
+//           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+//             {navItems.map((item) => (
+//               <button
+//                 id={`navbar-${item.name.replace(/\s+/g, '-').toLowerCase()}`}
+//                 key={item.name}
+//                 onClick={item.onClick}
+//                 style={{
+//                   display: 'flex', alignItems: 'center', gap: 6,
+//                   padding: '6px 10px', borderRadius: 3,
+//                   border: '1px solid transparent', background: 'transparent',
+//                   color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+//                 }}
+//                 onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
+//                 onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+//               >
+//                 <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
+//                 <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.name}</span>
+//               </button>
+//             ))}
+
+//             {/* Logout */}
+//             {mounted && isAuthenticated && (
+//               <button
+//                 id="navbar-logout-btn"
+//                 onClick={handleLogout}
+//                 style={{
+//                   display: 'flex', alignItems: 'center', gap: 6,
+//                   padding: '6px 12px', borderRadius: 3,
+//                   border: '1px solid transparent', background: 'transparent',
+//                   color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+//                 }}
+//                 onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
+//                 onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+//               >
+//                 <LogOut style={{ width: 16, height: 16, color: '#FF9900' }} />
+//                 <span style={{ fontSize: 13, fontWeight: 600 }}>Logout</span>
+//               </button>
+//             )}
+//           </div>
+
+//           {/* Mobile Toggle */}
+//           <button
+//             id="navbar-mobile-menu-btn"
+//             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+//             style={{ display: 'none', color: '#fff', padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}
+//             className="md-hidden-toggle"
+//           >
+//             {mobileMenuOpen ? <X style={{ width: 22, height: 22 }} /> : <Menu style={{ width: 22, height: 22 }} />}
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* ── MOBILE MENU ── */}
+//       {mobileMenuOpen && (
+//         <div style={{ background: '#131921', borderTop: '1px solid #3a3a3a', padding: '12px 16px' }}>
+//           {mounted && (
+//             <div style={{ marginBottom: 12 }}>
+//               <p style={{ fontSize: 11, fontWeight: 700, color: '#FF9900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Location</p>
+//               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+//                 {(locationData || []).map((loc) => (
+//                   <button
+//                     key={loc.LocationId}
+//                     onClick={() => { handleLocationChange(loc); setMobileMenuOpen(false); }}
+//                     style={{
+//                       display: 'flex', alignItems: 'center', gap: 6,
+//                       padding: '8px 10px', borderRadius: 3,
+//                       border: selectedLocation?.LocationId === loc.LocationId ? '1px solid #FF9900' : '1px solid #444',
+//                       background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#232f3e',
+//                       color: selectedLocation?.LocationId === loc.LocationId ? '#131921' : '#ccc',
+//                       cursor: 'pointer', fontSize: 12, fontWeight: 500,
+//                     }}
+//                   >
+//                     <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} />
+//                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{loc.Name}</span>
+//                   </button>
+//                 ))}
+//               </div>
+//             </div>
+//           )}
+//           <div style={{ borderTop: '1px solid #3a3a3a', paddingTop: 8 }}>
+//             {navItems.map((item) => (
+//               <button
+//                 key={item.name}
+//                 onClick={() => { item.onClick(); setMobileMenuOpen(false); }}
+//                 style={{
+//                   width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+//                   padding: '10px 8px', border: 'none', background: 'transparent',
+//                   color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
+//                 }}
+//               >
+//                 <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
+//                 <span>{item.name}</span>
+//               </button>
+//             ))}
+//             {mounted && isAuthenticated && (
+//               <button
+//                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+//                 style={{
+//                   width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+//                   padding: '10px 8px', border: 'none', background: 'transparent',
+//                   color: '#ff6b6b', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
+//                 }}
+//               >
+//                 <LogOut style={{ width: 16, height: 16 }} />
+//                 <span>Logout</span>
+//               </button>
+//             )}
+//           </div>
+//         </div>
+//       )}
+
+//       {/* ── Popups ── */}
+//       {showLogin && <LoginPopup close={() => setShowLogin(false)} />}
+
+//       <Toaster
+//         position="top-right"
+//         toastOptions={{
+//           duration: 2500,
+//           style: {
+//             background: '#232f3e',
+//             color: '#fff',
+//             border: '1px solid #FF9900',
+//             borderRadius: 4,
+//           },
+//         }}
+//       />
+//     </nav>
+//   );
+// }
+
+
+// 'use client';
+
+// import { useState, useEffect } from 'react';
+// import {
+//   MapPin,
+//   Gift,
+//   Menu,
+//   X,
+//   ShoppingBag,
+//   LogOut,
+//   ChevronDown,
+//   Zap
+// } from 'lucide-react';
+
+// import { useRouter } from 'next/navigation';
+// import { useDispatch, useSelector } from 'react-redux';
+// import LoginPopup from '../LoginPopup';
+// import { clearAuth, selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
+// import {
+//   getLocationList,
+//   setSelectedLocation,
+//   selectSelectedLocation,
+//   selectLocationList,
+//   userTracking,
+// } from '@/app/features/adminPanel/adminPanelSlice';
+// import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlice';
+// import toast, { Toaster } from 'react-hot-toast';
+
+// import { resetAdminState } from '@/app/features/adminPanel/adminPanelSlice';
+// import { resetShops } from '@/app/features/adminPanel/shopSlice';
+// import { resetShopOwners } from '@/app/features/adminPanel/shopOwnerSlice';
+
+// export default function Navbar() {
+//   const router = useRouter();
+//   const dispatch = useDispatch();
+
+//   const [mounted, setMounted] = useState(false);
+//   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+//   const [showLogin, setShowLogin] = useState(false);
+//   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+
+//   const isAuthenticated = useSelector(selectIsAuthenticated);
+//   const user = useSelector(selectUser);
+//   const locationData = useSelector(selectLocationList);
+//   const selectedLocation = useSelector(selectSelectedLocation);
+
+//   /* =========================
+//      MOUNT CHECK (fixes hydration)
+//      ========================= */
+//   useEffect(() => {
+//     setMounted(true);
+//   }, []);
+
+//   /* =========================
+//      LOAD LOCATIONS + INITIAL FETCH
+//      ========================= */
+//   useEffect(() => {
+//     const initLocation = async () => {
+//       try {
+//         const res = await dispatch(getLocationList()).unwrap();
+//         const locations = res?.data || [];
+//         const firstLocation = locations?.[0];
+
+//         if (firstLocation?.LocationId) {
+//           dispatch(setSelectedLocation(firstLocation));
+//           dispatch(fetchBestOfferBillboards({ LocationId: String(firstLocation.LocationId) }));
+//         } else {
+//           dispatch(fetchBestOfferBillboards({}));
+//         }
+//       } catch {
+//         dispatch(fetchBestOfferBillboards({}));
+//       }
+//     };
+
+//     initLocation();
+//   }, [dispatch, isAuthenticated]);
+
+//   /* =========================
+//      LOCATION CHANGE HANDLER
+//      ========================= */
+//   const handleLocationChange = (location) => {
+//     dispatch(setSelectedLocation(location));
+//     dispatch(fetchBestOfferBillboards({ LocationId: String(location.LocationId) }));
+//     setLocationDropdownOpen(false);
+//   };
+
+//   /* =========================
+//      AUTH-GUARDED HANDLERS
+//      ========================= */
+//   const handleSpecialOfferClick = () => {
+//     if (isAuthenticated) {
+//       router.push('/specialOffer');
+//       dispatch(userTracking('specialOffer'));
+//     } else {
+//       setShowLogin(true);
+//     }
+//   };
+
+//   const handleLogout = () => {
+//   dispatch(clearAuth());
+//   dispatch(resetAdminState());
+//   dispatch(resetShops());
+//   dispatch(resetShopOwners());
+//   router.push('/');
+//   toast.success('Logged out successfully 👋');
+// };
+//   const handleAdminClick = () => {
+//     if (isAuthenticated) {
+//       router.push('/admin');
+//     } else {
+//       setShowLogin(true);
+//     }
+//   };
+
+//   // ── NEW: Super Deal handler ──
+//   const handleSuperDealClick = () => {
+//     if (isAuthenticated) {
+//       router.push('/superDeal');
+//       dispatch(userTracking('superDeal'));
+//     } else {
+//       setShowLogin(true);
+//     }
+//   };
+
+//   /* =========================
+//      NAV CONFIG
+//      ========================= */
+//   console.log("user?.usertype", user?.usertype);
+
+//   const navItems = [
+//     ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+//       ? []
+//       : [
+//           { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
+//           // ── NEW: Super Deal nav item (visible to regular users only) ──
+//           { name: 'Super Deal', icon: Zap, onClick: handleSuperDealClick },
+//         ]),
+//     ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+//       ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
+//       : []),
+//   ];
+
+//   return (
+//     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
+//       {/* ── TOP BAR (Amazon dark navy) ── */}
+//       <div style={{ background: '#131921', borderBottom: '1px solid #3a3a3a' }}>
+//         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px', display: 'flex', alignItems: 'center', height: 60, gap: 8 }}>
+
+//           {/* Logo */}
+//           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8, flexShrink: 0 }}>
+//             <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', lineHeight: 1 }}>
+//               offer<span style={{ color: '#FF9900' }}>go</span>down
+//             </span>
+//           </div>
+
+//           {/* Location Dropdown */}
+//           {mounted && !(user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER') && (
+//             <div style={{ position: 'relative', flexShrink: 0 }}>
+//               <button
+//                 id="navbar-location-btn"
+//                 onClick={() => setLocationDropdownOpen((prev) => !prev)}
+//                 style={{
+//                   display: 'flex', alignItems: 'center', gap: 4,
+//                   padding: '6px 8px', borderRadius: 3,
+//                   border: '1px solid transparent',
+//                   background: 'transparent', cursor: 'pointer',
+//                   transition: 'border-color 0.15s',
+//                 }}
+//                 onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
+//                 onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+//               >
+//                 <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
+//                 <div style={{ textAlign: 'left' }}>
+//                   <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.2 }}>Location to</div>
+//                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+//                     {selectedLocation?.Name || 'Select Location'}
+//                   </div>
+//                 </div>
+//                 <ChevronDown style={{ width: 12, height: 12, color: '#fff', marginLeft: 2, transition: 'transform 0.2s', transform: locationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+//               </button>
+
+//               {locationDropdownOpen && (
+//                 <>
+//                   <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setLocationDropdownOpen(false)} />
+//                   <div style={{
+//                     position: 'absolute', left: 0, top: '100%', marginTop: 4, zIndex: 20,
+//                     minWidth: 200, background: '#fff', border: '1px solid #ddd',
+//                     borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', overflow: 'hidden',
+//                   }}>
+//                     <div style={{ padding: '10px 16px', borderBottom: '1px solid #eee', background: '#f5f5f5' }}>
+//                       <p style={{ fontSize: 12, fontWeight: 700, color: '#131921', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>Choose a location</p>
+//                     </div>
+//                     <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+//                       {(locationData || []).map((loc) => (
+//                         <button
+//                           key={loc.LocationId}
+//                           onClick={() => handleLocationChange(loc)}
+//                           style={{
+//                             width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+//                             padding: '10px 16px', textAlign: 'left', border: 'none', cursor: 'pointer',
+//                             background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#fff',
+//                             borderLeft: selectedLocation?.LocationId === loc.LocationId ? '3px solid #FF9900' : '3px solid transparent',
+//                             transition: 'all 0.15s',
+//                           }}
+//                           onMouseEnter={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#f5f5f5'; }}
+//                           onMouseLeave={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#fff'; }}
+//                         >
+//                           <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
+//                           <span style={{ fontSize: 13, fontWeight: 500, color: '#131921' }}>{loc.Name}</span>
+//                           {selectedLocation?.LocationId === loc.LocationId && (
+//                             <span style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: '#FF9900', flexShrink: 0 }} />
+//                           )}
+//                         </button>
+//                       ))}
+//                       {(!locationData || locationData.length === 0) && (
+//                         <p style={{ padding: '12px 16px', fontSize: 13, color: '#888', textAlign: 'center', margin: 0 }}>No locations found</p>
+//                       )}
+//                     </div>
+//                   </div>
+//                 </>
+//               )}
+//             </div>
+//           )}
+
+//           {/* Spacer */}
+//           <div style={{ flex: 1 }} />
+
+//           {/* Desktop Nav Items */}
+//           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+//             {navItems.map((item) => (
+//               <button
+//                 id={`navbar-${item.name.replace(/\s+/g, '-').toLowerCase()}`}
+//                 key={item.name}
+//                 onClick={item.onClick}
+//                 style={{
+//                   display: 'flex', alignItems: 'center', gap: 6,
+//                   padding: '6px 10px', borderRadius: 3,
+//                   border: '1px solid transparent', background: 'transparent',
+//                   color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+//                 }}
+//                 onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
+//                 onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+//               >
+//                 <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
+//                 <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.name}</span>
+//               </button>
+//             ))}
+
+//             {/* Logout */}
+//             {mounted && isAuthenticated && (
+//               <button
+//                 id="navbar-logout-btn"
+//                 onClick={handleLogout}
+//                 style={{
+//                   display: 'flex', alignItems: 'center', gap: 6,
+//                   padding: '6px 12px', borderRadius: 3,
+//                   border: '1px solid transparent', background: 'transparent',
+//                   color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+//                 }}
+//                 onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
+//                 onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+//               >
+//                 <LogOut style={{ width: 16, height: 16, color: '#FF9900' }} />
+//                 <span style={{ fontSize: 13, fontWeight: 600 }}>Logout</span>
+//               </button>
+//             )}
+//           </div>
+
+//           {/* Mobile Toggle */}
+//           <button
+//             id="navbar-mobile-menu-btn"
+//             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+//             style={{ display: 'none', color: '#fff', padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}
+//             className="md-hidden-toggle"
+//           >
+//             {mobileMenuOpen ? <X style={{ width: 22, height: 22 }} /> : <Menu style={{ width: 22, height: 22 }} />}
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* ── MOBILE MENU ── */}
+//       {mobileMenuOpen && (
+//         <div style={{ background: '#131921', borderTop: '1px solid #3a3a3a', padding: '12px 16px' }}>
+//           {mounted && (
+//             <div style={{ marginBottom: 12 }}>
+//               <p style={{ fontSize: 11, fontWeight: 700, color: '#FF9900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Location</p>
+//               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+//                 {(locationData || []).map((loc) => (
+//                   <button
+//                     key={loc.LocationId}
+//                     onClick={() => { handleLocationChange(loc); setMobileMenuOpen(false); }}
+//                     style={{
+//                       display: 'flex', alignItems: 'center', gap: 6,
+//                       padding: '8px 10px', borderRadius: 3,
+//                       border: selectedLocation?.LocationId === loc.LocationId ? '1px solid #FF9900' : '1px solid #444',
+//                       background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#232f3e',
+//                       color: selectedLocation?.LocationId === loc.LocationId ? '#131921' : '#ccc',
+//                       cursor: 'pointer', fontSize: 12, fontWeight: 500,
+//                     }}
+//                   >
+//                     <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} />
+//                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{loc.Name}</span>
+//                   </button>
+//                 ))}
+//               </div>
+//             </div>
+//           )}
+//           <div style={{ borderTop: '1px solid #3a3a3a', paddingTop: 8 }}>
+//             {navItems.map((item) => (
+//               <button
+//                 key={item.name}
+//                 onClick={() => { item.onClick(); setMobileMenuOpen(false); }}
+//                 style={{
+//                   width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+//                   padding: '10px 8px', border: 'none', background: 'transparent',
+//                   color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
+//                 }}
+//               >
+//                 <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
+//                 <span>{item.name}</span>
+//               </button>
+//             ))}
+//             {mounted && isAuthenticated && (
+//               <button
+//                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+//                 style={{
+//                   width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+//                   padding: '10px 8px', border: 'none', background: 'transparent',
+//                   color: '#ff6b6b', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
+//                 }}
+//               >
+//                 <LogOut style={{ width: 16, height: 16 }} />
+//                 <span>Logout</span>
+//               </button>
+//             )}
+//           </div>
+//         </div>
+//       )}
+
+//       {/* ── Popups ── */}
+//       {showLogin && <LoginPopup close={() => setShowLogin(false)} />}
+
+//       <Toaster
+//         position="top-right"
+//         toastOptions={{
+//           duration: 2500,
+//           style: {
+//             background: '#232f3e',
+//             color: '#fff',
+//             border: '1px solid #FF9900',
+//             borderRadius: 4,
+//           },
+//         }}
+//       />
+//     </nav>
+//   );
+// }
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -189,7 +894,8 @@ import {
   X,
   ShoppingBag,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Zap,
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -197,19 +903,19 @@ import { useDispatch, useSelector } from 'react-redux';
 import LoginPopup from '../LoginPopup';
 import { clearAuth, selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
 import {
-
   getLocationList,
   setSelectedLocation,
   selectSelectedLocation,
   selectLocationList,
   userTracking,
 } from '@/app/features/adminPanel/adminPanelSlice';
-import { fetchBestOfferBillboards } from '@/app/features/billBoard/billBoardSlice';
+import { fetchBestOfferBillboards, fetchSuperDeals } from '@/app/features/billBoard/billBoardSlice';
 import toast, { Toaster } from 'react-hot-toast';
-
 import { resetAdminState } from '@/app/features/adminPanel/adminPanelSlice';
 import { resetShops } from '@/app/features/adminPanel/shopSlice';
 import { resetShopOwners } from '@/app/features/adminPanel/shopOwnerSlice';
+
+const MOBILE_BREAKPOINT = 768;
 
 export default function Navbar() {
   const router = useRouter();
@@ -219,6 +925,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false); // ✅ JS-driven responsive
 
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const user = useSelector(selectUser);
@@ -226,11 +933,22 @@ export default function Navbar() {
   const selectedLocation = useSelector(selectSelectedLocation);
 
   /* =========================
-     MOUNT CHECK (fixes hydration)
+     MOUNT + RESIZE LISTENER
      ========================= */
   useEffect(() => {
     setMounted(true);
+
+    const checkMobile = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    checkMobile(); // run on mount
+
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Close mobile menu when switching to desktop
+  useEffect(() => {
+    if (!isMobile) setMobileMenuOpen(false);
+  }, [isMobile]);
 
   /* =========================
      LOAD LOCATIONS + INITIAL FETCH
@@ -245,11 +963,14 @@ export default function Navbar() {
         if (firstLocation?.LocationId) {
           dispatch(setSelectedLocation(firstLocation));
           dispatch(fetchBestOfferBillboards({ LocationId: String(firstLocation.LocationId) }));
+          dispatch(fetchSuperDeals({ LocationId: String(firstLocation.LocationId) }));
         } else {
           dispatch(fetchBestOfferBillboards({}));
+          dispatch(fetchSuperDeals({}));
         }
       } catch {
         dispatch(fetchBestOfferBillboards({}));
+        dispatch(fetchSuperDeals({}));
       }
     };
 
@@ -262,6 +983,7 @@ export default function Navbar() {
   const handleLocationChange = (location) => {
     dispatch(setSelectedLocation(location));
     dispatch(fetchBestOfferBillboards({ LocationId: String(location.LocationId) }));
+    dispatch(fetchSuperDeals({ LocationId: String(location.LocationId) }));
     setLocationDropdownOpen(false);
   };
 
@@ -277,14 +999,6 @@ export default function Navbar() {
     }
   };
 
-  const handleAdminClick = () => {
-    if (isAuthenticated) {
-      router.push('/admin');
-    } else {
-      setShowLogin(true);
-    }
-  };
-
   const handleLogout = () => {
     dispatch(clearAuth());
     dispatch(resetAdminState());
@@ -294,26 +1008,49 @@ export default function Navbar() {
     toast.success('Logged out successfully 👋');
   };
 
+  const handleAdminClick = () => {
+    if (isAuthenticated) {
+      router.push('/admin');
+    } else {
+      setShowLogin(true);
+    }
+  };
+
+  const handleSuperDealClick = () => {
+    if (isAuthenticated) {
+      router.push('/superDeal');
+      dispatch(userTracking('superDeal'));
+    } else {
+      setShowLogin(true);
+    }
+  };
+
   /* =========================
-     NAV CONFIG
+     NAV ITEMS CONFIG
      ========================= */
+  const isAdminOrOwner = mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER');
 
-
-  console.log("user?.usertype", user?.usertype)
   const navItems = [
-    ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
-      ? []
-      : [{ name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick }]),
-    ...(mounted && (user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER')
+    ...(!isAdminOrOwner
+      ? [
+          { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
+          { name: 'Super Deal', icon: Zap, onClick: handleSuperDealClick },
+        ]
+      : []),
+    ...(isAdminOrOwner
       ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
       : []),
   ];
 
   return (
     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
-      {/* ── TOP BAR (Amazon dark navy) ── */}
+
+      {/* ── TOP BAR ── */}
       <div style={{ background: '#131921', borderBottom: '1px solid #3a3a3a' }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px', display: 'flex', alignItems: 'center', height: 60, gap: 8 }}>
+        <div style={{
+          maxWidth: 1400, margin: '0 auto', padding: '0 16px',
+          display: 'flex', alignItems: 'center', height: 60, gap: 8,
+        }}>
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8, flexShrink: 0 }}>
@@ -322,8 +1059,8 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Location Dropdown */}
-          {mounted && !(user?.usertype === 'admin' || user?.usertype === 'SHOP_OWNER') && (
+          {/* Location Dropdown — hidden on mobile */}
+          {mounted && !isAdminOrOwner && !isMobile && (
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <button
                 id="navbar-location-btn"
@@ -331,9 +1068,8 @@ export default function Navbar() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 4,
                   padding: '6px 8px', borderRadius: 3,
-                  border: '1px solid transparent',
-                  background: 'transparent', cursor: 'pointer',
-                  transition: 'border-color 0.15s',
+                  border: '1px solid transparent', background: 'transparent',
+                  cursor: 'pointer', transition: 'border-color 0.15s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
@@ -345,7 +1081,11 @@ export default function Navbar() {
                     {selectedLocation?.Name || 'Select Location'}
                   </div>
                 </div>
-                <ChevronDown style={{ width: 12, height: 12, color: '#fff', marginLeft: 2, transition: 'transform 0.2s', transform: locationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                <ChevronDown style={{
+                  width: 12, height: 12, color: '#fff', marginLeft: 2,
+                  transition: 'transform 0.2s',
+                  transform: locationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                }} />
               </button>
 
               {locationDropdownOpen && (
@@ -357,7 +1097,9 @@ export default function Navbar() {
                     borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', overflow: 'hidden',
                   }}>
                     <div style={{ padding: '10px 16px', borderBottom: '1px solid #eee', background: '#f5f5f5' }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#131921', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>Choose a location</p>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: '#131921', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Choose a location
+                      </p>
                     </div>
                     <div style={{ maxHeight: 240, overflowY: 'auto' }}>
                       {(locationData || []).map((loc) => (
@@ -382,7 +1124,9 @@ export default function Navbar() {
                         </button>
                       ))}
                       {(!locationData || locationData.length === 0) && (
-                        <p style={{ padding: '12px 16px', fontSize: 13, color: '#888', textAlign: 'center', margin: 0 }}>No locations found</p>
+                        <p style={{ padding: '12px 16px', fontSize: 13, color: '#888', textAlign: 'center', margin: 0 }}>
+                          No locations found
+                        </p>
                       )}
                     </div>
                   </div>
@@ -394,111 +1138,168 @@ export default function Navbar() {
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 
-          {/* Desktop Nav Items */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {/* ── DESKTOP NAV — hidden on mobile ── */}
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {navItems.map((item) => (
+                <button
+                  id={`navbar-${item.name.replace(/\s+/g, '-').toLowerCase()}`}
+                  key={item.name}
+                  onClick={item.onClick}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 10px', borderRadius: 3,
+                    border: '1px solid transparent', background: 'transparent',
+                    color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                >
+                  <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.name}</span>
+                </button>
+              ))}
+
+              {mounted && isAuthenticated && (
+                <button
+                  id="navbar-logout-btn"
+                  onClick={handleLogout}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 12px', borderRadius: 3,
+                    border: '1px solid transparent', background: 'transparent',
+                    color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                >
+                  <LogOut style={{ width: 16, height: 16, color: '#FF9900' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Logout</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── HAMBURGER — only on mobile ── */}
+          {isMobile && (
+            <button
+              id="navbar-mobile-menu-btn"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 38, height: 38, borderRadius: 4,
+                background: mobileMenuOpen ? '#232f3e' : 'transparent',
+                border: '1px solid',
+                borderColor: mobileMenuOpen ? '#FF9900' : 'transparent',
+                color: '#fff', cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
+              onMouseLeave={e => { if (!mobileMenuOpen) e.currentTarget.style.borderColor = 'transparent'; }}
+            >
+              {mobileMenuOpen
+                ? <X style={{ width: 20, height: 20, color: '#FF9900' }} />
+                : <Menu style={{ width: 20, height: 20, color: '#fff' }} />
+              }
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── MOBILE DROPDOWN MENU ── */}
+      {isMobile && mobileMenuOpen && (
+        <div style={{
+          background: '#131921',
+          borderTop: '1px solid #3a3a3a',
+          padding: '16px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+        }}>
+
+          {/* Location section */}
+          {mounted && !isAdminOrOwner && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{
+                fontSize: 11, fontWeight: 700, color: '#FF9900',
+                textTransform: 'uppercase', letterSpacing: 0.5,
+                margin: '0 0 8px',
+              }}>
+                📍 Location
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {(locationData || []).map((loc) => {
+                  const isSelected = selectedLocation?.LocationId === loc.LocationId;
+                  return (
+                    <button
+                      key={loc.LocationId}
+                      onClick={() => { handleLocationChange(loc); setMobileMenuOpen(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '8px 10px', borderRadius: 4,
+                        border: isSelected ? '1px solid #FF9900' : '1px solid #3a3a3a',
+                        background: isSelected ? '#fff3e0' : '#232f3e',
+                        color: isSelected ? '#131921' : '#ccc',
+                        cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <MapPin style={{ width: 12, height: 12, flexShrink: 0, color: isSelected ? '#FF9900' : '#888' }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {loc.Name}
+                      </span>
+                      {isSelected && (
+                        <span style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%', background: '#FF9900', flexShrink: 0 }} />
+                      )}
+                    </button>
+                  );
+                })}
+                {(!locationData || locationData.length === 0) && (
+                  <p style={{ fontSize: 12, color: '#888', margin: 0, gridColumn: '1 / -1' }}>No locations found</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div style={{ borderTop: '1px solid #3a3a3a', marginBottom: 8 }} />
+
+          {/* Nav items */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {navItems.map((item) => (
               <button
-                id={`navbar-${item.name.replace(/\s+/g, '-').toLowerCase()}`}
                 key={item.name}
-                onClick={item.onClick}
+                onClick={() => { item.onClick(); setMobileMenuOpen(false); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 10px', borderRadius: 3,
-                  border: '1px solid transparent', background: 'transparent',
-                  color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '11px 10px', borderRadius: 4,
+                  border: 'none', background: 'transparent',
+                  color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 500,
+                  transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+                onMouseEnter={e => e.currentTarget.style.background = '#232f3e'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.name}</span>
+                <item.icon style={{ width: 17, height: 17, color: '#FF9900', flexShrink: 0 }} />
+                <span>{item.name}</span>
               </button>
             ))}
 
             {/* Logout */}
             {mounted && isAuthenticated && (
               <button
-                id="navbar-logout-btn"
-                onClick={handleLogout}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 12px', borderRadius: 3,
-                  border: '1px solid transparent', background: 'transparent',
-                  color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
-                }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
-              >
-                <LogOut style={{ width: 16, height: 16, color: '#FF9900' }} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Logout</span>
-              </button>
-            )}
-          </div>
-
-          {/* Mobile Toggle */}
-          <button
-            id="navbar-mobile-menu-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{ display: 'none', color: '#fff', padding: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}
-            className="md-hidden-toggle"
-          >
-            {mobileMenuOpen ? <X style={{ width: 22, height: 22 }} /> : <Menu style={{ width: 22, height: 22 }} />}
-          </button>
-        </div>
-      </div>
-
-      {/* ── MOBILE MENU ── */}
-      {mobileMenuOpen && (
-        <div style={{ background: '#131921', borderTop: '1px solid #3a3a3a', padding: '12px 16px' }}>
-          {mounted && (
-            <div style={{ marginBottom: 12 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#FF9900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Location</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {(locationData || []).map((loc) => (
-                  <button
-                    key={loc.LocationId}
-                    onClick={() => { handleLocationChange(loc); setMobileMenuOpen(false); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '8px 10px', borderRadius: 3,
-                      border: selectedLocation?.LocationId === loc.LocationId ? '1px solid #FF9900' : '1px solid #444',
-                      background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#232f3e',
-                      color: selectedLocation?.LocationId === loc.LocationId ? '#131921' : '#ccc',
-                      cursor: 'pointer', fontSize: 12, fontWeight: 500,
-                    }}
-                  >
-                    <MapPin style={{ width: 12, height: 12, flexShrink: 0 }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{loc.Name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          <div style={{ borderTop: '1px solid #3a3a3a', paddingTop: 8 }}>
-            {navItems.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => { item.onClick(); setMobileMenuOpen(false); }}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 8px', border: 'none', background: 'transparent',
-                  color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
-                }}
-              >
-                <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
-                <span>{item.name}</span>
-              </button>
-            ))}
-            {mounted && isAuthenticated && (
-              <button
                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
                 style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 8px', border: 'none', background: 'transparent',
-                  color: '#ff6b6b', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderRadius: 3,
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '11px 10px', borderRadius: 4,
+                  border: 'none', background: 'transparent',
+                  color: '#ff6b6b', cursor: 'pointer', fontSize: 14, fontWeight: 500,
+                  transition: 'background 0.15s',
+                  marginTop: 4, borderTop: '1px solid #3a3a3a',
                 }}
+                onMouseEnter={e => e.currentTarget.style.background = '#2a1f1f'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <LogOut style={{ width: 16, height: 16 }} />
+                <LogOut style={{ width: 17, height: 17, flexShrink: 0 }} />
                 <span>Logout</span>
               </button>
             )}
