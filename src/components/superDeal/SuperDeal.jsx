@@ -817,10 +817,8 @@ import { fetchSuperDeals, requestExpiredOffer } from "@/app/features/billBoard/b
 import { fetchProductOffer } from "@/app/features/products/productSlice";
 
 import UnlockOfferModal from "../products/UnlockOfferModel";
-import {
-  setSelectedLocation,
-  userTracking,
-} from "@/app/features/adminPanel/adminPanelSlice";
+import { selectSelectedLocation, userTracking } from "@/app/features/adminPanel/adminPanelSlice";
+
 import { selectIsAuthenticated } from "@/app/features/auth/authSlice";
 import LoginPopup from "../LoginPopup";
 import { postProductReaction  ,
@@ -960,8 +958,9 @@ function LikeDislikeButtons({ productId, isAuthenticated, onLoginRequired }) {
   const dispatch = useDispatch();
 
   // Read reaction + loading state from Redux
-  const reaction       = useSelector(selectReaction(productId));
-  const isLoading      = useSelector(selectReactionLoading(productId));
+// Instead of selectReaction(productId), select the whole reactions map and drill in
+const reaction  = useSelector((state) => state.reactions.reactions?.[productId]);
+const isLoading = useSelector((state) => state.reactions.loading?.[productId]);
 
   const likeActive    = reaction === "like";
   const dislikeActive = reaction === "dislike";
@@ -1249,7 +1248,7 @@ export default function SuperDeal() {
   } = useSelector((state) => state.billboards);
 
   const isAuthenticated = useSelector(selectIsAuthenticated);
-  const selectedLocation = useSelector(setSelectedLocation);
+const selectedLocation = useSelector(selectSelectedLocation); // ✅
   const locationData     = useSelector((state) => state?.products?.productOffer);
 
   /* ── Mount ── */
