@@ -1033,8 +1033,8 @@ export default function Navbar() {
   const navItems = [
     ...(!isAdminOrOwner
       ? [
+        { name: 'Super Deal', icon: Zap, onClick: handleSuperDealClick },
           { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
-          { name: 'Super Deal', icon: Zap, onClick: handleSuperDealClick },
         ]
       : []),
     ...(isAdminOrOwner
