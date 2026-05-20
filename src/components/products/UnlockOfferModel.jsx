@@ -1239,7 +1239,7 @@ export default function UnlockOfferModal({ product, couponCode, onClose }) {
                         Unlocking…
                       </>
                     ) : (
-                      <>🎟️ Unlock Coupon</>
+                      <> Claim this deal</>
                     )}
                   </button>
 
