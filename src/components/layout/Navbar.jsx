@@ -1054,9 +1054,10 @@ export default function Navbar() {
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8, flexShrink: 0 }}>
-            <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', lineHeight: 1 }}>
+            {/* <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', lineHeight: 1 }}>
               offer<span style={{ color: '#FF9900' }}>go</span>down
-            </span>
+            </span> */}
+          <img src="/offer_sandhai.jpeg" style={{height:"46px", width:"74px"}} />
           </div>
 
           {/* Location Dropdown — hidden on mobile */}

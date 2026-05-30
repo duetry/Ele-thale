@@ -2218,20 +2218,20 @@ export default function SuperDeal() {
                 ? {
                     bg:    "linear-gradient(90deg, #fce4ec, #f8bbd0)",
                     color: "#9f1239",
-                    icon:  "😔",
+                    icon:  "",
                     label: "You Missed Out",
                   }
                 : isUpcoming
                 ? {
                     bg:    "linear-gradient(90deg, #fffbeb, #fef3c7)",
                     color: "#92400e",
-                    icon:  "🔔",
+                    icon:  "",
                     label: "Get Ready to Claim",
                   }
                 : {
                     bg:    "linear-gradient(90deg, #dcfce7, #bbf7d0)",
                     color: "#14532d",
-                    icon:  "🔥",
+                    icon:  "",
                     label: "Don't Miss This",
                   };
 
@@ -2260,7 +2260,7 @@ export default function SuperDeal() {
                   }}
                 >
                   {/* ===== STATUS BAR (top of card) — same as BillboardBanners ===== */}
-                  <div
+                  {/* <div
                     style={{
                       width: "100%",
                       padding: "9px 14px",
@@ -2288,7 +2288,7 @@ export default function SuperDeal() {
                     >
                       {statusConfig.label}
                     </span>
-                  </div>
+                  </div> */}
 
                   {/* ===== PRODUCT IMAGE ===== */}
                   <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#fff", flexShrink: 0 }}>
@@ -2337,7 +2337,7 @@ export default function SuperDeal() {
                       onMouseEnter={(e) => { e.currentTarget.style.background = "#fecdd3"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "#fff1f2"; }}
                     >
-                      🔔 Request This Offer
+                      Request This Offer
                     </button>
                   ) : (
                     <button
