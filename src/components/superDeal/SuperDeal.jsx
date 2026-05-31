@@ -2337,7 +2337,7 @@ export default function SuperDeal() {
                       onMouseEnter={(e) => { e.currentTarget.style.background = "#fecdd3"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "#fff1f2"; }}
                     >
-                      Request This Offer
+                      Request This Offer Again
                     </button>
                   ) : (
                     <button

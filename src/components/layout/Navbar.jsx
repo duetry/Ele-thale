@@ -1057,7 +1057,7 @@ export default function Navbar() {
             {/* <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', lineHeight: 1 }}>
               offer<span style={{ color: '#FF9900' }}>go</span>down
             </span> */}
-          <img src="/offer_sandhai.jpeg" style={{height:"46px", width:"74px"}} />
+          <img src="/59e9ac32-f3aa-4544-9235-3c678d15868d.png" style={{height:"63px", width:"74px"}} />
           </div>
 
           {/* Location Dropdown — hidden on mobile */}
