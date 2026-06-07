@@ -763,16 +763,26 @@ const sendOtp = async () => {
         loginUser({ phoneNumber: phone, firebaseToken: idToken })
       );
 
+      // if (loginUser.fulfilled.match(result)) {
+      //   // if (result.payload?.hasPassword) {
+      //   //   setStep('password');
+      //   // } else {
+      //   //   setStep('createPassword');
+      //   // }
+      //   setPassword('');
+      //   setErrors({ phone: '', otp: '', password: '' });
+      //   setTouched({ phone: false, otp: false, password: false });
+      // }
       if (loginUser.fulfilled.match(result)) {
-        if (result.payload?.hasPassword) {
-          setStep('password');
-        } else {
-          setStep('createPassword');
-        }
-        setPassword('');
-        setErrors({ phone: '', otp: '', password: '' });
-        setTouched({ phone: false, otp: false, password: false });
-      }
+  const userType = result.payload?.usertype;
+
+  if (userType === 'admin' || userType === 'SHOP_OWNER') {
+    router.push('/admin');
+  }
+
+  close();
+  if (onLoginSuccess) onLoginSuccess();
+}
     } catch (err) {
       console.error('verifyOtp error:', err);
       setFirebaseError(
@@ -840,23 +850,23 @@ const sendOtp = async () => {
       return;
     }
 
-    if (step === 'password' || step === 'createPassword') {
-      const err = validatePassword(password);
-      setErrors((p) => ({ ...p, password: err }));
-      setTouched((p) => ({ ...p, password: true }));
-      if (err) return;
+    // if (step === 'password' || step === 'createPassword') {
+    //   const err = validatePassword(password);
+    //   setErrors((p) => ({ ...p, password: err }));
+    //   setTouched((p) => ({ ...p, password: true }));
+    //   if (err) return;
 
-      const result = await dispatch(
-        loginUser({ phoneNumber: phone, password, firebaseToken: firebaseTokenRef.current })
-      );
+    //   const result = await dispatch(
+    //     loginUser({ phoneNumber: phone, password, firebaseToken: firebaseTokenRef.current })
+    //   );
 
-      if (loginUser.fulfilled.match(result)) {
-        const userType = result.payload?.usertype;
-        if (userType === 'admin' || userType === 'SHOP_OWNER') router.push('/admin');
-        close();
-        if (onLoginSuccess) onLoginSuccess();
-      }
-    }
+    //   if (loginUser.fulfilled.match(result)) {
+    //     const userType = result.payload?.usertype;
+    //     if (userType === 'admin' || userType === 'SHOP_OWNER') router.push('/admin');
+    //     close();
+    //     if (onLoginSuccess) onLoginSuccess();
+    //   }
+    // }
   };
 
   /* ─── Resend OTP ─── */
