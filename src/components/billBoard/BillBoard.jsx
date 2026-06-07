@@ -3460,6 +3460,7 @@
 //     </div>
 //   );
 // }
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -3882,6 +3883,7 @@ export default function BillboardBanners() {
   const dispatch = useDispatch();
 
   const [mounted, setMounted] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [couponCode, setCouponCode] = useState(null);
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -3914,7 +3916,9 @@ export default function BillboardBanners() {
       fetchBestOfferBillboards({
         LocationId: String(selectedLocation.LocationId),
       })
-    );
+    ).finally(() => {
+      setHasFetched(true);
+    });
   }, [selectedLocation, dispatch]);
 
   /* ------------------ BANNER AUTO SLIDE ------------------ */
@@ -3997,7 +4001,7 @@ export default function BillboardBanners() {
           items: bestOfferExpired,
           label: "Expired Offers",
           accent: "#9f1239",
-          bg: "#f19393",
+          bg: "#fff1f2",
           border: "#fecdd3",
         },
       ].filter((s) => s.items.length > 0)
@@ -4243,7 +4247,7 @@ export default function BillboardBanners() {
         )}
 
         {/* ===================== EMPTY STATE ===================== */}
-        {totalItems === 0 && (
+        {totalItems === 0 && hasFetched && !bestOfferLoading && (
           <div
             style={{
               display: "flex",

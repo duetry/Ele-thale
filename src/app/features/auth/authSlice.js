@@ -42,9 +42,42 @@ const removeFromStorage = (key) => {
    ========================================================= */
 
 // LOGIN
+// export const loginUser = createAsyncThunk(
+//   'auth/loginUser',
+//   async ({ phoneNumber, password }, { rejectWithValue }) => {
+//     try {
+//       const response = await fetch(`${API_BASE}/Login`, {
+//         method: 'POST',
+//         headers: getHeaders(),
+//         body: JSON.stringify({
+//           phoneno: phoneNumber,
+//           password,
+//         }),
+//       });
+
+//       const data = await response.json();
+
+//       if (!response.ok) {
+//         throw new Error(data.message || 'Login failed');
+//       }
+// console.log("data" , data?.user_id)
+//       if (data.token) {
+//         setToStorage('authToken', data.token);
+//         setToStorage('user', JSON.stringify(data.user));
+//         setToStorage('userId', data?.user_id); // ✅ ADDED ONLY
+//       }
+
+//       return data;
+//     } catch (error) {
+//       return rejectWithValue(error.message || 'Something went wrong');
+//     }
+//   }
+// );
+
+
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ phoneNumber, password }, { rejectWithValue }) => {
+  async ({ phoneNumber, password, firebaseToken }, { rejectWithValue }) => { // ← add firebaseToken
     try {
       const response = await fetch(`${API_BASE}/Login`, {
         method: 'POST',
@@ -52,6 +85,7 @@ export const loginUser = createAsyncThunk(
         body: JSON.stringify({
           phoneno: phoneNumber,
           password,
+          firebaseToken, // ← add this
         }),
       });
 
@@ -60,11 +94,13 @@ export const loginUser = createAsyncThunk(
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
-console.log("data" , data?.user_id)
+
+      console.log("data", data?.user_id);
+
       if (data.token) {
         setToStorage('authToken', data.token);
         setToStorage('user', JSON.stringify(data.user));
-        setToStorage('userId', data?.user_id); // ✅ ADDED ONLY
+        setToStorage('userId', data?.user_id);
       }
 
       return data;
@@ -73,7 +109,6 @@ console.log("data" , data?.user_id)
     }
   }
 );
-
 // LOGOUT
 export const logoutUser = createAsyncThunk(
   'auth/logoutUser',
