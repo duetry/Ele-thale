@@ -675,7 +675,24 @@ export default function LoginPopup({ close, onLoginSuccess }) {
 
 
 
+
 useEffect(() => {
+  const initRecaptcha = async () => {
+    if (!recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {
+          size: "invisible",
+        }
+      );
+
+      await recaptchaVerifierRef.current.render();
+    }
+  };
+
+  initRecaptcha();
+
   return () => {
     clearInterval(timerRef.current);
 
@@ -704,29 +721,6 @@ const sendOtp = async () => {
   setFirebaseLoading(true);
 
   try {
-    // Clear old reCAPTCHA instance
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
-
-    // Clear old rendered reCAPTCHA HTML
-    const container = document.getElementById('recaptcha-container');
-    if (container) {
-      container.innerHTML = '';
-    }
-
-    // Create fresh reCAPTCHA
-    recaptchaVerifierRef.current = new RecaptchaVerifier(
-      auth,
-      'recaptcha-container',
-      {
-        size: 'invisible',
-      }
-    );
-
-    await recaptchaVerifierRef.current.render();
-
     const result = await signInWithPhoneNumber(
       auth,
       `+91${phone}`,
@@ -735,11 +729,11 @@ const sendOtp = async () => {
 
     confirmationResultRef.current = result;
 
-    setStep('otp');
+    setStep("otp");
     startResendTimer();
 
   } catch (err) {
-    console.error('sendOtp error:', err);
+    console.error(err);
     setFirebaseError(err.message);
   } finally {
     setFirebaseLoading(false);
@@ -763,17 +757,8 @@ const sendOtp = async () => {
         loginUser({ phoneNumber: phone, firebaseToken: idToken })
       );
 
-      // if (loginUser.fulfilled.match(result)) {
-      //   // if (result.payload?.hasPassword) {
-      //   //   setStep('password');
-      //   // } else {
-      //   //   setStep('createPassword');
-      //   // }
-      //   setPassword('');
-      //   setErrors({ phone: '', otp: '', password: '' });
-      //   setTouched({ phone: false, otp: false, password: false });
-      // }
       if (loginUser.fulfilled.match(result)) {
+   
   const userType = result.payload?.usertype;
 
   if (userType === 'admin' || userType === 'SHOP_OWNER') {
@@ -850,32 +835,12 @@ const sendOtp = async () => {
       return;
     }
 
-    // if (step === 'password' || step === 'createPassword') {
-    //   const err = validatePassword(password);
-    //   setErrors((p) => ({ ...p, password: err }));
-    //   setTouched((p) => ({ ...p, password: true }));
-    //   if (err) return;
-
-    //   const result = await dispatch(
-    //     loginUser({ phoneNumber: phone, password, firebaseToken: firebaseTokenRef.current })
-    //   );
-
-    //   if (loginUser.fulfilled.match(result)) {
-    //     const userType = result.payload?.usertype;
-    //     if (userType === 'admin' || userType === 'SHOP_OWNER') router.push('/admin');
-    //     close();
-    //     if (onLoginSuccess) onLoginSuccess();
-    //   }
-    // }
   };
 
   /* ─── Resend OTP ─── */
   const handleResendOtp = async () => {
     if (resendTimer > 0 || firebaseLoading) return;
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
+
     await sendOtp();
   };
 
@@ -983,10 +948,7 @@ const sendOtp = async () => {
                     setErrors({ phone: '', otp: '', password: '' });
                     setFirebaseError('');
                     clearInterval(timerRef.current);
-                    if (recaptchaVerifierRef.current) {
-                      recaptchaVerifierRef.current.clear();
-                      recaptchaVerifierRef.current = null;
-                    }
+                  
                   }}
                   className="text-slate-500 hover:text-slate-700 underline underline-offset-2"
                 >

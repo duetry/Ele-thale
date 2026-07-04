@@ -8,6 +8,7 @@ import shopOwnerReducer from '@/app/features/adminPanel/shopOwnerSlice';
 import shopReducer from '@/app/features/adminPanel/shopSlice';
 import flashDealReducer from '@/app/features/adminPanel/flashDealSlice';
 import reactionsReducer from '@/app/features/adminPanel/reactionSlice';
+import notifiedReducer from '@/app/features/adminPanel/notifiedSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,7 +19,8 @@ export const store = configureStore({
   shopOwner: shopOwnerReducer,
   shop: shopReducer,
   flashDeal: flashDealReducer,
-  reactions: reactionsReducer
+  reactions: reactionsReducer,
+   notified: notifiedReducer, 
   },
 });
 

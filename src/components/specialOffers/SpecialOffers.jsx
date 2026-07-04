@@ -1,8 +1,13 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Star, Heart, ShoppingCart, Store, Clock, ChevronLeft, ChevronRight, Zap, Timer } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { Star, Heart, ShoppingCart, Store, Clock, ChevronLeft, ChevronRight, Zap, Timer, Bell, CheckCircle2, X } from 'lucide-react';
+// Adjust this import path to wherever your slice actually lives
+import { notifyUpcomingOffer } from '@/app/features/billBoard/billBoardSlice';
 
 const OffersPage = () => {
+  const dispatch = useDispatch();
+notifyUpcomingOffer
   const [filter, setFilter] = useState('all');
   const [favorites, setFavorites] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -11,6 +16,11 @@ const OffersPage = () => {
     minutes: 59,
     seconds: 59
   });
+
+  // Notify feature state
+  const [notifyingId, setNotifyingId] = useState(null); // ProductId currently submitting
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [notifyError, setNotifyError] = useState(null);
 
   // Banner data - ADD YOUR IMAGE URLs HERE
   const banners = [
@@ -47,7 +57,7 @@ const OffersPage = () => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         let { hours, minutes, seconds } = prev;
-        
+
         if (seconds > 0) {
           seconds--;
         } else if (minutes > 0) {
@@ -58,7 +68,7 @@ const OffersPage = () => {
           minutes = 59;
           seconds = 59;
         }
-        
+
         return { hours, minutes, seconds };
       });
     }, 1000);
@@ -76,12 +86,12 @@ const OffersPage = () => {
 
   const categories = ['all', 'Smartphones', 'Laptops', 'Tablets', 'Headphones'];
 
-  const filteredProducts = filter === 'all' 
-    ? products 
+  const filteredProducts = filter === 'all'
+    ? products
     : products.filter(product => product.SubCategory === filter);
 
   const toggleFavorite = (id) => {
-    setFavorites(prev => 
+    setFavorites(prev =>
       prev.includes(id) ? prev.filter(fav => fav !== id) : [...prev, id]
     );
   };
@@ -96,6 +106,20 @@ const OffersPage = () => {
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  // Calls the notifyUpcomingOffer thunk, then shows a success popup
+  const handleNotify = async (productId) => {
+    setNotifyingId(productId);
+    setNotifyError(null);
+    try {
+      await dispatch(notifyUpcomingOffer({ Productid: productId })).unwrap();
+      setShowNotifyModal(true);
+    } catch (error) {
+      setNotifyError(typeof error === 'string' ? error : 'Something went wrong. Please try again.');
+    } finally {
+      setNotifyingId(null);
+    }
   };
 
   return (
@@ -116,7 +140,7 @@ const OffersPage = () => {
             />
           </div>
         ))}
-        
+
         {/* Navigation Arrows */}
         <button
           onClick={prevSlide}
@@ -124,14 +148,14 @@ const OffersPage = () => {
         >
           <ChevronLeft size={32} className="text-slate-900" />
         </button>
-        
+
         <button
           onClick={nextSlide}
           className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 p-4 rounded-full shadow-xl z-10 transition-all"
         >
           <ChevronRight size={32} className="text-slate-900" />
         </button>
-        
+
         {/* Dots Indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10">
           {banners.map((banner, index) => (
@@ -165,7 +189,7 @@ const OffersPage = () => {
               </span>
               <Zap className="text-amber-500" size={28} fill="currentColor" />
             </div>
-            
+
             <h2 className="text-5xl md:text-6xl font-bold text-slate-800 mb-3">
               Deal Ends In
             </h2>
@@ -224,7 +248,7 @@ const OffersPage = () => {
             <p className="text-xl md:text-2xl font-semibold text-slate-700 mb-6">
               Exclusive deals waiting for you ✨
             </p>
-            
+
             <button className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 text-white px-12 py-5 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <span>Shop Flash Deals</span>
               <ChevronRight className="group-hover:translate-x-1 transition-transform" size={20} />
@@ -253,7 +277,8 @@ const OffersPage = () => {
         <div className="space-y-6">
           {products.map((product) => {
             const discountedPrice = calculateDiscountedPrice(product.Price, product.Discount);
-            
+            const isNotifying = notifyingId === product.ProductId;
+
             return (
               <div
                 key={product.ProductId}
@@ -267,11 +292,11 @@ const OffersPage = () => {
                       alt={product.Name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    
+
                     <div className="absolute top-3 right-3 bg-amber-400 text-slate-900 px-4 py-2 rounded-xl font-bold shadow-lg text-lg">
                       {product.Discount}% OFF
                     </div>
-                    
+
                     <button
                       onClick={() => toggleFavorite(product.ProductId)}
                       className="absolute bottom-3 right-3 bg-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
@@ -295,15 +320,15 @@ const OffersPage = () => {
                           {product.Remark}
                         </span>
                       </div>
-                      
+
                       <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
                         {product.Name}
                       </h3>
-                      
+
                       <p className="text-base text-slate-600 mb-4 leading-relaxed">
                         {product.Description}
                       </p>
-                      
+
                       <div className="flex items-center gap-3 mb-6">
                         <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-lg">
                           <Star size={18} className="fill-amber-400 text-amber-400" />
@@ -313,7 +338,7 @@ const OffersPage = () => {
                         <span className="text-sm text-slate-600 font-medium">{product.SubCategory}</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
                       <div>
                         <div className="flex items-baseline gap-3 mb-1">
@@ -324,12 +349,29 @@ const OffersPage = () => {
                           You save ${(product.Price - discountedPrice).toFixed(2)} ({product.Discount}% off)
                         </div>
                       </div>
-                      
-                      <button className="w-full sm:w-auto bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 text-white px-10 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg text-lg">
-                        <ShoppingCart size={22} />
-                        Add to Cart
-                      </button>
+
+                      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        {/* Notify Me Button */}
+                        <button
+                          onClick={() => handleNotify(product.ProductId)}
+                          disabled={isNotifying}
+                          className="w-full sm:w-auto bg-white border-2 border-slate-800 text-slate-800 hover:bg-slate-800 hover:text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 shadow-sm hover:shadow-md text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          <Bell size={20} className={isNotifying ? 'animate-pulse' : ''} />
+                          {isNotifying ? 'Notifying...' : 'Notify Me'}
+                        </button>
+
+                        <button className="w-full sm:w-auto bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 text-white px-10 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg text-lg">
+                          <ShoppingCart size={22} />
+                          Add to Cart
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Inline error for this product's notify request */}
+                    {notifyError && notifyingId === null && (
+                      <p className="text-sm text-red-500 mt-3">{notifyError}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -337,6 +379,44 @@ const OffersPage = () => {
           })}
         </div>
       </div>
+
+      {/* Notify Success Modal */}
+      {showNotifyModal && (
+        <div
+          className="fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+          onClick={() => setShowNotifyModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center relative animate-[fadeIn_0.2s_ease-out]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowNotifyModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors"
+            >
+              <X size={22} />
+            </button>
+
+            <div className="mx-auto mb-5 w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+              <CheckCircle2 size={36} className="text-emerald-500" />
+            </div>
+
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">
+              Thanks for notifying!
+            </h3>
+            <p className="text-base text-slate-600 mb-6">
+              We will notify you as soon as this offer goes live.
+            </p>
+
+            <button
+              onClick={() => setShowNotifyModal(false)}
+              className="w-full bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

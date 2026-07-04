@@ -53,6 +53,9 @@ const AdminOffers = () => {
     { field: 'Finalprice', headerName: 'Final Price', width: 120 },
     { field: 'Description', headerName: 'Type', width: 100 },
     { field: 'LocationName', headerName: 'LocationName', width: 100 },
+    { field: 'Kilometer', headerName: 'Kilometer', width: 100 },
+    { field: 'Latitude', headerName: 'Latitude', width: 100 },
+    { field: 'Longitude', headerName: 'Longitude', width: 100 },
     {
       field: 'Isactive',
       headerName: 'Active',

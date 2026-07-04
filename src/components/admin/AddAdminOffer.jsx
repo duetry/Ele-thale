@@ -1,3 +1,6 @@
+
+
+
 // import React, { useState, useEffect } from "react";
 // import { useDispatch, useSelector } from "react-redux";
 // import {
@@ -37,6 +40,7 @@
 // import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 // import LocationOnIcon from "@mui/icons-material/LocationOn";
 // import AccessTimeIcon from "@mui/icons-material/AccessTime";
+// import BoltIcon from "@mui/icons-material/Bolt";
 // import { LoadingButton } from "@mui/lab";
 // import { useFormik } from "formik";
 // import * as Yup from "yup";
@@ -103,17 +107,14 @@
 //       Brand: editData?.Brand || "",
 //       Type: editData?.Type || "",
 //       Imagefile: null,
-//       // ── Store, Location, Power are patched asynchronously below ──
-//       // initialValues sets scalar/primitive defaults only; the object
-//       // lookups require shops/locationData to have loaded first, which
-//       // happens after this formik initialisation. The useEffect below
-//       // handles that once the Redux lists are populated.
 //       Store: null,
 //       Location: null,
 //       Power: editData?.Power ?? "",
 //       OfferStartTime: editData?.OfferStartTime || "",
 //       OfferEndTime: editData?.OfferEndTime || "",
 //       CoupounActive: editData?.CoupounActive === "true" || editData?.CoupounActive === true || !editData ? true : false,
+//       // ── NEW: FlashDeal field ──
+//       FlashDeal: editData?.FlashDeal === "true" || editData?.FlashDeal === true ? true : false,
 //     },
 //     enableReinitialize: true,
 //     validationSchema: Yup.object({
@@ -161,6 +162,8 @@
 //           Power: values.Power ?? null,
 //           Storeid: values.Store?.Storeid || "",
 //           CoupounActive: values.CoupounActive,
+//           // ── NEW: include FlashDeal in payload ──
+//           Flashdeal: values.FlashDeal,
 //         };
 
 //         if (editData?.Productid) {
@@ -189,14 +192,6 @@
 //   });
 
 //   // ── KEY FIX ─────────────────────────────────────────────────────────────
-//   // Root cause: enableReinitialize only re-runs when `editData` changes.
-//   // By the time shops/locationData resolve from the API the form is already
-//   // mounted and won't reinitialise again — so the find() calls in
-//   // initialValues always returned null on the first render.
-//   //
-//   // Solution: watch shops, locationData, and editData independently and
-//   // patch only the three async-dependent fields via setFieldValue.
-//   // The guard conditions prevent infinite loops and unnecessary re-renders.
 //   useEffect(() => {
 //     if (!editData) return;
 
@@ -208,7 +203,7 @@
 //       }
 //     }
 
-//     // Location — API returns "Locationid" (lowercase i), not "Location"
+//     // Location
 //     if (locationData?.length && editData.Locationid) {
 //       const matched = locationData.find((l) => l.LocationId === editData.Locationid) || null;
 //       if (matched && formik.values.Location?.LocationId !== matched.LocationId) {
@@ -216,7 +211,7 @@
 //       }
 //     }
 
-//     // Power — only patch if formik still holds the blank default
+//     // Power
 //     if (
 //       editData.Power !== undefined &&
 //       editData.Power !== null &&
@@ -230,6 +225,14 @@
 //       const val = editData.CoupounActive === "true" || editData.CoupounActive === true;
 //       if (formik.values.CoupounActive !== val) {
 //         formik.setFieldValue("CoupounActive", val);
+//       }
+//     }
+
+//     // ── NEW: FlashDeal patch ──
+//     if (editData.FlashDeal !== undefined && editData.FlashDeal !== null) {
+//       const val = editData.FlashDeal === "true" || editData.FlashDeal === true;
+//       if (formik.values.FlashDeal !== val) {
+//         formik.setFieldValue("FlashDeal", val);
 //       }
 //     }
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -299,6 +302,7 @@
 //         </Box>
 
 //         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+//           {/* Isactive switch — unchanged */}
 //           <Box
 //             sx={{
 //               display: "flex",
@@ -326,6 +330,7 @@
 //             </Typography>
 //           </Box>
 
+//           {/* CoupounActive switch — unchanged */}
 //           <Box
 //             sx={{
 //               display: "flex",
@@ -350,6 +355,35 @@
 //             />
 //             <Typography sx={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>
 //               {formik.values.CoupounActive ? "Coupon On" : "Coupon Off"}
+//             </Typography>
+//           </Box>
+
+//           {/* ── NEW: FlashDeal switch ── */}
+//           <Box
+//             sx={{
+//               display: "flex",
+//               alignItems: "center",
+//               gap: 1,
+//               background: "rgba(255,255,255,0.15)",
+//               borderRadius: "20px",
+//               px: 1.5,
+//               py: 0.5,
+//             }}
+//           >
+//             <BoltIcon sx={{ color: formik.values.FlashDeal ? "#fbbf24" : "#fff", fontSize: 16, transition: "color 0.2s" }} />
+//             <Switch
+//               checked={formik.values.FlashDeal}
+//               onChange={(e) => formik.setFieldValue("FlashDeal", e.target.checked)}
+//               size="small"
+//               sx={{
+//                 "& .MuiSwitch-switchBase.Mui-checked": { color: "#fbbf24" },
+//                 "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+//                   backgroundColor: "rgba(251,191,36,0.5)",
+//                 },
+//               }}
+//             />
+//             <Typography sx={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>
+//               {formik.values.FlashDeal ? "Flash On" : "Flash Off"}
 //             </Typography>
 //           </Box>
 
@@ -626,7 +660,7 @@
 //               Pricing Details
 //             </Box>
 
-//             {/* Row 5: Price | Discount | Final Price */}
+//             {/* Row 5: Price | Final Price */}
 //             <Box sx={{ display: "flex", gap: 2 }}>
 //               <TextField
 //                 label="Original Price"
@@ -1018,8 +1052,6 @@
 
 // export default AddAdminOffers;
 
-
-
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -1060,6 +1092,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BoltIcon from "@mui/icons-material/Bolt";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -1132,8 +1165,12 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       OfferStartTime: editData?.OfferStartTime || "",
       OfferEndTime: editData?.OfferEndTime || "",
       CoupounActive: editData?.CoupounActive === "true" || editData?.CoupounActive === true || !editData ? true : false,
-      // ── NEW: FlashDeal field ──
+      // ── FlashDeal field ──
       FlashDeal: editData?.FlashDeal === "true" || editData?.FlashDeal === true ? true : false,
+      // ── NEW: Kilometer / Latitude / Longitude ──
+      Kilometer: editData?.Kilometer ?? "",
+      Latitude: editData?.Latitude ?? "",
+      Longitude: editData?.Longitude ?? "",
     },
     enableReinitialize: true,
     validationSchema: Yup.object({
@@ -1158,6 +1195,21 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           if (!value || !OfferStartTime) return true;
           return new Date(value) > new Date(OfferStartTime);
         }),
+      // ── NEW: Kilometer / Latitude / Longitude validation ──
+      Kilometer: Yup.number()
+        .typeError("Must be a number")
+        .required("Kilometer is required")
+        .min(0, "Cannot be negative"),
+      Latitude: Yup.number()
+        .typeError("Must be a number")
+        .required("Latitude is required")
+        .min(-90, "Min -90")
+        .max(90, "Max 90"),
+      Longitude: Yup.number()
+        .typeError("Must be a number")
+        .required("Longitude is required")
+        .min(-180, "Min -180")
+        .max(180, "Max 180"),
     }),
     onSubmit: async (values, { resetForm }) => {
       setLoading(true);
@@ -1181,8 +1233,12 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           Power: values.Power ?? null,
           Storeid: values.Store?.Storeid || "",
           CoupounActive: values.CoupounActive,
-          // ── NEW: include FlashDeal in payload ──
+          // ── FlashDeal in payload ──
           Flashdeal: values.FlashDeal,
+          // ── NEW: Kilometer / Latitude / Longitude in payload ──
+          Kilometer: values.Kilometer,
+          Latitude: values.Latitude,
+          Longitude: values.Longitude,
         };
 
         if (editData?.Productid) {
@@ -1247,12 +1303,37 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       }
     }
 
-    // ── NEW: FlashDeal patch ──
+    // ── FlashDeal patch ──
     if (editData.FlashDeal !== undefined && editData.FlashDeal !== null) {
       const val = editData.FlashDeal === "true" || editData.FlashDeal === true;
       if (formik.values.FlashDeal !== val) {
         formik.setFieldValue("FlashDeal", val);
       }
+    }
+
+    // ── NEW: Kilometer / Latitude / Longitude patch ──
+    if (
+      editData.Kilometer !== undefined &&
+      editData.Kilometer !== null &&
+      formik.values.Kilometer === ""
+    ) {
+      formik.setFieldValue("Kilometer", editData.Kilometer);
+    }
+
+    if (
+      editData.Latitude !== undefined &&
+      editData.Latitude !== null &&
+      formik.values.Latitude === ""
+    ) {
+      formik.setFieldValue("Latitude", editData.Latitude);
+    }
+
+    if (
+      editData.Longitude !== undefined &&
+      editData.Longitude !== null &&
+      formik.values.Longitude === ""
+    ) {
+      formik.setFieldValue("Longitude", editData.Longitude);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shops, locationData, editData]);
@@ -1377,7 +1458,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
             </Typography>
           </Box>
 
-          {/* ── NEW: FlashDeal switch ── */}
+          {/* FlashDeal switch */}
           <Box
             sx={{
               display: "flex",
@@ -1671,6 +1752,70 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                 </Box>
               )}
             />
+
+            {/* ── NEW: Row 4b — Kilometer | Latitude | Longitude ── */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                label="Kilometer"
+                name="Kilometer"
+                type="number"
+                value={formik.values.Kilometer}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Kilometer && Boolean(formik.errors.Kilometer)}
+                helperText={formik.touched.Kilometer && formik.errors.Kilometer}
+                fullWidth
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <MyLocationIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{ min: 0, step: "any" }}
+              />
+              <TextField
+                label="Latitude"
+                name="Latitude"
+                type="number"
+                value={formik.values.Latitude}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Latitude && Boolean(formik.errors.Latitude)}
+                helperText={formik.touched.Latitude && formik.errors.Latitude}
+                fullWidth
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationOnIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{ step: "any", min: -90, max: 90 }}
+              />
+              <TextField
+                label="Longitude"
+                name="Longitude"
+                type="number"
+                value={formik.values.Longitude}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Longitude && Boolean(formik.errors.Longitude)}
+                helperText={formik.touched.Longitude && formik.errors.Longitude}
+                fullWidth
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationOnIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{ step: "any", min: -180, max: 180 }}
+              />
+            </Box>
 
             {/* ── Divider ── */}
             <Divider sx={{ borderColor: "#e2e8f0" }} />
