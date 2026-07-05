@@ -814,13 +814,12 @@
 //     </div>
 //   );
 // }
-
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { fetchSuperDeals, requestExpiredOffer } from "@/app/features/billBoard/billBoardSlice";
+import { fetchSuperDeals, requestExpiredOffer, notifyUpcomingOffer } from "@/app/features/billBoard/billBoardSlice";
 import { fetchProductOffer } from "@/app/features/products/productSlice";
 
 import UnlockOfferModal from "../products/UnlockOfferModel";
@@ -1630,6 +1629,334 @@ function RequestOfferSuccessPopup({ onClose }) {
 }
 
 /* =========================================================
+   NOTIFY SUCCESS POPUP (for "Notify Me" on upcoming offers)
+   ========================================================= */
+function NotifySuccessPopup({ onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 6000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 20, animation: "fadeInBg 0.3s ease",
+      }}
+    >
+      <style>{`
+        @keyframes fadeInBg { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes popIn {
+          0%  { opacity: 0; transform: scale(0.8) translateY(30px) }
+          70% { transform: scale(1.04) translateY(-4px) }
+          100%{ opacity: 1; transform: scale(1) translateY(0) }
+        }
+        @keyframes floatUp {
+          0%   { opacity: 0; transform: translateY(10px) }
+          100% { opacity: 1; transform: translateY(0) }
+        }
+        @keyframes ping {
+          0%   { transform: scale(1);   opacity: 0.8 }
+          100% { transform: scale(2.2); opacity: 0 }
+        }
+        @keyframes shimmer {
+          0%   { background-position: -200% center }
+          100% { background-position: 200% center }
+        }
+        @keyframes shrink {
+          from { width: 100% }
+          to   { width: 0% }
+        }
+      `}</style>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff", borderRadius: 24,
+          padding: "36px 32px 28px", maxWidth: 400, width: "100%",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.22)",
+          animation: "popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards",
+          textAlign: "center", position: "relative", overflow: "hidden",
+        }}
+      >
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 5,
+          background: "linear-gradient(90deg, #e91e8c, #f59e0b, #16a34a, #e91e8c)",
+          backgroundSize: "200% auto",
+          animation: "shimmer 2.5s linear infinite",
+        }} />
+
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute", top: 14, right: 14,
+            background: "#f3f4f6", border: "none", borderRadius: "50%",
+            width: 30, height: 30, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 16, color: "#6b7280",
+          }}
+        >×</button>
+
+        <div style={{ position: "relative", display: "inline-flex", marginBottom: 20 }}>
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            background: "rgba(233,30,140,0.2)",
+            animation: "ping 1.4s ease-out infinite",
+          }} />
+          <div style={{
+            width: 72, height: 72, borderRadius: "50%",
+            background: "linear-gradient(135deg, #fdf2f8, #fce7f3)",
+            border: "2px solid #f9a8d4",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 32, position: "relative",
+          }}>🔔</div>
+        </div>
+
+        <h2 style={{ margin: "0 0 10px", fontSize: 20, fontWeight: 800, color: "#1f2937", lineHeight: 1.3, animation: "floatUp 0.4s ease 0.15s both" }}>
+          You're on the list! 🔔
+        </h2>
+        <p style={{ margin: "0 0 6px", fontSize: 14, color: "#4b5563", lineHeight: 1.65, animation: "floatUp 0.4s ease 0.25s both" }}>
+          We'll notify you as soon as this offer goes live.
+        </p>
+        <p style={{ margin: "0 0 24px", fontSize: 13, color: "#9ca3af", lineHeight: 1.6, animation: "floatUp 0.4s ease 0.35s both" }}>
+          Sit back and relax. Don't miss your chance to grab the best deals when they drop! 👀
+        </p>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, animation: "floatUp 0.4s ease 0.4s both" }}>
+          <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+          <span style={{ fontSize: 11, color: "#d1d5db", fontWeight: 600, letterSpacing: 1 }}>WHILE YOU WAIT</span>
+          <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 24, animation: "floatUp 0.4s ease 0.45s both" }}>
+          {[{ icon: "⚡", label: "Flash Deals" }, { icon: "🏷️", label: "Best Prices" }, { icon: "🎁", label: "Surprises" }].map(({ icon, label }) => (
+            <div key={label} style={{ textAlign: "center" }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: "linear-gradient(135deg, #fdf2f8, #fce7f3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 20, margin: "0 auto 6px",
+              }}>{icon}</div>
+              <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>{label}</span>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            width: "100%", padding: "12px 0", borderRadius: 14, border: "none",
+            background: "linear-gradient(135deg, #e91e8c, #be185d)",
+            color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer",
+            letterSpacing: 0.3, boxShadow: "0 4px 18px rgba(233,30,140,0.35)",
+            animation: "floatUp 0.4s ease 0.5s both",
+            transition: "transform 0.15s ease, box-shadow 0.15s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.02)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(233,30,140,0.45)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(233,30,140,0.35)"; }}
+        >
+          Got it! 👍
+        </button>
+
+        <div style={{ marginTop: 16, height: 3, borderRadius: 99, background: "#f3f4f6", overflow: "hidden" }}>
+          <div style={{
+            height: "100%", borderRadius: 99,
+            background: "linear-gradient(90deg, #e91e8c, #f59e0b)",
+            animation: "shrink 6s linear forwards",
+          }} />
+        </div>
+        <p style={{ margin: "6px 0 0", fontSize: 11, color: "#d1d5db" }}>Closes automatically in 6s</p>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   SINGLE SUPER DEAL CARD (extracted so each card can hold
+   its own notify-me state)
+   ========================================================= */
+function SuperDealCard({
+  item,
+  isAuthenticated,
+  userLocation,
+  locationError,
+  locationDenied,
+  requestLocation,
+  onUnlockOffer,
+  onLoginRequired,
+  onRequestOffer,
+  onNotifySuccess,
+}) {
+  const dispatch = useDispatch();
+  const [notifyLoading, setNotifyLoading] = useState(false);
+  const [notified, setNotified] = useState(false);
+
+  const now       = new Date();
+  const startTime = item.OfferStartTime ? new Date(item.OfferStartTime) : null;
+  const endTime   = item.OfferEndTime   ? new Date(item.OfferEndTime)   : null;
+
+  const isExpired  = endTime   ? now > endTime   : false;
+  const isUpcoming = startTime ? now < startTime : false;
+  const isActive   = !isExpired && !isUpcoming;
+
+  const cardBg = isExpired ? "#fce4ec" : isUpcoming ? "#fffbeb" : "#c7f4c7";
+
+  const handleNotify = async (e) => {
+    e.stopPropagation();
+    if (notifyLoading || notified) return;
+
+    if (!isAuthenticated) {
+      onLoginRequired();
+      return;
+    }
+
+    setNotifyLoading(true);
+    try {
+      await dispatch(notifyUpcomingOffer({ Productid: item.Productid })).unwrap();
+      setNotified(true);
+      if (onNotifySuccess) onNotifySuccess();
+    } catch (err) {
+      console.error("Notify failed:", err);
+    } finally {
+      setNotifyLoading(false);
+    }
+  };
+
+  return (
+    <div
+      key={item.Productid}
+      onClick={() => isActive && onUnlockOffer(item)}
+      style={{
+        background: cardBg, borderRadius: 16,
+        boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+        cursor: !isActive ? "not-allowed" : "pointer",
+        opacity: !isActive ? 0.82 : 1,
+        position: "relative", overflow: "hidden",
+        display: "flex", flexDirection: "column",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (isActive) {
+          e.currentTarget.style.transform = "translateY(-4px)";
+          e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
+      }}
+    >
+      <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#fff", flexShrink: 0 }}>
+        <img
+          src={item.Imageurl}
+          alt={item.ProductName}
+          style={{
+            width: "100%", height: "100%", objectFit: "cover",
+            filter: !isActive ? "grayscale(40%)" : "none",
+            transition: "transform 0.3s ease",
+          }}
+          onMouseEnter={(e) => { if (isActive) e.currentTarget.style.transform = "scale(1.05)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+        />
+      </div>
+
+      <div style={{ padding: "0 12px" }}>
+        <DistanceBadge
+          productLat={item.Latitude}
+          productLng={item.Longitude}
+          apiKilometer={item.Kilometer}
+          userLocation={userLocation}
+          locationError={locationError}
+          locationDenied={locationDenied}
+          requestLocation={requestLocation}
+        />
+      </div>
+
+      <div style={{ padding: "0 12px" }}>
+        <CountdownBadge
+          offerStartTime={item.OfferStartTime}
+          offerEndTime={item.OfferEndTime}
+        />
+      </div>
+
+      <div style={{ padding: "0 12px" }}>
+        <LikeDislikeButtons
+          productId={item.Productid}
+          isAuthenticated={isAuthenticated}
+          onLoginRequired={onLoginRequired}
+        />
+      </div>
+
+      <div style={{ flex: 1 }} />
+
+      {isExpired ? (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRequestOffer(item); }}
+          style={{
+            width: "100%", marginTop: 14, padding: "10px 0",
+            borderRadius: 12, border: "1.5px solid #be123c",
+            background: "#fff1f2", fontSize: 14, fontWeight: 600,
+            cursor: "pointer", color: "#be123c", transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#fecdd3"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "#fff1f2"; }}
+        >
+          Request This Offer Again
+        </button>
+      ) : isUpcoming ? (
+        <button
+          onClick={handleNotify}
+          disabled={notifyLoading || notified}
+          style={{
+            width: "100%", marginTop: 14, padding: "10px 0",
+            borderRadius: 12, border: "none",
+            background: notified ? "#dcfce7" : "#fff0f5",
+            fontSize: 14, fontWeight: 600,
+            cursor: notifyLoading || notified ? "not-allowed" : "pointer",
+            color: notified ? "#16a34a" : "#be185d",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!notified && !notifyLoading) {
+              e.currentTarget.style.background = "#fce7f3";
+              e.currentTarget.style.transform = "scale(1.02)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!notified && !notifyLoading) {
+              e.currentTarget.style.background = "#fff0f5";
+              e.currentTarget.style.transform = "scale(1)";
+            }
+          }}
+        >
+          {notifyLoading ? "Notifying..." : notified ? "✓ Notified" : "🔔 Notify Me"}
+        </button>
+      ) : (
+        <button
+          disabled={!isActive}
+          style={{
+            width: "100%", marginTop: 14, padding: "10px 0",
+            borderRadius: 12, border: "none",
+            background: !isActive ? "#fce7f3" : "#fff0f5",
+            fontSize: 14, fontWeight: 600,
+            cursor: !isActive ? "not-allowed" : "pointer",
+            color: !isActive ? "#9f1239" : "#be185d",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => { if (isActive) { e.currentTarget.style.background = "#fce7f3"; e.currentTarget.style.transform = "scale(1.02)"; } }}
+          onMouseLeave={(e) => { if (isActive) { e.currentTarget.style.background = "#fff0f5"; e.currentTarget.style.transform = "scale(1)"; } }}
+        >
+          Go to Store
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
    MAIN COMPONENT
    ========================================================= */
 export default function SuperDeal() {
@@ -1642,6 +1969,8 @@ export default function SuperDeal() {
   const [showLogin, setShowLogin]                   = useState(false);
   const [isBannerPaused, setIsBannerPaused]         = useState(false);
   const [showRequestSuccess, setShowRequestSuccess] = useState(false);
+  // Popup shown when a user successfully subscribes to be notified about an upcoming offer
+  const [showNotifyPopup, setShowNotifyPopup]       = useState(false);
 
   const {
     userLocation,
@@ -1841,119 +2170,21 @@ export default function SuperDeal() {
         {/* ===================== OFFER CARDS ===================== */}
         {sorted.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
-            {sorted.map((item) => {
-              const now       = new Date();
-              const startTime = item.OfferStartTime ? new Date(item.OfferStartTime) : null;
-              const endTime   = item.OfferEndTime   ? new Date(item.OfferEndTime)   : null;
-
-              const isExpired  = endTime   ? now > endTime   : false;
-              const isUpcoming = startTime ? now < startTime : false;
-              const isActive   = !isExpired && !isUpcoming;
-
-              const cardBg = isExpired ? "#fce4ec" : isUpcoming ? "#fffbeb" : "#c7f4c7";
-
-              return (
-                <div
-                  key={item.Productid}
-                  onClick={() => isActive && handleUnlockOffer(item)}
-                  style={{
-                    background: cardBg, borderRadius: 16,
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-                    cursor: !isActive ? "not-allowed" : "pointer",
-                    opacity: !isActive ? 0.82 : 1,
-                    position: "relative", overflow: "hidden",
-                    display: "flex", flexDirection: "column",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isActive) {
-                      e.currentTarget.style.transform = "translateY(-4px)";
-                      e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
-                  }}
-                >
-                  <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#fff", flexShrink: 0 }}>
-                    <img
-                      src={item.Imageurl}
-                      alt={item.ProductName}
-                      style={{
-                        width: "100%", height: "100%", objectFit: "cover",
-                        filter: !isActive ? "grayscale(40%)" : "none",
-                        transition: "transform 0.3s ease",
-                      }}
-                      onMouseEnter={(e) => { if (isActive) e.currentTarget.style.transform = "scale(1.05)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
-                    />
-                  </div>
-
-                  <div style={{ padding: "0 12px" }}>
-            <DistanceBadge
-  productLat={item.Latitude}
-  productLng={item.Longitude}
-  apiKilometer={item.Kilometer}
-  userLocation={userLocation}
-  locationError={locationError}
-  locationDenied={locationDenied}
-  requestLocation={requestLocation}
-/>
-                  </div>
-
-                  <div style={{ padding: "0 12px" }}>
-                    <CountdownBadge
-                      offerStartTime={item.OfferStartTime}
-                      offerEndTime={item.OfferEndTime}
-                    />
-                  </div>
-
-                  <div style={{ padding: "0 12px" }}>
-                    <LikeDislikeButtons
-                      productId={item.Productid}
-                      isAuthenticated={isAuthenticated}
-                      onLoginRequired={() => setShowLogin(true)}
-                    />
-                  </div>
-
-                  <div style={{ flex: 1 }} />
-
-                  {isExpired ? (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleRequestOffer(item); }}
-                      style={{
-                        width: "100%", marginTop: 14, padding: "10px 0",
-                        borderRadius: 12, border: "1.5px solid #be123c",
-                        background: "#fff1f2", fontSize: 14, fontWeight: 600,
-                        cursor: "pointer", color: "#be123c", transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fecdd3"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "#fff1f2"; }}
-                    >
-                      Request This Offer Again
-                    </button>
-                  ) : (
-                    <button
-                      disabled={!isActive}
-                      style={{
-                        width: "100%", marginTop: 14, padding: "10px 0",
-                        borderRadius: 12, border: "none",
-                        background: !isActive ? "#fce7f3" : "#fff0f5",
-                        fontSize: 14, fontWeight: 600,
-                        cursor: !isActive ? "not-allowed" : "pointer",
-                        color: !isActive ? "#9f1239" : "#be185d",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => { if (isActive) { e.currentTarget.style.background = "#fce7f3"; e.currentTarget.style.transform = "scale(1.02)"; } }}
-                      onMouseLeave={(e) => { if (isActive) { e.currentTarget.style.background = "#fff0f5"; e.currentTarget.style.transform = "scale(1)"; } }}
-                    >
-                      {isUpcoming ? "Coming Soon" : "Go to Store"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+            {sorted.map((item) => (
+              <SuperDealCard
+                key={item.Productid}
+                item={item}
+                isAuthenticated={isAuthenticated}
+                userLocation={userLocation}
+                locationError={locationError}
+                locationDenied={locationDenied}
+                requestLocation={requestLocation}
+                onUnlockOffer={handleUnlockOffer}
+                onLoginRequired={() => setShowLogin(true)}
+                onRequestOffer={handleRequestOffer}
+                onNotifySuccess={() => setShowNotifyPopup(true)}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -1983,6 +2214,11 @@ export default function SuperDeal() {
 
       {showRequestSuccess && (
         <RequestOfferSuccessPopup onClose={() => setShowRequestSuccess(false)} />
+      )}
+
+      {/* ===================== NOTIFY SUCCESS POPUP ===================== */}
+      {showNotifyPopup && (
+        <NotifySuccessPopup onClose={() => setShowNotifyPopup(false)} />
       )}
 
       {/* ===================== LOCATION PERMISSION POPUP ===================== */}

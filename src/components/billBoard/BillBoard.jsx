@@ -4402,6 +4402,1166 @@
 // }
 
 
+// "use client";
+
+// import React, { useEffect, useState } from "react";
+// import { useDispatch, useSelector } from "react-redux";
+
+// import { fetchBestOfferBillboards, notifyUpcomingOffer } from "@/app/features/billBoard/billBoardSlice";
+// import { fetchProductOffer } from "@/app/features/products/productSlice";
+// import UnlockOfferModal from "../products/UnlockOfferModel";
+// import {
+//   setSelectedLocation,
+//   userTracking,
+// } from "@/app/features/adminPanel/adminPanelSlice";
+// import { selectIsAuthenticated } from "@/app/features/auth/authSlice";
+// import LoginPopup from "../LoginPopup";
+// import {
+//   postProductReaction,
+// } from "@/app/features/adminPanel/reactionSlice";
+
+// /* =========================================================
+//    NOTIFY SUCCESS POPUP COMPONENT
+//    ========================================================= */
+// function NotifySuccessPopup({ onClose }) {
+//   useEffect(() => {
+//     // Auto-close after 6 seconds to match the progress bar animation
+//     const timer = setTimeout(onClose, 6000); 
+//     return () => clearTimeout(timer);
+//   }, [onClose]);
+
+//   return (
+//     <div
+//       onClick={onClose}
+//       style={{
+//         position: "fixed", inset: 0, zIndex: 9999,
+//         background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)",
+//         display: "flex", alignItems: "center", justifyContent: "center",
+//         padding: 20, animation: "fadeInBg 0.3s ease",
+//       }}
+//     >
+//       <style>{`
+//         @keyframes fadeInBg { from { opacity: 0 } to { opacity: 1 } }
+//         @keyframes popIn {
+//           0%  { opacity: 0; transform: scale(0.8) translateY(30px) }
+//           70% { transform: scale(1.04) translateY(-4px) }
+//           100%{ opacity: 1; transform: scale(1) translateY(0) }
+//         }
+//         @keyframes floatUp {
+//           0%   { opacity: 0; transform: translateY(10px) }
+//           100% { opacity: 1; transform: translateY(0) }
+//         }
+//         @keyframes ping {
+//           0%   { transform: scale(1);   opacity: 0.8 }
+//           100% { transform: scale(2.2); opacity: 0 }
+//         }
+//         @keyframes shimmer {
+//           0%   { background-position: -200% center }
+//           100% { background-position: 200% center }
+//         }
+//         @keyframes shrink {
+//           from { width: 100% }
+//           to   { width: 0% }
+//         }
+//       `}</style>
+
+//       <div
+//         onClick={(e) => e.stopPropagation()}
+//         style={{
+//           background: "#fff", borderRadius: 24,
+//           padding: "36px 32px 28px", maxWidth: 400, width: "100%",
+//           boxShadow: "0 32px 80px rgba(0,0,0,0.22)",
+//           animation: "popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards",
+//           textAlign: "center", position: "relative", overflow: "hidden",
+//         }}
+//       >
+//         <div style={{
+//           position: "absolute", top: 0, left: 0, right: 0, height: 5,
+//           background: "linear-gradient(90deg, #e91e8c, #f59e0b, #16a34a, #e91e8c)",
+//           backgroundSize: "200% auto",
+//           animation: "shimmer 2.5s linear infinite",
+//         }} />
+
+//         <button
+//           onClick={onClose}
+//           style={{
+//             position: "absolute", top: 14, right: 14,
+//             background: "#f3f4f6", border: "none", borderRadius: "50%",
+//             width: 30, height: 30, cursor: "pointer",
+//             display: "flex", alignItems: "center", justifyContent: "center",
+//             fontSize: 16, color: "#6b7280",
+//           }}
+//         >×</button>
+
+//         <div style={{ position: "relative", display: "inline-flex", marginBottom: 20 }}>
+//           <div style={{
+//             position: "absolute", inset: 0, borderRadius: "50%",
+//             background: "rgba(233,30,140,0.2)",
+//             animation: "ping 1.4s ease-out infinite",
+//           }} />
+//           <div style={{
+//             width: 72, height: 72, borderRadius: "50%",
+//             background: "linear-gradient(135deg, #fdf2f8, #fce7f3)",
+//             border: "2px solid #f9a8d4",
+//             display: "flex", alignItems: "center", justifyContent: "center",
+//             fontSize: 32, position: "relative",
+//           }}>🔔</div>
+//         </div>
+
+//         <h2 style={{ margin: "0 0 10px", fontSize: 20, fontWeight: 800, color: "#1f2937", lineHeight: 1.3, animation: "floatUp 0.4s ease 0.15s both" }}>
+//           You're on the list! 🔔
+//         </h2>
+//         <p style={{ margin: "0 0 6px", fontSize: 14, color: "#4b5563", lineHeight: 1.65, animation: "floatUp 0.4s ease 0.25s both" }}>
+//           We'll notify you as soon as this offer goes live.
+//         </p>
+//         <p style={{ margin: "0 0 24px", fontSize: 13, color: "#9ca3af", lineHeight: 1.6, animation: "floatUp 0.4s ease 0.35s both" }}>
+//           Sit back and relax. Don't miss your chance to grab the best deals when they drop! 👀
+//         </p>
+
+//         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, animation: "floatUp 0.4s ease 0.4s both" }}>
+//           <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+//           <span style={{ fontSize: 11, color: "#d1d5db", fontWeight: 600, letterSpacing: 1 }}>WHILE YOU WAIT</span>
+//           <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+//         </div>
+
+//         <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 24, animation: "floatUp 0.4s ease 0.45s both" }}>
+//           {[{ icon: "⚡", label: "Flash Deals" }, { icon: "🏷️", label: "Best Prices" }, { icon: "🎁", label: "Surprises" }].map(({ icon, label }) => (
+//             <div key={label} style={{ textAlign: "center" }}>
+//               <div style={{
+//                 width: 44, height: 44, borderRadius: 12,
+//                 background: "linear-gradient(135deg, #fdf2f8, #fce7f3)",
+//                 display: "flex", alignItems: "center", justifyContent: "center",
+//                 fontSize: 20, margin: "0 auto 6px",
+//               }}>{icon}</div>
+//               <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>{label}</span>
+//             </div>
+//           ))}
+//         </div>
+
+//         <button
+//           onClick={onClose}
+//           style={{
+//             width: "100%", padding: "12px 0", borderRadius: 14, border: "none",
+//             background: "linear-gradient(135deg, #e91e8c, #be185d)",
+//             color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer",
+//             letterSpacing: 0.3, boxShadow: "0 4px 18px rgba(233,30,140,0.35)",
+//             animation: "floatUp 0.4s ease 0.5s both",
+//             transition: "transform 0.15s ease, box-shadow 0.15s ease",
+//           }}
+//           onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.02)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(233,30,140,0.45)"; }}
+//           onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(233,30,140,0.35)"; }}
+//         >
+//           Got it! 👍
+//         </button>
+
+//         <div style={{ marginTop: 16, height: 3, borderRadius: 99, background: "#f3f4f6", overflow: "hidden" }}>
+//           <div style={{
+//             height: "100%", borderRadius: 99,
+//             background: "linear-gradient(90deg, #e91e8c, #f59e0b)",
+//             animation: "shrink 6s linear forwards",
+//           }} />
+//         </div>
+//         <p style={{ margin: "6px 0 0", fontSize: 11, color: "#d1d5db" }}>Closes automatically in 6s</p>
+//       </div>
+//     </div>
+//   );
+// }
+
+// /* =========================================================
+//    LIKE / DISLIKE BUTTONS COMPONENT
+//    ========================================================= */
+// function LikeDislikeButtons({ productId, isAuthenticated, onLoginRequired }) {
+//   const dispatch = useDispatch();
+
+//   const reaction = useSelector(
+//     (state) => state.reactions.reactions?.[productId]
+//   );
+//   const isLoading = useSelector(
+//     (state) => state.reactions.loading?.[productId]
+//   );
+
+//   const likeActive = reaction === "like";
+//   const dislikeActive = reaction === "dislike";
+
+//   const handleReaction = (e, type) => {
+//     e.stopPropagation();
+
+//     if (!isAuthenticated) {
+//       onLoginRequired();
+//       return;
+//     }
+
+//     if (isLoading || reaction === type) return;
+
+//     dispatch(postProductReaction({ Productid: productId, Reaction: type }));
+//   };
+
+//   const btnStyle = (active, activeColor, activeBg) => ({
+//     display: "flex",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     gap: 5,
+//     padding: "6px 14px",
+//     borderRadius: 20,
+//     border: `1.5px solid ${active ? activeColor : "#d1d5db"}`,
+//     background: active ? activeBg : "#fff",
+//     color: active ? activeColor : "#6b7280",
+//     fontSize: 13,
+//     fontWeight: 600,
+//     cursor: isLoading ? "not-allowed" : "pointer",
+//     transition: "all 0.2s ease",
+//     transform: active ? "scale(1.05)" : "scale(1)",
+//     boxShadow: active ? `0 2px 8px ${activeColor}30` : "none",
+//     opacity: isLoading ? 0.7 : 1,
+//   });
+
+//   return (
+//     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+//       {/* ── Like Button ── */}
+//       <button
+//         onClick={(e) => handleReaction(e, "like")}
+//         disabled={isLoading}
+//         title="Like this offer"
+//         style={btnStyle(likeActive, "#16a34a", "#f0fdf4")}
+//         onMouseEnter={(e) => {
+//           if (!likeActive && !isLoading) {
+//             e.currentTarget.style.borderColor = "#16a34a";
+//             e.currentTarget.style.color = "#16a34a";
+//             e.currentTarget.style.background = "#f0fdf4";
+//           }
+//         }}
+//         onMouseLeave={(e) => {
+//           if (!likeActive) {
+//             e.currentTarget.style.borderColor = "#d1d5db";
+//             e.currentTarget.style.color = "#6b7280";
+//             e.currentTarget.style.background = "#fff";
+//           }
+//         }}
+//       >
+//         <svg
+//           width="14"
+//           height="14"
+//           viewBox="0 0 24 24"
+//           fill={likeActive ? "#16a34a" : "none"}
+//           stroke={likeActive ? "#16a34a" : "currentColor"}
+//           strokeWidth="2"
+//           strokeLinecap="round"
+//           strokeLinejoin="round"
+//           style={{ transition: "all 0.2s ease", flexShrink: 0 }}
+//         >
+//           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+//           <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+//         </svg>
+//         {isLoading && reaction !== "like" ? "..." : likeActive ? "Liked" : "Like"}
+//       </button>
+
+//       {/* ── Dislike Button ── */}
+//       <button
+//         onClick={(e) => handleReaction(e, "dislike")}
+//         disabled={isLoading}
+//         title="Dislike this offer"
+//         style={btnStyle(dislikeActive, "#be123c", "#fff1f2")}
+//         onMouseEnter={(e) => {
+//           if (!dislikeActive && !isLoading) {
+//             e.currentTarget.style.borderColor = "#be123c";
+//             e.currentTarget.style.color = "#be123c";
+//             e.currentTarget.style.background = "#fff1f2";
+//           }
+//         }}
+//         onMouseLeave={(e) => {
+//           if (!dislikeActive) {
+//             e.currentTarget.style.borderColor = "#d1d5db";
+//             e.currentTarget.style.color = "#6b7280";
+//             e.currentTarget.style.background = "#fff";
+//           }
+//         }}
+//       >
+//         <svg
+//           width="14"
+//           height="14"
+//           viewBox="0 0 24 24"
+//           fill={dislikeActive ? "#be123c" : "none"}
+//           stroke={dislikeActive ? "#be123c" : "currentColor"}
+//           strokeWidth="2"
+//           strokeLinecap="round"
+//           strokeLinejoin="round"
+//           style={{ transition: "all 0.2s ease", flexShrink: 0 }}
+//         >
+//           <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
+//           <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+//         </svg>
+//         {isLoading && reaction !== "dislike" ? "..." : dislikeActive ? "Disliked" : "Dislike"}
+//       </button>
+//     </div>
+//   );
+// }
+
+// /* =========================================================
+//    SECTION HEADER COMPONENT
+//    ========================================================= */
+// function SectionHeader({ label, count, accent, bg, border }) {
+//   return (
+//     <div
+//       style={{
+//         display: "flex",
+//         alignItems: "center",
+//         justifyContent: "center",
+//         gap: 12,
+//         marginBottom: 20,
+//         padding: "14px 24px",
+//         background: bg,
+//         border: `1.5px solid ${border}`,
+//         borderRadius: 16,
+//       }}
+//     >
+//       <span
+//         style={{
+//           fontSize: 20,
+//           fontWeight: 800,
+//           color: accent,
+//           letterSpacing: "-0.3px",
+//         }}
+//       >
+//         {label}
+//       </span>
+//     </div>
+//   );
+// }
+
+// /* =========================================================
+//    SINGLE OFFER CARD COMPONENT
+//    ========================================================= */
+// // Added onNotifySuccess to props
+// function OfferCard({ item, isAuthenticated, onUnlockOffer, onLoginRequired, getTimeRemaining, onNotifySuccess }) {
+//   const dispatch = useDispatch();
+  
+//   const [notifyLoading, setNotifyLoading] = useState(false);
+//   const [notified, setNotified] = useState(false);
+//   // Removed showNotifyPopup state from here
+
+//   const now = new Date();
+//   const startTime = item.OfferStartTime ? new Date(item.OfferStartTime) : null;
+//   const endTime = item.OfferEndTime ? new Date(item.OfferEndTime) : null;
+
+//   const isExpired = endTime ? now > endTime : false;
+//   const isUpcoming = startTime ? now < startTime : false;
+//   const isActive = !isExpired && !isUpcoming;
+
+//   const cardBg = isExpired
+//     ? "#fce4ec"
+//     : isUpcoming
+//     ? "#fffbeb"
+//     : "#c7f4c7";
+
+//   const handleNotify = async (e) => {
+//     e.stopPropagation();
+//     if (notifyLoading || notified) return;
+
+//     if (!isAuthenticated) {
+//       onLoginRequired();
+//       return;
+//     }
+
+//     setNotifyLoading(true);
+//     try {
+//       await dispatch(notifyUpcomingOffer({ Productid: item.Productid })).unwrap();
+//       setNotified(true);
+//       // Trigger the popup in the parent component
+//       if (onNotifySuccess) onNotifySuccess(); 
+//     } catch (err) {
+//       console.error("Notify failed:", err);
+//     } finally {
+//       setNotifyLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div
+//       key={item.Productid}
+//       onClick={() => isActive && onUnlockOffer(item)}
+//       style={{
+//         background: cardBg,
+//         borderRadius: 16,
+//         boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+//         cursor: !isActive ? "not-allowed" : "pointer",
+//         opacity: !isActive ? 0.82 : 1,
+//         position: "relative",
+//         overflow: "hidden",
+//         display: "flex",
+//         flexDirection: "column",
+//         transition: "transform 0.2s ease, box-shadow 0.2s ease",
+//       }}
+//       onMouseEnter={(e) => {
+//         if (isActive) {
+//           e.currentTarget.style.transform = "translateY(-4px)";
+//           e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+//         }
+//       }}
+//       onMouseLeave={(e) => {
+//         e.currentTarget.style.transform = "translateY(0)";
+//         e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
+//       }}
+//     >
+//       {/* ===== PRODUCT IMAGE ===== */}
+//       <div
+//         style={{
+//           width: "100%",
+//           aspectRatio: "1 / 1",
+//           overflow: "hidden",
+//           background: "#fff",
+//           flexShrink: 0,
+//         }}
+//       >
+//         <img
+//           src={item.Imageurl}
+//           alt={item.ProductName}
+//           style={{
+//             width: "100%",
+//             height: "100%",
+//             objectFit: "cover",
+//             filter: !isActive ? "grayscale(40%)" : "none",
+//             transition: "transform 0.3s ease",
+//           }}
+//           onMouseEnter={(e) => {
+//             if (isActive) e.currentTarget.style.transform = "scale(1.05)";
+//           }}
+//           onMouseLeave={(e) => {
+//             e.currentTarget.style.transform = "scale(1)";
+//           }}
+//         />
+//       </div>
+
+//       {/* ===== COMBINED ROW: like/dislike first, then timer badge ===== */}
+//       <div style={{ padding: "0 12px", marginTop: 12 }}>
+//         <div
+//           style={{
+//             padding: "8px 10px",
+//             background: "#fff0f5",
+//             border: "1px solid #fbcfe8",
+//             borderRadius: 10,
+//             display: "flex",
+//             alignItems: "center",
+//             gap: 6,
+//             flexWrap: "nowrap",
+//           }}
+//         >
+//           {/* Like / Dislike — always first with full text */}
+//           <LikeDislikeButtons
+//             productId={item.Productid}
+//             isAuthenticated={isAuthenticated}
+//             onLoginRequired={onLoginRequired}
+//           />
+
+//           {/* Spacer pushes timer badge to right */}
+//           <div style={{ flex: 1 }} />
+
+//           {/* Active: clock icon + time until end */}
+//           {isActive && endTime && getTimeRemaining(endTime) && (
+//             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+//               <svg
+//                 width="12"
+//                 height="12"
+//                 viewBox="0 0 24 24"
+//                 fill="none"
+//                 stroke="#be185d"
+//                 strokeWidth="2.2"
+//                 strokeLinecap="round"
+//                 strokeLinejoin="round"
+//                 style={{ flexShrink: 0 }}
+//               >
+//                 <circle cx="12" cy="12" r="10" />
+//                 <polyline points="12 6 12 12 16 14" />
+//               </svg>
+//               <span
+//                 style={{
+//                   fontSize: 10,
+//                   fontWeight: 700,
+//                   color: "#fff",
+//                   background: "#e91e8c",
+//                   borderRadius: 999,
+//                   padding: "2px 8px",
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 {getTimeRemaining(endTime)}
+//               </span>
+//             </div>
+//           )}
+
+//           {/* Expired: X icon + "Offer ended" */}
+//           {isExpired && (
+//             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+//               <svg
+//                 width="12"
+//                 height="12"
+//                 viewBox="0 0 24 24"
+//                 fill="none"
+//                 stroke="#be185d"
+//                 strokeWidth="2.2"
+//                 strokeLinecap="round"
+//                 strokeLinejoin="round"
+//                 style={{ flexShrink: 0 }}
+//               >
+//                 <circle cx="12" cy="12" r="10" />
+//                 <line x1="15" y1="9" x2="9" y2="15" />
+//                 <line x1="9" y1="9" x2="15" y2="15" />
+//               </svg>
+//               <span
+//                 style={{
+//                   fontSize: 10,
+//                   fontWeight: 700,
+//                   color: "#9f1239",
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 Offer ended
+//               </span>
+//             </div>
+//           )}
+
+//           {/* Upcoming: clock icon + time until start */}
+//           {isUpcoming && startTime && getTimeRemaining(startTime) && (
+//             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+//               <svg
+//                 width="12"
+//                 height="12"
+//                 viewBox="0 0 24 24"
+//                 fill="none"
+//                 stroke="#be185d"
+//                 strokeWidth="2.2"
+//                 strokeLinecap="round"
+//                 strokeLinejoin="round"
+//                 style={{ flexShrink: 0 }}
+//               >
+//                 <circle cx="12" cy="12" r="10" />
+//                 <polyline points="12 6 12 12 16 14" />
+//               </svg>
+//               <span
+//                 style={{
+//                   fontSize: 10,
+//                   fontWeight: 700,
+//                   color: "#fff",
+//                   background: "#e91e8c",
+//                   borderRadius: 999,
+//                   padding: "2px 8px",
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 {getTimeRemaining(startTime)}
+//               </span>
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       <div style={{ flex: 1 }} />
+
+//       {/* ===== BUTTON ===== */}
+//       {!isExpired && (
+//         isUpcoming ? (
+//           <button
+//             onClick={handleNotify}
+//             disabled={notifyLoading || notified}
+//             style={{
+//               width: "100%",
+//               marginTop: 14,
+//               padding: "10px 0",
+//               borderRadius: 12,
+//               border: "none",
+//               background: notified ? "#dcfce7" : "#fff0f5",
+//               fontSize: 14,
+//               fontWeight: 600,
+//               cursor: notifyLoading || notified ? "not-allowed" : "pointer",
+//               color: notified ? "#16a34a" : "#be185d",
+//               transition: "all 0.2s ease",
+//             }}
+//             onMouseEnter={(e) => {
+//               if (!notified && !notifyLoading) {
+//                 e.currentTarget.style.background = "#fce7f3";
+//                 e.currentTarget.style.transform = "scale(1.02)";
+//               }
+//             }}
+//             onMouseLeave={(e) => {
+//               if (!notified && !notifyLoading) {
+//                 e.currentTarget.style.background = "#fff0f5";
+//                 e.currentTarget.style.transform = "scale(1)";
+//               }
+//             }}
+//           >
+//             {notifyLoading ? "Notifying..." : notified ? "✓ Notified" : "🔔 Notify Me"}
+//           </button>
+//         ) : (
+//           <button
+//             disabled={!isActive}
+//             style={{
+//               width: "100%",
+//               marginTop: 14,
+//               padding: "10px 0",
+//               borderRadius: 12,
+//               border: "none",
+//               background: !isActive ? "#fce7f3" : "#fff0f5",
+//               fontSize: 14,
+//               fontWeight: 600,
+//               cursor: !isActive ? "not-allowed" : "pointer",
+//               color: !isActive ? "#9f1239" : "#be185d",
+//               transition: "all 0.2s ease",
+//             }}
+//             onMouseEnter={(e) => {
+//               if (isActive) {
+//                 e.currentTarget.style.background = "#fce7f3";
+//                 e.currentTarget.style.transform = "scale(1.02)";
+//               }
+//             }}
+//             onMouseLeave={(e) => {
+//               if (isActive) {
+//                 e.currentTarget.style.background = "#fff0f5";
+//                 e.currentTarget.style.transform = "scale(1)";
+//               }
+//             }}
+//           >
+//             Go to Store
+//           </button>
+//         )
+//       )}
+//     </div>
+//   );
+// }
+
+// /* =========================================================
+//    MAIN COMPONENT
+//    ========================================================= */
+// export default function BillboardBanners() {
+//   const dispatch = useDispatch();
+
+//   const [mounted, setMounted] = useState(false);
+//   const [hasFetched, setHasFetched] = useState(false);
+//   const [selectedProduct, setSelectedProduct] = useState(null);
+//   const [couponCode, setCouponCode] = useState(null);
+//   const [currentBanner, setCurrentBanner] = useState(0);
+//   const [showLogin, setShowLogin] = useState(false);
+//   const [isBannerPaused, setIsBannerPaused] = useState(false);
+  
+//   // Added state to control the popup at the root level
+//   const [showNotifyPopup, setShowNotifyPopup] = useState(false);
+
+//   const {
+//     bestOfferBillboards,
+//     bestOfferLoading,
+//     bestOfferError,
+//     bestOfferBanner,
+//     bestOfferLive,
+//     bestOfferUpcoming,
+//     bestOfferExpired,
+//   } = useSelector((state) => state.billboards);
+
+//   const isAuthenticated = useSelector(selectIsAuthenticated);
+//   const selectedLocation = useSelector(setSelectedLocation);
+//   const locationData = useSelector((state) => state?.products?.productOffer);
+
+//   /* ------------------ MOUNT CHECK ------------------ */
+//   useEffect(() => {
+//     setMounted(true);
+//   }, []);
+
+//   /* ------------------ FETCH WHEN LOCATION CHANGES ------------------ */
+//   useEffect(() => {
+//     if (!selectedLocation?.LocationId) return;
+//     dispatch(
+//       fetchBestOfferBillboards({
+//         LocationId: String(selectedLocation.LocationId),
+//       })
+//     ).finally(() => {
+//       setHasFetched(true);
+//     });
+//   }, [selectedLocation, dispatch]);
+
+//   /* ------------------ BANNER AUTO SLIDE ------------------ */
+//   useEffect(() => {
+//     if (!mounted || !bestOfferBanner?.length || isBannerPaused) return;
+
+//     const interval = setInterval(() => {
+//       setCurrentBanner((prev) =>
+//         prev === bestOfferBanner.length - 1 ? 0 : prev + 1
+//       );
+//     }, 4000);
+
+//     return () => clearInterval(interval);
+//   }, [mounted, bestOfferBanner, isBannerPaused]);
+
+//   /* ------------------ CLICK HANDLER ------------------ */
+//   const handleUnlockOffer = (product) => {
+//     if (!product?.Storeid) {
+//       console.warn("Storeid missing for product:", product);
+//       return;
+//     }
+
+//     if (isAuthenticated) {
+//       dispatch(userTracking(product?.ProductName));
+
+//       dispatch(fetchProductOffer(product.Storeid))
+//         .unwrap()
+//         .then((res) => {
+//           setCouponCode(res?.data?.[0]);
+//           setSelectedProduct(product);
+//         })
+//         .catch((err) => {
+//           console.error("Offer API failed:", err);
+//         });
+//     } else {
+//       setShowLogin(true);
+//     }
+//   };
+
+//   /* ------------------ HELPERS ------------------ */
+//   const getTimeRemaining = (date) => {
+//     const now = new Date();
+//     const diffMs = date - now;
+//     if (diffMs <= 0) return null;
+//     const totalMins = Math.floor(diffMs / 60000);
+//     const days = Math.floor(totalMins / 1440);
+//     const hours = Math.floor((totalMins % 1440) / 60);
+//     const mins = totalMins % 60;
+//     if (days > 0) return `${days} Day${days > 1 ? "s" : ""} Left 🔥`;
+//     if (hours > 0) return `${hours} Hr${hours > 1 ? "s" : ""} Left ⏳`;
+//     return `${mins} Min${mins > 1 ? "s" : ""} Left ⚡`;
+//   };
+
+//   // Determine if we have the new sectioned shape or old flat array
+//   const hasNewShape =
+//     bestOfferLive?.length > 0 ||
+//     bestOfferUpcoming?.length > 0 ||
+//     bestOfferExpired?.length > 0;
+
+//   const sections = hasNewShape
+//     ? [
+//         {
+//           key: "live",
+//           items: bestOfferLive,
+//           label: "Live Offers",
+//           accent: "#16a34a",
+//           bg: "#f0fdf4",
+//           border: "#86efac",
+//         },
+//         {
+//           key: "upcoming",
+//           items: bestOfferUpcoming,
+//           label: "Coming Soon",
+//           accent: "#92400e",
+//           bg: "#fffbeb",
+//           border: "#fcd34d",
+//         },
+//         {
+//           key: "expired",
+//           items: bestOfferExpired,
+//           label: "Expired Offers",
+//           accent: "#9f1239",
+//           bg: "#fff1f2",
+//           border: "#fecdd3",
+//         },
+//       ].filter((s) => s.items.length > 0)
+//     : null;
+
+//   const totalItems = hasNewShape
+//     ? (bestOfferLive?.length || 0) +
+//       (bestOfferUpcoming?.length || 0) +
+//       (bestOfferExpired?.length || 0)
+//     : bestOfferBillboards?.length || 0;
+
+//   /* ------------------ LOADING / ERROR STATES ------------------ */
+//   if (!mounted || bestOfferLoading) {
+//     return (
+//       <div style={{ width: "100%", marginTop: 60, padding: 20 }}>
+//         <div
+//           className="skeleton"
+//           style={{
+//             width: "100%",
+//             height: 380,
+//             borderRadius: 24,
+//             marginBottom: 40,
+//           }}
+//         />
+//         <div
+//           style={{
+//             display: "grid",
+//             gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+//             gap: 20,
+//           }}
+//         >
+//           {[...Array(8)].map((_, i) => (
+//             <div
+//               key={i}
+//               style={{ padding: 16, borderRadius: 16, background: "#fff" }}
+//             >
+//               <div className="skeleton" style={{ height: 180 }} />
+//               <div className="skeleton" style={{ height: 20, marginTop: 12 }} />
+//               <div
+//                 className="skeleton"
+//                 style={{ height: 16, marginTop: 8, width: "70%" }}
+//               />
+//               <div
+//                 className="skeleton"
+//                 style={{ height: 30, marginTop: 16, width: "40%" }}
+//               />
+//               <div className="skeleton" style={{ height: 40, marginTop: 16 }} />
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (bestOfferError) {
+//     return (
+//       <div
+//         style={{
+//           display: "flex",
+//           justifyContent: "center",
+//           alignItems: "center",
+//           minHeight: "100vh",
+//           color: "red",
+//         }}
+//       >
+//         {bestOfferError}
+//       </div>
+//     );
+//   }
+
+//   /* ------------------ CARD GRID RENDERER ------------------ */
+//   const renderCardGrid = (items) => (
+//     <div
+//       style={{
+//         display: "grid",
+//         gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+//         gap: 20,
+//       }}
+//     >
+//       {items.map((item) => (
+//         <OfferCard
+//           key={item.Productid}
+//           item={item}
+//           isAuthenticated={isAuthenticated}
+//           onUnlockOffer={handleUnlockOffer}
+//           onLoginRequired={() => setShowLogin(true)}
+//           getTimeRemaining={getTimeRemaining}
+//           onNotifySuccess={() => setShowNotifyPopup(true)} // Pass callback to trigger popup
+//         />
+//       ))}
+//     </div>
+//   );
+
+//   return (
+//     <div style={{ width: "100%", background: "#fff", marginTop: 60 }}>
+//       <div style={{ maxWidth: 1400, margin: "0 auto", padding: 20 }}>
+
+//         {/* ===================== BANNER CAROUSEL ===================== */}
+//         {bestOfferBanner?.length > 0 && (
+//           <div
+//             style={{
+//               position: "relative",
+//               overflow: "hidden",
+//               borderRadius: 24,
+//               marginBottom: 40,
+//               cursor: "pointer",
+//             }}
+//             onMouseEnter={() => setIsBannerPaused(true)}
+//             onMouseLeave={() => setIsBannerPaused(false)}
+//           >
+//             <div
+//               style={{
+//                 display: "flex",
+//                 transform: `translateX(-${currentBanner * 100}%)`,
+//                 transition: "transform 0.7s ease-in-out",
+//               }}
+//             >
+//               {bestOfferBanner.map((banner, index) => {
+//                 const bannerProduct = {
+//                   Productid: banner.Productid || banner.id || `banner-${index}`,
+//                   ProductName: banner.ProductName || banner.title || "Special Offer",
+//                   Storeid: banner.Storeid || banner.storeId || locationData?.Storeid,
+//                   Imageurl: banner.Imageurl || banner.image,
+//                   Price: banner.Price,
+//                   Finalprice: banner.Finalprice,
+//                   Brand: banner.Brand,
+//                   Type: banner.Type,
+//                   OfferStartTime: banner.OfferStartTime,
+//                   OfferEndTime: banner.OfferEndTime,
+//                 };
+
+//                 return (
+//                   <div
+//                     key={index}
+//                     style={{
+//                       minWidth: "100%",
+//                       height: 380,
+//                       position: "relative",
+//                     }}
+//                     onClick={() => handleUnlockOffer(bannerProduct)}
+//                   >
+//                     <img
+//                       src={banner.Imageurl || banner.image}
+//                       alt={banner.ProductName || banner.title || "Best Offer Banner"}
+//                       style={{
+//                         width: "100%",
+//                         height: "100%",
+//                         objectFit: "cover",
+//                         pointerEvents: "none",
+//                         transition: "transform 0.3s ease",
+//                       }}
+//                     />
+//                     <div
+//                       style={{
+//                         position: "absolute",
+//                         inset: 0,
+//                         background: "rgba(0,0,0,0)",
+//                         transition: "background 0.3s ease",
+//                         display: "flex",
+//                         alignItems: "flex-end",
+//                         justifyContent: "center",
+//                         paddingBottom: 24,
+//                       }}
+//                       onMouseEnter={(e) =>
+//                         (e.currentTarget.style.background = "rgba(0,0,0,0.15)")
+//                       }
+//                       onMouseLeave={(e) =>
+//                         (e.currentTarget.style.background = "rgba(0,0,0,0)")
+//                       }
+//                     >
+//                       <span
+//                         style={{
+//                           background: "rgba(0,0,0,0.75)",
+//                           color: "#fff",
+//                           padding: "8px 20px",
+//                           borderRadius: 24,
+//                           fontSize: 13,
+//                           fontWeight: 600,
+//                           opacity: 0,
+//                           transform: "translateY(8px)",
+//                           transition: "all 0.2s ease",
+//                         }}
+//                         onMouseEnter={(e) => {
+//                           e.currentTarget.style.opacity = "1";
+//                           e.currentTarget.style.transform = "translateY(0)";
+//                         }}
+//                         onMouseLeave={(e) => {
+//                           e.currentTarget.style.opacity = "0";
+//                           e.currentTarget.style.transform = "translateY(8px)";
+//                         }}
+//                       >
+//                         🔓 Tap to Unlock Offer
+//                       </span>
+//                     </div>
+//                   </div>
+//                 );
+//               })}
+//             </div>
+
+//             {/* Navigation Dots */}
+//             <div
+//               style={{
+//                 position: "absolute",
+//                 bottom: 16,
+//                 left: "50%",
+//                 transform: "translateX(-50%)",
+//                 display: "flex",
+//                 gap: 8,
+//                 zIndex: 10,
+//               }}
+//             >
+//               {bestOfferBanner.map((_, i) => (
+//                 <span
+//                   key={i}
+//                   onClick={(e) => {
+//                     e.stopPropagation();
+//                     setCurrentBanner(i);
+//                   }}
+//                   style={{
+//                     width: 10,
+//                     height: 10,
+//                     borderRadius: "50%",
+//                     cursor: "pointer",
+//                     background: currentBanner === i ? "#fff" : "rgba(255,255,255,0.6)",
+//                     border: "2px solid rgba(255,255,255,0.8)",
+//                     transition: "all 0.2s ease",
+//                   }}
+//                   onMouseEnter={(e) => {
+//                     if (currentBanner !== i) {
+//                       e.currentTarget.style.background = "rgba(255,255,255,0.9)";
+//                       e.currentTarget.style.transform = "scale(1.15)";
+//                     }
+//                   }}
+//                   onMouseLeave={(e) => {
+//                     if (currentBanner !== i) {
+//                       e.currentTarget.style.background = "rgba(255,255,255,0.6)";
+//                       e.currentTarget.style.transform = "scale(1)";
+//                     }
+//                   }}
+//                 />
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {/* ===================== EMPTY STATE ===================== */}
+//         {totalItems === 0 && hasFetched && !bestOfferLoading && (
+//           <div
+//             style={{
+//               display: "flex",
+//               flexDirection: "column",
+//               alignItems: "center",
+//               justifyContent: "center",
+//               padding: "80px 24px",
+//               background:
+//                 "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 60%, #f0fdf4 100%)",
+//               borderRadius: 24,
+//               border: "1.5px dashed #86efac",
+//               textAlign: "center",
+//               minHeight: 340,
+//             }}
+//           >
+//             <div
+//               style={{
+//                 width: 88,
+//                 height: 88,
+//                 borderRadius: "50%",
+//                 background: "linear-gradient(135deg, #bbf7d0, #86efac)",
+//                 display: "flex",
+//                 alignItems: "center",
+//                 justifyContent: "center",
+//                 marginBottom: 28,
+//                 boxShadow: "0 8px 32px rgba(34,197,94,0.18)",
+//               }}
+//             >
+//               <svg
+//                 width="42"
+//                 height="42"
+//                 viewBox="0 0 24 24"
+//                 fill="none"
+//                 stroke="#16a34a"
+//                 strokeWidth="1.7"
+//                 strokeLinecap="round"
+//                 strokeLinejoin="round"
+//               >
+//                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+//                 <line x1="7" y1="7" x2="7.01" y2="7" />
+//                 <line x1="12" y1="17" x2="17" y2="12" />
+//               </svg>
+//             </div>
+//             <h2
+//               style={{
+//                 fontSize: 22,
+//                 fontWeight: 700,
+//                 color: "#14532d",
+//                 margin: "0 0 10px",
+//                 letterSpacing: "-0.3px",
+//               }}
+//             >
+//               No Special Offers Available
+//             </h2>
+//             <p
+//               style={{
+//                 fontSize: 15,
+//                 color: "#4b7c5e",
+//                 maxWidth: 380,
+//                 lineHeight: 1.7,
+//                 margin: "0 0 28px",
+//               }}
+//             >
+//               We couldn't find any active deals for your selected location.
+//               Switch to a nearby area — great offers might be just around the
+//               corner!
+//             </p>
+//             <div
+//               style={{
+//                 display: "inline-flex",
+//                 alignItems: "center",
+//                 gap: 8,
+//                 background: "#ffffff",
+//                 border: "1px solid #bbf7d0",
+//                 borderRadius: 999,
+//                 padding: "10px 22px",
+//                 fontSize: 13,
+//                 fontWeight: 600,
+//                 color: "#16a34a",
+//                 boxShadow: "0 2px 10px rgba(34,197,94,0.10)",
+//               }}
+//             >
+//               <svg
+//                 width="15"
+//                 height="15"
+//                 viewBox="0 0 24 24"
+//                 fill="none"
+//                 stroke="#16a34a"
+//                 strokeWidth="2.2"
+//                 strokeLinecap="round"
+//                 strokeLinejoin="round"
+//               >
+//                 <circle cx="12" cy="12" r="10" />
+//                 <line x1="12" y1="8" x2="12" y2="12" />
+//                 <line x1="12" y1="16" x2="12.01" y2="16" />
+//               </svg>
+//               Try selecting a different location
+//             </div>
+//           </div>
+//         )}
+
+//         {/* ===================== OFFER CARDS — SECTIONED (new shape) ===================== */}
+//         {totalItems > 0 && hasNewShape && sections.map(({ key, items, label, accent, bg, border }) => (
+//           <div key={key} style={{ marginBottom: 48 }}>
+//             <SectionHeader
+//               label={label}
+//               count={items.length}
+//               accent={accent}
+//               bg={bg}
+//               border={border}
+//             />
+//             {renderCardGrid(items)}
+//           </div>
+//         ))}
+
+//         {/* ===================== OFFER CARDS — FLAT (old shape fallback) ===================== */}
+//         {totalItems > 0 && !hasNewShape && renderCardGrid(bestOfferBillboards)}
+
+//       </div>
+
+//       {/* ===================== MODALS ===================== */}
+//       <UnlockOfferModal
+//         product={selectedProduct}
+//         couponCode={couponCode}
+//         onClose={() => {
+//           setSelectedProduct(null);
+//           setCouponCode(null);
+//         }}
+//       />
+
+//       {showLogin && (
+//         <LoginPopup
+//           close={() => setShowLogin(false)}
+//           onLoginSuccess={() => {
+//             setShowLogin(false);
+//             if (selectedProduct) {
+//               dispatch(userTracking(selectedProduct?.ProductName));
+//               dispatch(fetchProductOffer(selectedProduct.Storeid))
+//                 .unwrap()
+//                 .then((res) => {
+//                   setCouponCode(res?.data?.[0]);
+//                 })
+//                 .catch((err) => {
+//                   console.error("Offer API failed:", err);
+//                 });
+//             }
+//           }}
+//         />
+//       )}
+
+//       {/* ===================== NOTIFY SUCCESS POPUP (Rendered at root level) ===================== */}
+//       {showNotifyPopup && (
+//         <NotifySuccessPopup onClose={() => setShowNotifyPopup(false)} />
+//       )}
+//     </div>
+//   );
+// }
+
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -4419,6 +5579,418 @@ import LoginPopup from "../LoginPopup";
 import {
   postProductReaction,
 } from "@/app/features/adminPanel/reactionSlice";
+
+/* =========================================================
+   HAVERSINE DISTANCE UTILITY
+   ========================================================= */
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function formatDistance(km) {
+  if (km < 1) return `${Math.round(km * 1000)} m away`;
+  if (km < 10) return `${km.toFixed(1)} km away`;
+  return `${Math.round(km)} km away`;
+}
+
+/* =========================================================
+   USER LOCATION HOOK
+   ========================================================= */
+function useUserLocation() {
+  const [userLocation, setUserLocation]         = useState(null);
+  const [locationError, setLocationError]       = useState(false);
+  const [locationDenied, setLocationDenied]     = useState(false);
+  const [showLocationPopup, setShowLocationPopup] = useState(false);
+
+  // On mount, check permission state first
+  useEffect(() => {
+    if (!navigator?.geolocation) {
+      setLocationError(true);
+      return;
+    }
+
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        if (result.state === "granted") {
+          // Already granted — fetch silently
+          fetchLocation();
+        } else if (result.state === "denied") {
+          setLocationDenied(true);
+          setLocationError(true);
+        } else {
+          // "prompt" state — show our custom popup first
+          setShowLocationPopup(true);
+        }
+
+        result.onchange = () => {
+          if (result.state === "granted") {
+            setLocationDenied(false);
+            setLocationError(false);
+            setShowLocationPopup(false);
+            fetchLocation();
+          } else if (result.state === "denied") {
+            setLocationDenied(true);
+            setLocationError(true);
+          }
+        };
+      });
+    } else {
+      // Permissions API not available — show popup
+      setShowLocationPopup(true);
+    }
+  }, []);
+
+  const fetchLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationError(false);
+        setLocationDenied(false);
+      },
+      () => {
+        setLocationError(true);
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  };
+
+  const requestLocation = (e) => {
+    e?.stopPropagation();
+    if (!navigator.geolocation) return;
+
+    if (locationDenied) {
+      alert(
+        "Location permission is blocked.\n\nTo enable it:\n• Chrome: Click the lock icon in the address bar → Site settings → Location → Allow\n• Safari: Settings → Privacy → Location Services → Allow\n\nThen refresh the page."
+      );
+      return;
+    }
+
+    setShowLocationPopup(true);
+  };
+
+  const confirmLocation = () => {
+    setShowLocationPopup(false);
+    fetchLocation();
+  };
+
+  const dismissLocation = () => {
+    setShowLocationPopup(false);
+    setLocationError(true);
+  };
+
+  return {
+    userLocation,
+    locationError,
+    locationDenied,
+    showLocationPopup,
+    requestLocation,
+    confirmLocation,
+    dismissLocation,
+  };
+}
+
+/* =========================================================
+   LOCATION PERMISSION POPUP
+   ========================================================= */
+function LocationPermissionPopup({ onConfirm, onDismiss }) {
+  return (
+    <div
+      onClick={onDismiss}
+      style={{
+        position: "fixed", inset: 0, zIndex: 99999,
+        background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 20, animation: "lpFadeIn 0.25s ease",
+      }}
+    >
+      <style>{`
+        @keyframes lpFadeIn  { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes lpPopIn   {
+          0%   { opacity: 0; transform: scale(0.88) translateY(24px) }
+          70%  { transform: scale(1.02) translateY(-3px) }
+          100% { opacity: 1; transform: scale(1) translateY(0) }
+        }
+        @keyframes lpPulse {
+          0%, 100% { transform: scale(1);   opacity: 1 }
+          50%       { transform: scale(1.12); opacity: 0.85 }
+        }
+        @keyframes lpRing {
+          0%   { transform: scale(1);   opacity: 0.6 }
+          100% { transform: scale(2);   opacity: 0 }
+        }
+      `}</style>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff", borderRadius: 24,
+          padding: "36px 32px 28px", maxWidth: 380, width: "100%",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.25)",
+          animation: "lpPopIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards",
+          textAlign: "center", position: "relative", overflow: "hidden",
+        }}
+      >
+        {/* Top accent bar */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 4,
+          background: "linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6)",
+        }} />
+
+        {/* Close button */}
+        <button
+          onClick={onDismiss}
+          style={{
+            position: "absolute", top: 14, right: 14,
+            background: "#f3f4f6", border: "none", borderRadius: "50%",
+            width: 30, height: 30, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 16, color: "#6b7280", lineHeight: 1,
+          }}
+        >×</button>
+
+        {/* Animated icon */}
+        <div style={{ position: "relative", display: "inline-flex", marginBottom: 22 }}>
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            background: "rgba(59,130,246,0.15)",
+            animation: "lpRing 1.8s ease-out infinite",
+          }} />
+          <div style={{
+            width: 76, height: 76, borderRadius: "50%",
+            background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
+            border: "2px solid #bfdbfe",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "relative",
+            animation: "lpPulse 2.4s ease-in-out infinite",
+          }}>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none"
+              stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+        </div>
+
+        <h2 style={{
+          margin: "0 0 10px", fontSize: 20, fontWeight: 800,
+          color: "#111827", lineHeight: 1.3,
+        }}>
+          Enable Location
+        </h2>
+
+        <p style={{
+          margin: "0 0 6px", fontSize: 14, color: "#4b5563", lineHeight: 1.65,
+        }}>
+          We use your location to show nearby deals and how far each offer is from you.
+        </p>
+
+        <p style={{
+          margin: "0 0 24px", fontSize: 12, color: "#9ca3af", lineHeight: 1.6,
+        }}>
+          Your location is never stored or shared.
+        </p>
+
+        {/* Feature pills */}
+        <div style={{
+          display: "flex", justifyContent: "center", gap: 8,
+          flexWrap: "wrap", marginBottom: 24,
+        }}>
+          {[
+            { icon: "📍", text: "Nearby deals" },
+            { icon: "📏", text: "Distance info" },
+            { icon: "⚡", text: "Faster discovery" },
+          ].map(({ icon, text }) => (
+            <div key={text} style={{
+              display: "flex", alignItems: "center", gap: 5,
+              background: "#eff6ff", border: "1px solid #bfdbfe",
+              borderRadius: 20, padding: "5px 12px",
+              fontSize: 12, color: "#1d4ed8", fontWeight: 600,
+            }}>
+              <span style={{ fontSize: 13 }}>{icon}</span> {text}
+            </div>
+          ))}
+        </div>
+
+        {/* CTA buttons */}
+        <button
+          onClick={onConfirm}
+          style={{
+            width: "100%", padding: "13px 0", borderRadius: 14, border: "none",
+            background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+            color: "#fff", fontSize: 15, fontWeight: 700,
+            cursor: "pointer", marginBottom: 10,
+            boxShadow: "0 4px 18px rgba(59,130,246,0.35)",
+            transition: "transform 0.15s ease, box-shadow 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.02)";
+            e.currentTarget.style.boxShadow = "0 6px 24px rgba(59,130,246,0.45)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 4px 18px rgba(59,130,246,0.35)";
+          }}
+        >
+          📍 Allow Location Access
+        </button>
+
+        <button
+          onClick={onDismiss}
+          style={{
+            width: "100%", padding: "11px 0", borderRadius: 14,
+            border: "1.5px solid #e5e7eb", background: "transparent",
+            color: "#6b7280", fontSize: 14, fontWeight: 600,
+            cursor: "pointer",
+            transition: "background 0.15s ease, color 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f9fafb";
+            e.currentTarget.style.color = "#374151";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "#6b7280";
+          }}
+        >
+          Maybe later
+        </button>
+
+        <p style={{ margin: "14px 0 0", fontSize: 11, color: "#d1d5db" }}>
+          You can change this anytime in your browser settings
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   DISTANCE BADGE COMPONENT
+   ========================================================= */
+function DistanceBadge({ productLat, productLng, apiKilometer, userLocation, locationError, locationDenied, requestLocation }) {
+  if (!productLat || !productLng) return null;
+
+  // No browser location (denied / error) — fall back to server-provided Kilometer
+  if (locationError) {
+    if (apiKilometer !== undefined && apiKilometer !== null) {
+      const km       = Number(apiKilometer);
+      const label    = formatDistance(km);
+      const isNear   = km < 2;
+      const isMedium = km < 10;
+      const bgColor  = isNear ? "#f0fdf4" : isMedium ? "#fffbeb" : "#f0f9ff";
+      const border   = isNear ? "#bbf7d0" : isMedium ? "#fde68a" : "#bae6fd";
+      const color    = isNear ? "#15803d" : isMedium ? "#92400e" : "#0369a1";
+      const pinColor = isNear ? "#16a34a" : isMedium ? "#d97706" : "#0284c7";
+
+      return (
+        <div
+          onClick={requestLocation}
+          title="Approximate distance — click to enable precise location"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "4px 10px", borderRadius: 20,
+            background: bgColor, border: `1px solid ${border}`,
+            fontSize: 11, color, fontWeight: 700, marginTop: 8,
+            cursor: "pointer",
+          }}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+            stroke={pinColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          {label}
+        </div>
+      );
+    }
+
+    // No fallback data either — show the original "enable location" pill
+    return (
+      <div
+        onClick={requestLocation}
+        title={locationDenied ? "Location blocked — click for instructions" : "Click to enable location"}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          padding: "4px 10px", borderRadius: 20,
+          background: "#f3f4f6", border: "1px solid #e5e7eb",
+          fontSize: 11, color: "#9ca3af", fontWeight: 600,
+          marginTop: 8, cursor: "pointer",
+          transition: "background 0.2s ease, color 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "#e5e7eb";
+          e.currentTarget.style.color = "#6b7280";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "#f3f4f6";
+          e.currentTarget.style.color = "#9ca3af";
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+          stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        {locationDenied ? "Location blocked" : "Enable location"}
+      </div>
+    );
+  }
+
+  if (!userLocation) {
+    return (
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 5,
+        padding: "4px 10px", borderRadius: 20,
+        background: "#f3f4f6", border: "1px solid #e5e7eb",
+        fontSize: 11, color: "#9ca3af", fontWeight: 600,
+        marginTop: 8,
+      }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+          stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ animation: "spin 1.5s linear infinite" }}>
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        Locating…
+        <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
+      </div>
+    );
+  }
+
+  // Browser location is available — keep computing live haversine distance as before
+  const km       = haversineDistance(userLocation.lat, userLocation.lng, productLat, productLng);
+  const label    = formatDistance(km);
+  const isNear   = km < 2;
+  const isMedium = km < 10;
+  const bgColor  = isNear ? "#f0fdf4" : isMedium ? "#fffbeb" : "#f0f9ff";
+  const border   = isNear ? "#bbf7d0" : isMedium ? "#fde68a" : "#bae6fd";
+  const color    = isNear ? "#15803d" : isMedium ? "#92400e" : "#0369a1";
+  const pinColor = isNear ? "#16a34a" : isMedium ? "#d97706" : "#0284c7";
+
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: "4px 10px", borderRadius: 20,
+      background: bgColor, border: `1px solid ${border}`,
+      fontSize: 11, color, fontWeight: 700, marginTop: 8,
+    }}>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+        stroke={pinColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
+      </svg>
+      {label}
+    </div>
+  );
+}
 
 /* =========================================================
    NOTIFY SUCCESS POPUP COMPONENT
@@ -4731,8 +6303,19 @@ function SectionHeader({ label, count, accent, bg, border }) {
 /* =========================================================
    SINGLE OFFER CARD COMPONENT
    ========================================================= */
-// Added onNotifySuccess to props
-function OfferCard({ item, isAuthenticated, onUnlockOffer, onLoginRequired, getTimeRemaining, onNotifySuccess }) {
+// Added onNotifySuccess to props, plus location props for the distance badge
+function OfferCard({
+  item,
+  isAuthenticated,
+  onUnlockOffer,
+  onLoginRequired,
+  getTimeRemaining,
+  onNotifySuccess,
+  userLocation,
+  locationError,
+  locationDenied,
+  requestLocation,
+}) {
   const dispatch = useDispatch();
   
   const [notifyLoading, setNotifyLoading] = useState(false);
@@ -4828,6 +6411,19 @@ function OfferCard({ item, isAuthenticated, onUnlockOffer, onLoginRequired, getT
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)";
           }}
+        />
+      </div>
+
+      {/* ===== DISTANCE BADGE ===== */}
+      <div style={{ padding: "0 12px", marginTop: 8 }}>
+        <DistanceBadge
+          productLat={item.Latitude}
+          productLng={item.Longitude}
+          apiKilometer={item.Kilometer}
+          userLocation={userLocation}
+          locationError={locationError}
+          locationDenied={locationDenied}
+          requestLocation={requestLocation}
         />
       </div>
 
@@ -5044,6 +6640,17 @@ export default function BillboardBanners() {
   // Added state to control the popup at the root level
   const [showNotifyPopup, setShowNotifyPopup] = useState(false);
 
+  // Location hook — powers the distance badge on each card, same as SuperDeal
+  const {
+    userLocation,
+    locationError,
+    locationDenied,
+    showLocationPopup,
+    requestLocation,
+    confirmLocation,
+    dismissLocation,
+  } = useUserLocation();
+
   const {
     bestOfferBillboards,
     bestOfferLoading,
@@ -5244,6 +6851,10 @@ export default function BillboardBanners() {
           onLoginRequired={() => setShowLogin(true)}
           getTimeRemaining={getTimeRemaining}
           onNotifySuccess={() => setShowNotifyPopup(true)} // Pass callback to trigger popup
+          userLocation={userLocation}
+          locationError={locationError}
+          locationDenied={locationDenied}
+          requestLocation={requestLocation}
         />
       ))}
     </div>
@@ -5556,6 +7167,14 @@ export default function BillboardBanners() {
       {/* ===================== NOTIFY SUCCESS POPUP (Rendered at root level) ===================== */}
       {showNotifyPopup && (
         <NotifySuccessPopup onClose={() => setShowNotifyPopup(false)} />
+      )}
+
+      {/* ===================== LOCATION PERMISSION POPUP ===================== */}
+      {showLocationPopup && (
+        <LocationPermissionPopup
+          onConfirm={confirmLocation}
+          onDismiss={dismissLocation}
+        />
       )}
     </div>
   );
