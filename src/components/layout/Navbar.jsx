@@ -1034,7 +1034,7 @@ export default function Navbar() {
     ...(!isAdminOrOwner
       ? [
         { name: 'Super Deal', icon: Zap, onClick: handleSuperDealClick },
-          { name: 'Special Offers', icon: Gift, onClick: handleSpecialOfferClick },
+          { name: 'Nearby Offers', icon: Gift, onClick: handleSpecialOfferClick },
         ]
       : []),
     ...(isAdminOrOwner
@@ -1046,182 +1046,224 @@ export default function Navbar() {
     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
 
       {/* ── TOP BAR ── */}
-      <div style={{ background: '#131921', borderBottom: '1px solid #3a3a3a' }}>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
         <div style={{
           maxWidth: 1400, margin: '0 auto', padding: '0 16px',
-          display: 'flex', alignItems: 'center', height: 60, gap: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 70, gap: 16,
         }}>
 
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8, flexShrink: 0 }}>
-            {/* <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', lineHeight: 1 }}>
-              offer<span style={{ color: '#FF9900' }}>go</span>down
-            </span> */}
-          <img src="/59e9ac32-f3aa-4544-9235-3c678d15868d.png" style={{height:"63px", width:"74px"}} />
+          {/* Left: Location Dropdown (Desktop) */}
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'flex-start' }}>
+            {mounted && !isAdminOrOwner && !isMobile && (
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  id="navbar-location-btn"
+                  onClick={() => setLocationDropdownOpen((prev) => !prev)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '8px 16px', borderRadius: 12,
+                    border: '1px solid #e5e7eb', background: '#fbfbfb',
+                    cursor: 'pointer', transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                    e.currentTarget.style.background = '#f3f4f6';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.background = '#fbfbfb';
+                  }}
+                >
+                  <MapPin style={{ width: 16, height: 16, color: '#8B5CF6', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1f2937' }}>
+                    {selectedLocation?.Name || 'Select Location'}
+                  </span>
+                  <ChevronDown style={{
+                    width: 14, height: 14, color: '#4b5563', marginLeft: 2,
+                    transition: 'transform 0.2s',
+                    transform: locationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  }} />
+                </button>
+
+                {locationDropdownOpen && (
+                  <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setLocationDropdownOpen(false)} />
+                    <div style={{
+                      position: 'absolute', left: 0, top: '100%', marginTop: 8, zIndex: 20,
+                      minWidth: 220, background: '#fff', border: '1px solid #e5e7eb',
+                      borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.1)', overflow: 'hidden',
+                    }}>
+                      <div style={{ padding: '12px 16px', borderBottom: '1px solid #eee', background: '#f9fafb' }}>
+                        <p style={{ fontSize: 11, fontWeight: 800, color: '#374151', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          Choose a location
+                        </p>
+                      </div>
+                      <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+                        {(locationData || []).map((loc) => (
+                          <button
+                            key={loc.LocationId}
+                            onClick={() => handleLocationChange(loc)}
+                            style={{
+                              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                              padding: '10px 16px', textAlign: 'left', border: 'none', cursor: 'pointer',
+                              background: selectedLocation?.LocationId === loc.LocationId ? '#f3e8ff' : '#fff',
+                              borderLeft: selectedLocation?.LocationId === loc.LocationId ? '3px solid #8B5CF6' : '3px solid transparent',
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#f9fafb'; }}
+                            onMouseLeave={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#fff'; }}
+                          >
+                            <MapPin style={{ width: 14, height: 14, color: '#8B5CF6', flexShrink: 0 }} />
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{loc.Name}</span>
+                            {selectedLocation?.LocationId === loc.LocationId && (
+                              <span style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: '#8B5CF6', flexShrink: 0 }} />
+                            )}
+                          </button>
+                        ))}
+                        {(!locationData || locationData.length === 0) && (
+                          <p style={{ padding: '12px 16px', fontSize: 13, color: '#888', textAlign: 'center', margin: 0 }}>
+                            No locations found
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Location Dropdown — hidden on mobile */}
-          {mounted && !isAdminOrOwner && !isMobile && (
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <button
-                id="navbar-location-btn"
-                onClick={() => setLocationDropdownOpen((prev) => !prev)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  padding: '6px 8px', borderRadius: 3,
-                  border: '1px solid transparent', background: 'transparent',
-                  cursor: 'pointer', transition: 'border-color 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
-              >
-                <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.2 }}>Location to</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {selectedLocation?.Name || 'Select Location'}
-                  </div>
-                </div>
-                <ChevronDown style={{
-                  width: 12, height: 12, color: '#fff', marginLeft: 2,
-                  transition: 'transform 0.2s',
-                  transform: locationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }} />
-              </button>
-
-              {locationDropdownOpen && (
-                <>
-                  <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setLocationDropdownOpen(false)} />
-                  <div style={{
-                    position: 'absolute', left: 0, top: '100%', marginTop: 4, zIndex: 20,
-                    minWidth: 200, background: '#fff', border: '1px solid #ddd',
-                    borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', overflow: 'hidden',
-                  }}>
-                    <div style={{ padding: '10px 16px', borderBottom: '1px solid #eee', background: '#f5f5f5' }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#131921', margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                        Choose a location
-                      </p>
-                    </div>
-                    <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-                      {(locationData || []).map((loc) => (
-                        <button
-                          key={loc.LocationId}
-                          onClick={() => handleLocationChange(loc)}
-                          style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                            padding: '10px 16px', textAlign: 'left', border: 'none', cursor: 'pointer',
-                            background: selectedLocation?.LocationId === loc.LocationId ? '#fff3e0' : '#fff',
-                            borderLeft: selectedLocation?.LocationId === loc.LocationId ? '3px solid #FF9900' : '3px solid transparent',
-                            transition: 'all 0.15s',
-                          }}
-                          onMouseEnter={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#f5f5f5'; }}
-                          onMouseLeave={e => { if (selectedLocation?.LocationId !== loc.LocationId) e.currentTarget.style.background = '#fff'; }}
-                        >
-                          <MapPin style={{ width: 14, height: 14, color: '#FF9900', flexShrink: 0 }} />
-                          <span style={{ fontSize: 13, fontWeight: 500, color: '#131921' }}>{loc.Name}</span>
-                          {selectedLocation?.LocationId === loc.LocationId && (
-                            <span style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: '#FF9900', flexShrink: 0 }} />
-                          )}
-                        </button>
-                      ))}
-                      {(!locationData || locationData.length === 0) && (
-                        <p style={{ padding: '12px 16px', fontSize: 13, color: '#888', textAlign: 'center', margin: 0 }}>
-                          No locations found
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
-
-          {/* ── DESKTOP NAV — hidden on mobile ── */}
-          {!isMobile && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {navItems.map((item) => (
-                <button
-                  id={`navbar-${item.name.replace(/\s+/g, '-').toLowerCase()}`}
-                  key={item.name}
-                  onClick={item.onClick}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 10px', borderRadius: 3,
-                    border: '1px solid transparent', background: 'transparent',
-                    color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = '#fff'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
-                >
-                  <item.icon style={{ width: 16, height: 16, color: '#FF9900' }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.name}</span>
-                </button>
-              ))}
-
-              {mounted && isAuthenticated && (
-                <button
-                  id="navbar-logout-btn"
-                  onClick={handleLogout}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 12px', borderRadius: 3,
-                    border: '1px solid transparent', background: 'transparent',
-                    color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0,
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
-                >
-                  <LogOut style={{ width: 16, height: 16, color: '#FF9900' }} />
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>Logout</span>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* ── HAMBURGER — only on mobile ── */}
-          {isMobile && (
-            <button
-              id="navbar-mobile-menu-btn"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 38, height: 38, borderRadius: 4,
-                background: mobileMenuOpen ? '#232f3e' : 'transparent',
-                border: '1px solid',
-                borderColor: mobileMenuOpen ? '#FF9900' : 'transparent',
-                color: '#fff', cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                flexShrink: 0,
+          {/* Center: Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div 
+              onClick={() => router.push('/')}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                cursor: 'pointer',
+                userSelect: 'none'
               }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = '#FF9900'}
-              onMouseLeave={e => { if (!mobileMenuOpen) e.currentTarget.style.borderColor = 'transparent'; }}
             >
-              {mobileMenuOpen
-                ? <X style={{ width: 20, height: 20, color: '#FF9900' }} />
-                : <Menu style={{ width: 20, height: 20, color: '#fff' }} />
-              }
-            </button>
-          )}
+              <svg width="26" height="26" viewBox="0 0 100 100" style={{ marginRight: 0, flexShrink: 0 }}>
+                <defs>
+                  <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#ef4444" />
+                  </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="36" stroke="url(#logo-gradient)" strokeWidth="18" fill="none" />
+              </svg>
+              <span style={{ 
+                fontSize: '22px', 
+                fontWeight: '800', 
+                color: '#ef4444', 
+                fontFamily: "'Poppins', 'Inter', sans-serif",
+                letterSpacing: '-0.5px'
+              }}>
+                ffer Sandhai
+              </span>
+            </div>
+          </div>
+
+          {/* Right: Desktop Nav & Logout (or hamburger on mobile) */}
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'flex-end', gap: 12 }}>
+            {/* Desktop Nav */}
+            {!isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {navItems.map((item) => (
+                  <button
+                    id={`navbar-${item.name.replace(/\s+/g, '-').toLowerCase()}`}
+                    key={item.name}
+                    onClick={item.onClick}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '8px 16px', borderRadius: 8,
+                      border: '1px solid transparent', background: 'transparent',
+                      color: '#4b5563', cursor: 'pointer', transition: 'all 0.2s ease', flexShrink: 0,
+                      fontWeight: 600,
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = '#f3f4f6';
+                      e.currentTarget.style.color = '#1f2937';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#4b5563';
+                    }}
+                  >
+                    <item.icon style={{ width: 16, height: 16, color: '#8B5CF6' }} />
+                    <span style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{item.name}</span>
+                  </button>
+                ))}
+
+                {mounted && isAuthenticated && (
+                  <button
+                    id="navbar-logout-btn"
+                    onClick={handleLogout}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '8px 16px', borderRadius: 8,
+                      border: '1px solid #EF4444', background: 'transparent',
+                      color: '#EF4444', cursor: 'pointer', transition: 'all 0.2s ease', flexShrink: 0,
+                      fontWeight: 600,
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = '#FEF2F2';
+                      e.currentTarget.style.borderColor = '#DC2626';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.borderColor = '#EF4444';
+                    }}
+                  >
+                    <LogOut style={{ width: 16, height: 16, color: '#EF4444' }} />
+                    <span style={{ fontSize: 13 }}>Logout</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Mobile Hamburger */}
+            {isMobile && (
+              <button
+                id="navbar-mobile-menu-btn"
+                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 40, height: 40, borderRadius: 8,
+                  background: mobileMenuOpen ? '#f3f4f6' : 'transparent',
+                  border: '1px solid',
+                  borderColor: mobileMenuOpen ? '#e5e7eb' : 'transparent',
+                  color: '#1f2937', cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0,
+                }}
+              >
+                {mobileMenuOpen
+                  ? <X style={{ width: 22, height: 22, color: '#8B5CF6' }} />
+                  : <Menu style={{ width: 22, height: 22, color: '#1f2937' }} />
+                }
+              </button>
+            )}
+          </div>
+
         </div>
       </div>
 
       {/* ── MOBILE DROPDOWN MENU ── */}
       {isMobile && mobileMenuOpen && (
         <div style={{
-          background: '#131921',
-          borderTop: '1px solid #3a3a3a',
+          background: '#ffffff',
+          borderTop: '1px solid #e5e7eb',
           padding: '16px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
         }}>
 
           {/* Location section */}
           {mounted && !isAdminOrOwner && (
             <div style={{ marginBottom: 16 }}>
               <p style={{
-                fontSize: 11, fontWeight: 700, color: '#FF9900',
+                fontSize: 11, fontWeight: 800, color: '#8B5CF6',
                 textTransform: 'uppercase', letterSpacing: 0.5,
                 margin: '0 0 8px',
               }}>
@@ -1236,20 +1278,20 @@ export default function Navbar() {
                       onClick={() => { handleLocationChange(loc); setMobileMenuOpen(false); }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '8px 10px', borderRadius: 4,
-                        border: isSelected ? '1px solid #FF9900' : '1px solid #3a3a3a',
-                        background: isSelected ? '#fff3e0' : '#232f3e',
-                        color: isSelected ? '#131921' : '#ccc',
-                        cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                        padding: '8px 10px', borderRadius: 8,
+                        border: isSelected ? '1px solid #8B5CF6' : '1px solid #e5e7eb',
+                        background: isSelected ? '#f3e8ff' : '#fbfbfb',
+                        color: isSelected ? '#8B5CF6' : '#4b5563',
+                        cursor: 'pointer', fontSize: 12, fontWeight: 600,
                         transition: 'all 0.15s',
                       }}
                     >
-                      <MapPin style={{ width: 12, height: 12, flexShrink: 0, color: isSelected ? '#FF9900' : '#888' }} />
+                      <MapPin style={{ width: 12, height: 12, flexShrink: 0, color: isSelected ? '#8B5CF6' : '#9ca3af' }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {loc.Name}
                       </span>
                       {isSelected && (
-                        <span style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: '50%', background: '#FF9900', flexShrink: 0 }} />
+                        <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#8B5CF6', flexShrink: 0 }} />
                       )}
                     </button>
                   );
@@ -1262,7 +1304,7 @@ export default function Navbar() {
           )}
 
           {/* Divider */}
-          <div style={{ borderTop: '1px solid #3a3a3a', marginBottom: 8 }} />
+          <div style={{ borderTop: '1px solid #e5e7eb', marginBottom: 8 }} />
 
           {/* Nav items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1272,15 +1314,15 @@ export default function Navbar() {
                 onClick={() => { item.onClick(); setMobileMenuOpen(false); }}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 10px', borderRadius: 4,
+                  padding: '11px 10px', borderRadius: 8,
                   border: 'none', background: 'transparent',
-                  color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 500,
+                  color: '#4b5563', cursor: 'pointer', fontSize: 14, fontWeight: 600,
                   transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#232f3e'}
+                onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <item.icon style={{ width: 17, height: 17, color: '#FF9900', flexShrink: 0 }} />
+                <item.icon style={{ width: 17, height: 17, color: '#8B5CF6', flexShrink: 0 }} />
                 <span>{item.name}</span>
               </button>
             ))}
@@ -1291,16 +1333,16 @@ export default function Navbar() {
                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 10px', borderRadius: 4,
+                  padding: '11px 10px', borderRadius: 8,
                   border: 'none', background: 'transparent',
-                  color: '#ff6b6b', cursor: 'pointer', fontSize: 14, fontWeight: 500,
-                  transition: 'background 0.15s',
-                  marginTop: 4, borderTop: '1px solid #3a3a3a',
+                  color: '#EF4444', cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                  transition: 'all 0.15s',
+                  marginTop: 4, borderTop: '1px solid #e5e7eb',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#2a1f1f'}
+                onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <LogOut style={{ width: 17, height: 17, flexShrink: 0 }} />
+                <LogOut style={{ width: 17, height: 17, flexShrink: 0, color: '#EF4444' }} />
                 <span>Logout</span>
               </button>
             )}
@@ -1316,10 +1358,11 @@ export default function Navbar() {
         toastOptions={{
           duration: 2500,
           style: {
-            background: '#232f3e',
-            color: '#fff',
-            border: '1px solid #FF9900',
-            borderRadius: 4,
+            background: '#ffffff',
+            color: '#1f2937',
+            border: '1px solid #e5e7eb',
+            borderRadius: 12,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
           },
         }}
       />

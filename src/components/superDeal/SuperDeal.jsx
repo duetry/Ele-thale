@@ -833,6 +833,9 @@ import {
   selectReactionLoading,
 } from "@/app/features/adminPanel/reactionSlice";
 
+import { MapPin, Heart, Share2, Store, Clock, Gift, ArrowRight, Grid, List, ChevronRight, Star, Bell } from "lucide-react";
+import toast from "react-hot-toast";
+
 /* =========================================================
    HAVERSINE DISTANCE UTILITY
    ========================================================= */
@@ -1131,116 +1134,84 @@ function LocationPermissionPopup({ onConfirm, onDismiss }) {
 function DistanceBadge({ productLat, productLng, apiKilometer, userLocation, locationError, locationDenied, requestLocation }) {
   if (!productLat || !productLng) return null;
 
-  // No browser location (denied / error) — fall back to server-provided Kilometer
+  let label = "";
+  let isLocating = false;
+  let isBlocked = false;
+
   if (locationError) {
     if (apiKilometer !== undefined && apiKilometer !== null) {
-      const km       = Number(apiKilometer);
-      const label    = formatDistance(km);
-      const isNear   = km < 2;
-      const isMedium = km < 10;
-      const bgColor  = isNear ? "#f0fdf4" : isMedium ? "#fffbeb" : "#f0f9ff";
-      const border   = isNear ? "#bbf7d0" : isMedium ? "#fde68a" : "#bae6fd";
-      const color    = isNear ? "#15803d" : isMedium ? "#92400e" : "#0369a1";
-      const pinColor = isNear ? "#16a34a" : isMedium ? "#d97706" : "#0284c7";
-
-      return (
-        <div
-          onClick={requestLocation}
-          title="Approximate distance — click to enable precise location"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 5,
-            padding: "4px 10px", borderRadius: 20,
-            background: bgColor, border: `1px solid ${border}`,
-            fontSize: 11, color, fontWeight: 700, marginTop: 8,
-            cursor: "pointer",
-          }}
-        >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-            stroke={pinColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-          {label}
-        </div>
-      );
+      const km = Number(apiKilometer);
+      label = formatDistance(km);
+    } else {
+      isBlocked = locationDenied;
+      label = locationDenied ? "Location blocked" : "Enable location";
     }
-
-    // No fallback data either — show the original "enable location" pill
-    return (
-      <div
-        onClick={requestLocation}
-        title={locationDenied ? "Location blocked — click for instructions" : "Click to enable location"}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 5,
-          padding: "4px 10px", borderRadius: 20,
-          background: "#f3f4f6", border: "1px solid #e5e7eb",
-          fontSize: 11, color: "#9ca3af", fontWeight: 600,
-          marginTop: 8, cursor: "pointer",
-          transition: "background 0.2s ease, color 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#e5e7eb";
-          e.currentTarget.style.color = "#6b7280";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "#f3f4f6";
-          e.currentTarget.style.color = "#9ca3af";
-        }}
-      >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-          stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-          <circle cx="12" cy="10" r="3" />
-        </svg>
-        {locationDenied ? "Location blocked" : "Enable location"}
-      </div>
-    );
+  } else if (!userLocation) {
+    isLocating = true;
+    label = "Locating…";
+  } else {
+    const km = haversineDistance(userLocation.lat, userLocation.lng, productLat, productLng);
+    label = formatDistance(km);
   }
-
-  if (!userLocation) {
-    return (
-      <div style={{
-        display: "inline-flex", alignItems: "center", gap: 5,
-        padding: "4px 10px", borderRadius: 20,
-        background: "#f3f4f6", border: "1px solid #e5e7eb",
-        fontSize: 11, color: "#9ca3af", fontWeight: 600,
-        marginTop: 8,
-      }}>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-          stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-          style={{ animation: "spin 1.5s linear infinite" }}>
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-          <circle cx="12" cy="10" r="3" />
-        </svg>
-        Locating…
-        <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
-      </div>
-    );
-  }
-
-  // Browser location is available — keep computing live haversine distance as before
-  const km       = haversineDistance(userLocation.lat, userLocation.lng, productLat, productLng);
-  const label    = formatDistance(km);
-  const isNear   = km < 2;
-  const isMedium = km < 10;
-  const bgColor  = isNear ? "#f0fdf4" : isMedium ? "#fffbeb" : "#f0f9ff";
-  const border   = isNear ? "#bbf7d0" : isMedium ? "#fde68a" : "#bae6fd";
-  const color    = isNear ? "#15803d" : isMedium ? "#92400e" : "#0369a1";
-  const pinColor = isNear ? "#16a34a" : isMedium ? "#d97706" : "#0284c7";
 
   return (
-    <div style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "4px 10px", borderRadius: 20,
-      background: bgColor, border: `1px solid ${border}`,
-      fontSize: 11, color, fontWeight: 700, marginTop: 8,
-    }}>
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-        stroke={pinColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-      {label}
+    <div
+      onClick={(e) => {
+        if (locationError) {
+          e.stopPropagation();
+          requestLocation(e);
+        }
+      }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 16px",
+        borderBottom: "1px solid #f3f4f6",
+        cursor: locationError ? "pointer" : "default",
+        background: "#ffffff",
+        transition: "background 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (locationError) e.currentTarget.style.background = "#f9fafb";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#ffffff";
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          background: "#f5f3ff",
+          flexShrink: 0
+        }}>
+          <MapPin
+            style={{
+              width: 14,
+              height: 14,
+              color: isLocating || isBlocked ? "#9ca3af" : "#db2777",
+            }}
+          />
+        </span>
+        {isLocating || isBlocked ? (
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#1f2937" }}>
+            {label}
+          </span>
+        ) : (
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#1f2937" }}>
+            {label}{" "}
+            <span style={{ fontWeight: 500, color: "#6b7280" }}>
+              from your location
+            </span>
+          </span>
+        )}
+      </div>
+      <ChevronRight style={{ width: 14, height: 14, color: "#9ca3af" }} />
     </div>
   );
 }
@@ -1299,72 +1270,91 @@ function CountdownBadge({ offerStartTime, offerEndTime }) {
   if (status === "expired") {
     return (
       <div style={{
-        display: "flex", alignItems: "center", gap: 6,
-        padding: "7px 10px", marginTop: 10,
-        background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 10,
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "8px 12px",
+        background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10,
+        color: "#166534", fontSize: 12, fontWeight: 700
       }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-          stroke="#be123c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="15" y1="9" x2="9" y2="15" />
-          <line x1="9" y1="9" x2="15" y2="15" />
-        </svg>
-        <span style={{ fontSize: 12, fontWeight: 700, color: "#be123c" }}>
-          This offer has ended
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 16,
+          height: 16,
+          borderRadius: "50%",
+          background: "#be123c",
+          color: "#ffffff",
+          flexShrink: 0
+        }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
         </span>
+        <span>This offer has ended</span>
       </div>
     );
   }
 
   const isUpcoming  = status === "upcoming";
-  const bgColor     = isUpcoming ? "#fffbeb" : "#f0fdf4";
-  const borderColor = isUpcoming ? "#fde68a" : "#bbf7d0";
-  const labelColor  = isUpcoming ? "#92400e" : "#14532d";
-  const digitBg     = isUpcoming ? "#f59e0b" : "#16a34a";
+  const labelText = isUpcoming ? "Offer Available in" : "Offer Closes in";
+  const badgeColor  = isUpcoming ? "#d97706" : "#16a34a"; // Amber for upcoming, green for active
 
   return (
-    <div style={{
-      padding: "9px 10px", marginTop: 10,
-      background: bgColor, border: `1px solid ${borderColor}`, borderRadius: 10,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8 }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-          stroke={labelColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-        <span style={{ fontSize: 11, fontWeight: 700, color: labelColor, textTransform: "uppercase", letterSpacing: 0.4 }}>
-          {label}
-        </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Title */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4, color: badgeColor, fontSize: 11, fontWeight: 800, letterSpacing: "0.5px" }}>
+        <Clock style={{ width: 12, height: 12 }} />
+        <span>{labelText.toUpperCase()}</span>
       </div>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 4 }}>
-        {segments.map((seg, i) => (
-          <React.Fragment key={i}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{
-                background: digitBg, color: "#fff",
-                fontFamily: "monospace", fontSize: 16, fontWeight: 800,
-                borderRadius: 7, padding: "4px 8px", minWidth: 34,
-                letterSpacing: 1, textAlign: "center",
-                boxShadow: `0 2px 8px ${digitBg}55`,
-              }}>
-                {seg.num}
+
+      {/* Row with segments and gift icon */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {segments.map((seg, i) => (
+            <React.Fragment key={i}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{
+                  background: badgeColor,
+                  color: "#ffffff",
+                  fontFamily: "monospace",
+                  fontSize: 14,
+                  fontWeight: 800,
+                  borderRadius: 6,
+                  width: 32,
+                  height: 28,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: `0 2px 6px ${badgeColor}33`,
+                }}>
+                  {seg.num}
+                </div>
+                <span style={{ fontSize: 8, fontWeight: 700, color: "#9ca3af", marginTop: 3, letterSpacing: "0.2px" }}>
+                  {seg.unit.toUpperCase()}
+                </span>
               </div>
-              <div style={{
-                fontSize: 9, fontWeight: 700, color: labelColor,
-                marginTop: 3, textTransform: "uppercase", textAlign: "center",
-              }}>
-                {seg.unit}
-              </div>
-            </div>
-            {i < segments.length - 1 && (
-              <span style={{
-                fontSize: 16, fontWeight: 900,
-                color: digitBg, marginBottom: 14, lineHeight: 1,
-              }}>:</span>
-            )}
-          </React.Fragment>
-        ))}
+              {i < segments.length - 1 && (
+                <span style={{ fontSize: 14, fontWeight: 900, color: badgeColor, marginBottom: 12, lineHeight: 1 }}>:</span>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Gift icon box */}
+        <div style={{
+          width: 38,
+          height: 38,
+          borderRadius: 8,
+          border: "1.5px solid #e8f5e9",
+          background: "#f8fafc",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: isUpcoming ? "#d97706" : "#16a34a",
+          opacity: 0.8
+        }}>
+          <Gift style={{ width: 20, height: 20, strokeWidth: 1.5 }} />
+        </div>
       </div>
     </div>
   );
@@ -1373,6 +1363,24 @@ function CountdownBadge({ offerStartTime, offerEndTime }) {
 /* =========================================================
    LIKE / DISLIKE BUTTONS COMPONENT
    ========================================================= */
+const DislikeIcon = ({ style, ...props }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={style}
+    {...props}
+  >
+    <path d="M12 5c-1.7-2.6-5.5-3-7.5-1-2 2-2 6 2.5 10.5l5 4.5 5-4.5c4.5-4.5 4.5-8.5 2.5-10.5-2-2-5.8-1.6-7.5 1" />
+    <path d="M12 5l-1.5 3 2.5 3-2 3.5 1 2.5" />
+  </svg>
+);
+
 function LikeDislikeButtons({ productId, isAuthenticated, onLoginRequired }) {
   const dispatch = useDispatch();
 
@@ -1390,95 +1398,83 @@ function LikeDislikeButtons({ productId, isAuthenticated, onLoginRequired }) {
   };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+    <>
+      {/* Like Button */}
       <button
         onClick={(e) => handleReaction(e, "like")}
         disabled={isLoading}
         title="Like this offer"
         style={{
-          display: "flex", alignItems: "center", gap: 5,
-          padding: "6px 14px", borderRadius: 20,
-          border: `1.5px solid ${likeActive ? "#16a34a" : "#d1d5db"}`,
-          background: likeActive ? "#f0fdf4" : "#fff",
-          color: likeActive ? "#16a34a" : "#6b7280",
-          fontSize: 13, fontWeight: 600,
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          padding: "10px 14px",
+          borderRadius: 12,
+          border: `1.5px solid ${likeActive ? "#0d9488" : "#14b8a6"}`,
+          background: likeActive ? "#f0fdf4" : "#ffffff",
+          color: likeActive ? "#0d9488" : "#374151",
+          fontSize: 13,
+          fontWeight: 700,
           cursor: isLoading ? "not-allowed" : "pointer",
           transition: "all 0.2s ease",
-          transform: likeActive ? "scale(1.05)" : "scale(1)",
-          boxShadow: likeActive ? "0 2px 8px rgba(22,163,74,0.18)" : "none",
-          opacity: isLoading ? 0.7 : 1,
         }}
         onMouseEnter={(e) => {
           if (!likeActive && !isLoading) {
-            e.currentTarget.style.borderColor = "#16a34a";
-            e.currentTarget.style.color = "#16a34a";
             e.currentTarget.style.background = "#f0fdf4";
           }
         }}
         onMouseLeave={(e) => {
           if (!likeActive) {
-            e.currentTarget.style.borderColor = "#d1d5db";
-            e.currentTarget.style.color = "#6b7280";
-            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.background = "#ffffff";
           }
         }}
       >
-        <svg width="15" height="15" viewBox="0 0 24 24"
-          fill={likeActive ? "#16a34a" : "none"}
-          stroke={likeActive ? "#16a34a" : "currentColor"}
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transition: "all 0.2s ease", flexShrink: 0 }}
-        >
-          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-          <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-        </svg>
-        {isLoading && reaction !== "like" ? "..." : likeActive ? "Liked" : "Like"}
+        <Heart
+          fill={likeActive ? "#0d9488" : "none"}
+          stroke="#0d9488"
+          style={{ width: 15, height: 15 }}
+        />
+        <span>Like</span>
       </button>
 
+      {/* Dislike Button */}
       <button
         onClick={(e) => handleReaction(e, "dislike")}
         disabled={isLoading}
         title="Dislike this offer"
         style={{
-          display: "flex", alignItems: "center", gap: 5,
-          padding: "6px 14px", borderRadius: 20,
-          border: `1.5px solid ${dislikeActive ? "#be123c" : "#d1d5db"}`,
-          background: dislikeActive ? "#fff1f2" : "#fff",
-          color: dislikeActive ? "#be123c" : "#6b7280",
-          fontSize: 13, fontWeight: 600,
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          padding: "10px 14px",
+          borderRadius: 12,
+          border: `1.5px solid ${dislikeActive ? "#be123c" : "#f43f5e"}`,
+          background: dislikeActive ? "#fff1f2" : "#ffffff",
+          color: dislikeActive ? "#be123c" : "#374151",
+          fontSize: 13,
+          fontWeight: 700,
           cursor: isLoading ? "not-allowed" : "pointer",
           transition: "all 0.2s ease",
-          transform: dislikeActive ? "scale(1.05)" : "scale(1)",
-          boxShadow: dislikeActive ? "0 2px 8px rgba(190,18,60,0.18)" : "none",
-          opacity: isLoading ? 0.7 : 1,
         }}
         onMouseEnter={(e) => {
           if (!dislikeActive && !isLoading) {
-            e.currentTarget.style.borderColor = "#be123c";
-            e.currentTarget.style.color = "#be123c";
             e.currentTarget.style.background = "#fff1f2";
           }
         }}
         onMouseLeave={(e) => {
           if (!dislikeActive) {
-            e.currentTarget.style.borderColor = "#d1d5db";
-            e.currentTarget.style.color = "#6b7280";
-            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.background = "#ffffff";
           }
         }}
       >
-        <svg width="15" height="15" viewBox="0 0 24 24"
-          fill={dislikeActive ? "#be123c" : "none"}
-          stroke={dislikeActive ? "#be123c" : "currentColor"}
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transition: "all 0.2s ease", flexShrink: 0 }}
-        >
-          <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
-          <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
-        </svg>
-        {isLoading && reaction !== "dislike" ? "..." : dislikeActive ? "Disliked" : "Dislike"}
+        <DislikeIcon style={{ width: 15, height: 15, color: "#f43f5e" }} />
+        <span>Dislike</span>
       </button>
-    </div>
+    </>
   );
 }
 
@@ -1789,10 +1785,13 @@ function SuperDealCard({
   onLoginRequired,
   onRequestOffer,
   onNotifySuccess,
+  viewMode,
+  isMobile,
 }) {
   const dispatch = useDispatch();
   const [notifyLoading, setNotifyLoading] = useState(false);
   const [notified, setNotified] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
 
   const now       = new Date();
   const startTime = item.OfferStartTime ? new Date(item.OfferStartTime) : null;
@@ -1801,8 +1800,6 @@ function SuperDealCard({
   const isExpired  = endTime   ? now > endTime   : false;
   const isUpcoming = startTime ? now < startTime : false;
   const isActive   = !isExpired && !isUpcoming;
-
-  const cardBg = isExpired ? "#fce4ec" : isUpcoming ? "#fffbeb" : "#c7f4c7";
 
   const handleNotify = async (e) => {
     e.stopPropagation();
@@ -1825,45 +1822,87 @@ function SuperDealCard({
     }
   };
 
+  const handleWishlist = (e) => {
+    e.stopPropagation();
+    setWishlisted(!wishlisted);
+    toast.success(!wishlisted ? 'Added to Wishlist! ❤️' : 'Removed from Wishlist! 🤍');
+  };
+
+  const handleShare = (e) => {
+    e.stopPropagation();
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/superDeal` : '';
+    const shareData = {
+      title: item.ProductName || 'Super Deal',
+      text: `Check out this super deal: ${item.ProductName}!`,
+      url: shareUrl
+    };
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      navigator.share(shareData).catch((err) => console.log(err));
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success('Deal link copied to clipboard! 📋');
+    }
+  };
+
+  const isList = viewMode === 'list' && !isMobile;
+
   return (
     <div
       key={item.Productid}
       onClick={() => isActive && onUnlockOffer(item)}
       style={{
-        background: cardBg, borderRadius: 16,
-        boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+        display: "flex",
+        flexDirection: isList ? "row" : "column",
+        background: "#ffffff",
+        borderRadius: 20,
+        border: "1px solid #f0f0f0",
+        boxShadow: "0 6px 20px rgba(0,0,0,0.04)",
         cursor: !isActive ? "not-allowed" : "pointer",
-        opacity: !isActive ? 0.82 : 1,
-        position: "relative", overflow: "hidden",
-        display: "flex", flexDirection: "column",
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+        opacity: !isActive ? 0.85 : 1,
+        position: "relative",
+        overflow: "hidden",
+        maxWidth: isList ? "100%" : "440px",
+        width: "100%",
+        transition: "all 0.3s ease",
       }}
       onMouseEnter={(e) => {
         if (isActive) {
-          e.currentTarget.style.transform = "translateY(-4px)";
-          e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+          e.currentTarget.style.transform = "translateY(-5px)";
+          e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,0.08)";
         }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
+        e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.04)";
       }}
     >
-      <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", background: "#fff", flexShrink: 0 }}>
+      {/* Banner Image */}
+      <div style={{
+        width: isList ? "300px" : "100%",
+        height: "auto",
+        overflow: "hidden",
+        position: "relative",
+        flexShrink: 0
+      }}>
         <img
           src={item.Imageurl}
           alt={item.ProductName}
           style={{
-            width: "100%", height: "100%", objectFit: "cover",
+            width: "100%",
+            height: "auto",
+            display: "block",
             filter: !isActive ? "grayscale(40%)" : "none",
-            transition: "transform 0.3s ease",
+            transition: "transform 0.4s ease",
           }}
-          onMouseEnter={(e) => { if (isActive) e.currentTarget.style.transform = "scale(1.05)"; }}
+          onMouseEnter={(e) => { if (isActive) e.currentTarget.style.transform = "scale(1.04)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         />
       </div>
 
-      <div style={{ padding: "0 12px" }}>
+      {/* Content container */}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+        
+        {/* Distance badge row */}
         <DistanceBadge
           productLat={item.Latitude}
           productLng={item.Longitude}
@@ -1873,85 +1912,132 @@ function SuperDealCard({
           locationDenied={locationDenied}
           requestLocation={requestLocation}
         />
+
+        {/* Core body */}
+        <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12, flex: 1, justifyContent: "center" }}>
+          
+          {/* Countdown badge */}
+          <CountdownBadge
+            offerStartTime={item.OfferStartTime}
+            offerEndTime={item.OfferEndTime}
+          />
+
+          {/* Action row (Like, Dislike, CTA) */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+            <LikeDislikeButtons
+              productId={item.Productid}
+              isAuthenticated={isAuthenticated}
+              onLoginRequired={onLoginRequired}
+            />
+
+            {/* CTA Button Slot */}
+            {isExpired ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onRequestOffer(item); }}
+                style={{
+                  flex: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 16px",
+                  borderRadius: 14,
+                  border: "1px solid #fecdd3",
+                  background: "#fff1f2",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  color: "#be123c",
+                  transition: "all 0.2s ease",
+                  position: "relative",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#fecdd3"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#fff1f2"}
+              >
+                <Bell style={{ width: 15, height: 15 }} />
+                <span>Request This Offer Again</span>
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 20,
+                  height: 20,
+                  borderRadius: "50%",
+                  background: "#be123c",
+                  color: "#ffffff",
+                  marginLeft: "auto",
+                  flexShrink: 0
+                }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </span>
+              </button>
+            ) : isUpcoming ? (
+              <button
+                onClick={handleNotify}
+                disabled={notifyLoading || notified}
+                style={{
+                  flex: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  border: notified ? "1px solid #86efac" : "1px solid #fbcfe8",
+                  background: notified ? "#e8f5e9" : "#fff0f5",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: notifyLoading || notified ? "not-allowed" : "pointer",
+                  color: notified ? "#16a34a" : "#be185d",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <span>{notifyLoading ? "..." : notified ? "✓ Notified" : "🔔 Notify"}</span>
+              </button>
+            ) : (
+              <button
+                disabled={!isActive}
+                style={{
+                  flex: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  border: "1px solid #86efac",
+                  background: "#e8f5e9",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  color: "#15803d",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#c8e6c9"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#e8f5e9"}
+              >
+                <Store style={{ width: 15, height: 15 }} />
+                <span>Go to Store</span>
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  background: "#15803d",
+                  color: "#ffffff",
+                  marginLeft: "auto"
+                }}>
+                  <ArrowRight style={{ width: 10, height: 10 }} />
+                </span>
+              </button>
+            )}
+          </div>
+
+        </div>
       </div>
-
-      <div style={{ padding: "0 12px" }}>
-        <CountdownBadge
-          offerStartTime={item.OfferStartTime}
-          offerEndTime={item.OfferEndTime}
-        />
-      </div>
-
-      <div style={{ padding: "0 12px" }}>
-        <LikeDislikeButtons
-          productId={item.Productid}
-          isAuthenticated={isAuthenticated}
-          onLoginRequired={onLoginRequired}
-        />
-      </div>
-
-      <div style={{ flex: 1 }} />
-
-      {isExpired ? (
-        <button
-          onClick={(e) => { e.stopPropagation(); onRequestOffer(item); }}
-          style={{
-            width: "100%", marginTop: 14, padding: "10px 0",
-            borderRadius: 12, border: "1.5px solid #be123c",
-            background: "#fff1f2", fontSize: 14, fontWeight: 600,
-            cursor: "pointer", color: "#be123c", transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#fecdd3"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "#fff1f2"; }}
-        >
-          Request This Offer Again
-        </button>
-      ) : isUpcoming ? (
-        <button
-          onClick={handleNotify}
-          disabled={notifyLoading || notified}
-          style={{
-            width: "100%", marginTop: 14, padding: "10px 0",
-            borderRadius: 12, border: "none",
-            background: notified ? "#dcfce7" : "#fff0f5",
-            fontSize: 14, fontWeight: 600,
-            cursor: notifyLoading || notified ? "not-allowed" : "pointer",
-            color: notified ? "#16a34a" : "#be185d",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            if (!notified && !notifyLoading) {
-              e.currentTarget.style.background = "#fce7f3";
-              e.currentTarget.style.transform = "scale(1.02)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!notified && !notifyLoading) {
-              e.currentTarget.style.background = "#fff0f5";
-              e.currentTarget.style.transform = "scale(1)";
-            }
-          }}
-        >
-          {notifyLoading ? "Notifying..." : notified ? "✓ Notified" : "🔔 Notify Me"}
-        </button>
-      ) : (
-        <button
-          disabled={!isActive}
-          style={{
-            width: "100%", marginTop: 14, padding: "10px 0",
-            borderRadius: 12, border: "none",
-            background: !isActive ? "#fce7f3" : "#fff0f5",
-            fontSize: 14, fontWeight: 600,
-            cursor: !isActive ? "not-allowed" : "pointer",
-            color: !isActive ? "#9f1239" : "#be185d",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => { if (isActive) { e.currentTarget.style.background = "#fce7f3"; e.currentTarget.style.transform = "scale(1.02)"; } }}
-          onMouseLeave={(e) => { if (isActive) { e.currentTarget.style.background = "#fff0f5"; e.currentTarget.style.transform = "scale(1)"; } }}
-        >
-          Go to Store
-        </button>
-      )}
     </div>
   );
 }
@@ -1969,8 +2055,12 @@ export default function SuperDeal() {
   const [showLogin, setShowLogin]                   = useState(false);
   const [isBannerPaused, setIsBannerPaused]         = useState(false);
   const [showRequestSuccess, setShowRequestSuccess] = useState(false);
-  // Popup shown when a user successfully subscribes to be notified about an upcoming offer
   const [showNotifyPopup, setShowNotifyPopup]       = useState(false);
+
+  // Redesign state variables
+  const [sortBy, setSortBy]                         = useState("Ending Soon");
+  const [viewMode, setViewMode]                     = useState("grid");
+  const [isMobile, setIsMobile]                     = useState(false);
 
   const {
     userLocation,
@@ -1994,6 +2084,13 @@ export default function SuperDeal() {
   const locationData     = useSelector((state) => state?.products?.productOffer);
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (!selectedLocation?.LocationId) return;
@@ -2039,9 +2136,9 @@ export default function SuperDeal() {
 
   if (!mounted || superDealLoading) {
     return (
-      <div style={{ width: "100%", marginTop: 60, padding: 20 }}>
+      <div style={{ width: "100%", marginTop: 80, padding: 20 }}>
         <div className="skeleton" style={{ width: "100%", height: 380, borderRadius: 24, marginBottom: 40 }} />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
           {[...Array(8)].map((_, i) => (
             <div key={i} style={{ padding: 16, borderRadius: 16, background: "#fff" }}>
               <div className="skeleton" style={{ height: 180 }} />
@@ -2064,11 +2161,41 @@ export default function SuperDeal() {
     );
   }
 
-  const sorted = superDealBillboards || [];
+  const getSortedDeals = () => {
+    let deals = [...(superDealBillboards || [])];
+    
+    const dealsWithDistance = deals.map(deal => {
+      let distance = Infinity;
+      if (userLocation && deal.Latitude && deal.Longitude) {
+        distance = haversineDistance(userLocation.lat, userLocation.lng, deal.Latitude, deal.Longitude);
+      } else if (deal.Kilometer !== undefined && deal.Kilometer !== null) {
+        distance = Number(deal.Kilometer);
+      }
+      return { ...deal, Kilometer: distance };
+    });
+
+    if (sortBy === "Ending Soon") {
+      dealsWithDistance.sort((a, b) => {
+        const aTime = a.OfferEndTime ? new Date(a.OfferEndTime).getTime() : Infinity;
+        const bTime = b.OfferEndTime ? new Date(b.OfferEndTime).getTime() : Infinity;
+        return aTime - bTime;
+      });
+    } else if (sortBy === "Distance: Low to High") {
+      dealsWithDistance.sort((a, b) => {
+        const aDist = a.Kilometer !== undefined ? a.Kilometer : Infinity;
+        const bDist = b.Kilometer !== undefined ? b.Kilometer : Infinity;
+        return aDist - bDist;
+      });
+    }
+    
+    return dealsWithDistance;
+  };
+
+  const sorted = getSortedDeals();
 
   return (
-    <div style={{ width: "100%", background: "#fff", marginTop: 60 }}>
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: 20 }}>
+    <div style={{ width: "100%", background: "#f9fafb", minHeight: "100vh", paddingTop: 90, paddingBottom: 40 }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 20px" }}>
 
         {/* ===================== BANNER CAROUSEL ===================== */}
         {superDealBanner?.length > 0 && (
@@ -2138,6 +2265,8 @@ export default function SuperDeal() {
           </div>
         )}
 
+
+
         {/* ===================== EMPTY STATE ===================== */}
         {sorted.length === 0 && (
           <div style={{
@@ -2169,7 +2298,14 @@ export default function SuperDeal() {
 
         {/* ===================== OFFER CARDS ===================== */}
         {sorted.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+          <div style={{
+            display: viewMode === "list" && !isMobile ? "flex" : "grid",
+            flexDirection: viewMode === "list" && !isMobile ? "column" : "unset",
+            gridTemplateColumns: viewMode === "list" && !isMobile ? "unset" : isMobile ? "1fr" : "repeat(3, 1fr)",
+            gridAutoRows: "1fr",
+            justifyItems: "center",
+            gap: 24
+          }}>
             {sorted.map((item) => (
               <SuperDealCard
                 key={item.Productid}
@@ -2183,6 +2319,8 @@ export default function SuperDeal() {
                 onLoginRequired={() => setShowLogin(true)}
                 onRequestOffer={handleRequestOffer}
                 onNotifySuccess={() => setShowNotifyPopup(true)}
+                viewMode={viewMode}
+                isMobile={isMobile}
               />
             ))}
           </div>

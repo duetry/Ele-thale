@@ -5878,116 +5878,76 @@ function LocationPermissionPopup({ onConfirm, onDismiss }) {
 function DistanceBadge({ productLat, productLng, apiKilometer, userLocation, locationError, locationDenied, requestLocation }) {
   if (!productLat || !productLng) return null;
 
-  // No browser location (denied / error) — fall back to server-provided Kilometer
+  let label = "";
+  let isLocating = false;
+  let isError = false;
+
   if (locationError) {
     if (apiKilometer !== undefined && apiKilometer !== null) {
-      const km       = Number(apiKilometer);
-      const label    = formatDistance(km);
-      const isNear   = km < 2;
-      const isMedium = km < 10;
-      const bgColor  = isNear ? "#f0fdf4" : isMedium ? "#fffbeb" : "#f0f9ff";
-      const border   = isNear ? "#bbf7d0" : isMedium ? "#fde68a" : "#bae6fd";
-      const color    = isNear ? "#15803d" : isMedium ? "#92400e" : "#0369a1";
-      const pinColor = isNear ? "#16a34a" : isMedium ? "#d97706" : "#0284c7";
-
-      return (
-        <div
-          onClick={requestLocation}
-          title="Approximate distance — click to enable precise location"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 5,
-            padding: "4px 10px", borderRadius: 20,
-            background: bgColor, border: `1px solid ${border}`,
-            fontSize: 11, color, fontWeight: 700, marginTop: 8,
-            cursor: "pointer",
-          }}
-        >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-            stroke={pinColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-          {label}
-        </div>
-      );
+      const km = Number(apiKilometer);
+      label = formatDistance(km);
+    } else {
+      isError = true;
+      label = locationDenied ? "Location blocked" : "Enable location";
     }
-
-    // No fallback data either — show the original "enable location" pill
-    return (
-      <div
-        onClick={requestLocation}
-        title={locationDenied ? "Location blocked — click for instructions" : "Click to enable location"}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 5,
-          padding: "4px 10px", borderRadius: 20,
-          background: "#f3f4f6", border: "1px solid #e5e7eb",
-          fontSize: 11, color: "#9ca3af", fontWeight: 600,
-          marginTop: 8, cursor: "pointer",
-          transition: "background 0.2s ease, color 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#e5e7eb";
-          e.currentTarget.style.color = "#6b7280";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "#f3f4f6";
-          e.currentTarget.style.color = "#9ca3af";
-        }}
-      >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-          stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-          <circle cx="12" cy="10" r="3" />
-        </svg>
-        {locationDenied ? "Location blocked" : "Enable location"}
-      </div>
-    );
+  } else if (!userLocation) {
+    isLocating = true;
+    label = "Locating…";
+  } else {
+    const km = haversineDistance(userLocation.lat, userLocation.lng, productLat, productLng);
+    label = formatDistance(km);
   }
 
-  if (!userLocation) {
-    return (
-      <div style={{
-        display: "inline-flex", alignItems: "center", gap: 5,
-        padding: "4px 10px", borderRadius: 20,
-        background: "#f3f4f6", border: "1px solid #e5e7eb",
-        fontSize: 11, color: "#9ca3af", fontWeight: 600,
-        marginTop: 8,
-      }}>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-          stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-          style={{ animation: "spin 1.5s linear infinite" }}>
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-          <circle cx="12" cy="10" r="3" />
-        </svg>
-        Locating…
-        <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
-      </div>
-    );
-  }
-
-  // Browser location is available — keep computing live haversine distance as before
-  const km       = haversineDistance(userLocation.lat, userLocation.lng, productLat, productLng);
-  const label    = formatDistance(km);
-  const isNear   = km < 2;
-  const isMedium = km < 10;
-  const bgColor  = isNear ? "#f0fdf4" : isMedium ? "#fffbeb" : "#f0f9ff";
-  const border   = isNear ? "#bbf7d0" : isMedium ? "#fde68a" : "#bae6fd";
-  const color    = isNear ? "#15803d" : isMedium ? "#92400e" : "#0369a1";
-  const pinColor = isNear ? "#16a34a" : isMedium ? "#d97706" : "#0284c7";
+  const showFromYourLocation = !isLocating && !isError && label;
 
   return (
-    <div style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "4px 10px", borderRadius: 20,
-      background: bgColor, border: `1px solid ${border}`,
-      fontSize: 11, color, fontWeight: 700, marginTop: 8,
-    }}>
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-        stroke={pinColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-      {label}
+    <div
+      onClick={isError ? requestLocation : undefined}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        cursor: isError ? "pointer" : "default",
+      }}
+    >
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          padding: "4px 10px",
+          borderRadius: 999,
+          background: "#f3f0ff",
+          color: "#6366f1",
+          fontSize: 11,
+          fontWeight: 700,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#6366f1"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            animation: isLocating ? "spin 1.5s linear infinite" : "none",
+            flexShrink: 0
+          }}
+        >
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        {label}
+      </div>
+      {showFromYourLocation && (
+        <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500, whiteSpace: "nowrap" }}>
+          from your location
+        </span>
+      )}
     </div>
   );
 }
@@ -6168,103 +6128,98 @@ function LikeDislikeButtons({ productId, isAuthenticated, onLoginRequired }) {
     dispatch(postProductReaction({ Productid: productId, Reaction: type }));
   };
 
-  const btnStyle = (active, activeColor, activeBg) => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-    padding: "6px 14px",
-    borderRadius: 20,
-    border: `1.5px solid ${active ? activeColor : "#d1d5db"}`,
-    background: active ? activeBg : "#fff",
-    color: active ? activeColor : "#6b7280",
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: isLoading ? "not-allowed" : "pointer",
-    transition: "all 0.2s ease",
-    transform: active ? "scale(1.05)" : "scale(1)",
-    boxShadow: active ? `0 2px 8px ${activeColor}30` : "none",
-    opacity: isLoading ? 0.7 : 1,
-  });
-
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <>
       {/* ── Like Button ── */}
       <button
         onClick={(e) => handleReaction(e, "like")}
         disabled={isLoading}
         title="Like this offer"
-        style={btnStyle(likeActive, "#16a34a", "#f0fdf4")}
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          background: "none",
+          border: "none",
+          color: likeActive ? "#dc2626" : "#4b5563",
+          fontWeight: 600,
+          fontSize: 13,
+          cursor: isLoading ? "not-allowed" : "pointer",
+          padding: "6px 0",
+          transition: "transform 0.1s ease",
+        }}
         onMouseEnter={(e) => {
-          if (!likeActive && !isLoading) {
-            e.currentTarget.style.borderColor = "#16a34a";
-            e.currentTarget.style.color = "#16a34a";
-            e.currentTarget.style.background = "#f0fdf4";
-          }
+          e.currentTarget.style.color = "#dc2626";
         }}
         onMouseLeave={(e) => {
-          if (!likeActive) {
-            e.currentTarget.style.borderColor = "#d1d5db";
-            e.currentTarget.style.color = "#6b7280";
-            e.currentTarget.style.background = "#fff";
-          }
+          if (!likeActive) e.currentTarget.style.color = "#4b5563";
         }}
       >
         <svg
-          width="14"
-          height="14"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
-          fill={likeActive ? "#16a34a" : "none"}
-          stroke={likeActive ? "#16a34a" : "currentColor"}
-          strokeWidth="2"
+          fill={likeActive ? "#dc2626" : "none"}
+          stroke={likeActive ? "#dc2626" : "currentColor"}
+          strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ transition: "all 0.2s ease", flexShrink: 0 }}
+          style={{ transition: "all 0.2s ease" }}
         >
-          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-          <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
         </svg>
-        {isLoading && reaction !== "like" ? "..." : likeActive ? "Liked" : "Like"}
+        <span>{isLoading && reaction !== "like" ? "..." : "Like"}</span>
       </button>
+
+      {/* Vertical Separator */}
+      <div style={{ width: 1, height: 20, background: "#e2e8f0" }} />
 
       {/* ── Dislike Button ── */}
       <button
         onClick={(e) => handleReaction(e, "dislike")}
         disabled={isLoading}
         title="Dislike this offer"
-        style={btnStyle(dislikeActive, "#be123c", "#fff1f2")}
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          background: "none",
+          border: "none",
+          color: dislikeActive ? "#6b7280" : "#4b5563",
+          fontWeight: 600,
+          fontSize: 13,
+          cursor: isLoading ? "not-allowed" : "pointer",
+          padding: "6px 0",
+          transition: "transform 0.1s ease",
+        }}
         onMouseEnter={(e) => {
-          if (!dislikeActive && !isLoading) {
-            e.currentTarget.style.borderColor = "#be123c";
-            e.currentTarget.style.color = "#be123c";
-            e.currentTarget.style.background = "#fff1f2";
-          }
+          e.currentTarget.style.color = "#6b7280";
         }}
         onMouseLeave={(e) => {
-          if (!dislikeActive) {
-            e.currentTarget.style.borderColor = "#d1d5db";
-            e.currentTarget.style.color = "#6b7280";
-            e.currentTarget.style.background = "#fff";
-          }
+          if (!dislikeActive) e.currentTarget.style.color = "#4b5563";
         }}
       >
         <svg
-          width="14"
-          height="14"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
-          fill={dislikeActive ? "#be123c" : "none"}
-          stroke={dislikeActive ? "#be123c" : "currentColor"}
-          strokeWidth="2"
+          fill={dislikeActive ? "#6b7280" : "none"}
+          stroke={dislikeActive ? "#6b7280" : "currentColor"}
+          strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ transition: "all 0.2s ease", flexShrink: 0 }}
+          style={{ transition: "all 0.2s ease" }}
         >
-          <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
-          <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          <path d="M12 5.67l-1 2.5 2 2-2 3 1.5 2.5" fill="none" stroke={dislikeActive ? "#fff" : "currentColor"} strokeWidth="1.5" />
         </svg>
-        {isLoading && reaction !== "dislike" ? "..." : dislikeActive ? "Disliked" : "Dislike"}
+        <span>{isLoading && reaction !== "dislike" ? "..." : "Dislike"}</span>
       </button>
-    </div>
+    </>
   );
 }
 
@@ -6277,19 +6232,23 @@ function SectionHeader({ label, count, accent, bg, border }) {
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        gap: 12,
-        marginBottom: 20,
-        padding: "14px 24px",
+        justifyContent: "flex-start",
+        gap: 10,
+        marginBottom: 24,
+        padding: "12px 20px",
         background: bg,
         border: `1.5px solid ${border}`,
-        borderRadius: 16,
+        borderRadius: 12,
       }}
     >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill={accent} stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+        <line x1="7" y1="7" x2="7.01" y2="7" stroke="#fff" strokeWidth="2.5" />
+      </svg>
       <span
         style={{
-          fontSize: 20,
-          fontWeight: 800,
+          fontSize: 18,
+          fontWeight: 700,
           color: accent,
           letterSpacing: "-0.3px",
         }}
@@ -6320,7 +6279,6 @@ function OfferCard({
   
   const [notifyLoading, setNotifyLoading] = useState(false);
   const [notified, setNotified] = useState(false);
-  // Removed showNotifyPopup state from here
 
   const now = new Date();
   const startTime = item.OfferStartTime ? new Date(item.OfferStartTime) : null;
@@ -6329,12 +6287,6 @@ function OfferCard({
   const isExpired = endTime ? now > endTime : false;
   const isUpcoming = startTime ? now < startTime : false;
   const isActive = !isExpired && !isUpcoming;
-
-  const cardBg = isExpired
-    ? "#fce4ec"
-    : isUpcoming
-    ? "#fffbeb"
-    : "#c7f4c7";
 
   const handleNotify = async (e) => {
     e.stopPropagation();
@@ -6349,7 +6301,6 @@ function OfferCard({
     try {
       await dispatch(notifyUpcomingOffer({ Productid: item.Productid })).unwrap();
       setNotified(true);
-      // Trigger the popup in the parent component
       if (onNotifySuccess) onNotifySuccess(); 
     } catch (err) {
       console.error("Notify failed:", err);
@@ -6363,11 +6314,12 @@ function OfferCard({
       key={item.Productid}
       onClick={() => isActive && onUnlockOffer(item)}
       style={{
-        background: cardBg,
+        background: "#ffffff",
         borderRadius: 16,
-        boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+        border: "1px solid #e2e8f0",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
         cursor: !isActive ? "not-allowed" : "pointer",
-        opacity: !isActive ? 0.82 : 1,
+        opacity: !isActive ? 0.85 : 1,
         position: "relative",
         overflow: "hidden",
         display: "flex",
@@ -6377,21 +6329,21 @@ function OfferCard({
       onMouseEnter={(e) => {
         if (isActive) {
           e.currentTarget.style.transform = "translateY(-4px)";
-          e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+          e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)";
         }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
+        e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)";
       }}
     >
       {/* ===== PRODUCT IMAGE ===== */}
       <div
         style={{
           width: "100%",
-          aspectRatio: "1 / 1",
+          aspectRatio: "1.7 / 1",
           overflow: "hidden",
-          background: "#fff",
+          background: "#f8fafc",
           flexShrink: 0,
         }}
       >
@@ -6414,53 +6366,42 @@ function OfferCard({
         />
       </div>
 
-      {/* ===== DISTANCE BADGE ===== */}
-      <div style={{ padding: "0 12px", marginTop: 8 }}>
-        <DistanceBadge
-          productLat={item.Latitude}
-          productLng={item.Longitude}
-          apiKilometer={item.Kilometer}
-          userLocation={userLocation}
-          locationError={locationError}
-          locationDenied={locationDenied}
-          requestLocation={requestLocation}
-        />
-      </div>
-
-      {/* ===== COMBINED ROW: like/dislike first, then timer badge ===== */}
-      <div style={{ padding: "0 12px", marginTop: 12 }}>
-        <div
-          style={{
-            padding: "8px 10px",
-            background: "#fff0f5",
-            border: "1px solid #fbcfe8",
-            borderRadius: 10,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            flexWrap: "nowrap",
-          }}
-        >
-          {/* Like / Dislike — always first with full text */}
-          <LikeDislikeButtons
-            productId={item.Productid}
-            isAuthenticated={isAuthenticated}
-            onLoginRequired={onLoginRequired}
+      {/* ===== COMBINED ROW: location on left, timer on right ===== */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 14px",
+          borderTop: "1px solid #f1f5f9",
+          borderBottom: "1px solid #f1f5f9",
+          background: "#ffffff",
+        }}
+      >
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start", overflow: "hidden" }}>
+          <DistanceBadge
+            productLat={item.Latitude}
+            productLng={item.Longitude}
+            apiKilometer={item.Kilometer}
+            userLocation={userLocation}
+            locationError={locationError}
+            locationDenied={locationDenied}
+            requestLocation={requestLocation}
           />
+        </div>
 
-          {/* Spacer pushes timer badge to right */}
-          <div style={{ flex: 1 }} />
+        <div style={{ width: 1, height: 20, background: "#e2e8f0", margin: "0 10px", flexShrink: 0 }} />
 
-          {/* Active: clock icon + time until end */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", flexShrink: 0 }}>
           {isActive && endTime && getTimeRemaining(endTime) && (
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <svg
-                width="12"
-                height="12"
+                width="13"
+                height="13"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#be185d"
-                strokeWidth="2.2"
+                stroke="#ea580c"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{ flexShrink: 0 }}
@@ -6470,12 +6411,9 @@ function OfferCard({
               </svg>
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 700,
-                  color: "#fff",
-                  background: "#e91e8c",
-                  borderRadius: 999,
-                  padding: "2px 8px",
+                  color: "#ea580c",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -6484,16 +6422,15 @@ function OfferCard({
             </div>
           )}
 
-          {/* Expired: X icon + "Offer ended" */}
           {isExpired && (
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <svg
-                width="12"
-                height="12"
+                width="13"
+                height="13"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#be185d"
-                strokeWidth="2.2"
+                stroke="#ef4444"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{ flexShrink: 0 }}
@@ -6504,27 +6441,26 @@ function OfferCard({
               </svg>
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 700,
-                  color: "#9f1239",
+                  color: "#ef4444",
                   whiteSpace: "nowrap",
                 }}
               >
-                Offer ended
+                Offer Ended
               </span>
             </div>
           )}
 
-          {/* Upcoming: clock icon + time until start */}
           {isUpcoming && startTime && getTimeRemaining(startTime) && (
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <svg
-                width="12"
-                height="12"
+                width="13"
+                height="13"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#be185d"
-                strokeWidth="2.2"
+                stroke="#ea580c"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{ flexShrink: 0 }}
@@ -6534,12 +6470,9 @@ function OfferCard({
               </svg>
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 700,
-                  color: "#fff",
-                  background: "#e91e8c",
-                  borderRadius: 999,
-                  padding: "2px 8px",
+                  color: "#ea580c",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -6552,73 +6485,116 @@ function OfferCard({
 
       <div style={{ flex: 1 }} />
 
-      {/* ===== BUTTON ===== */}
-      {!isExpired && (
-        isUpcoming ? (
-          <button
-            onClick={handleNotify}
-            disabled={notifyLoading || notified}
-            style={{
-              width: "100%",
-              marginTop: 14,
-              padding: "10px 0",
-              borderRadius: 12,
-              border: "none",
-              background: notified ? "#dcfce7" : "#fff0f5",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: notifyLoading || notified ? "not-allowed" : "pointer",
-              color: notified ? "#16a34a" : "#be185d",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              if (!notified && !notifyLoading) {
-                e.currentTarget.style.background = "#fce7f3";
-                e.currentTarget.style.transform = "scale(1.02)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!notified && !notifyLoading) {
-                e.currentTarget.style.background = "#fff0f5";
-                e.currentTarget.style.transform = "scale(1)";
-              }
-            }}
-          >
-            {notifyLoading ? "Notifying..." : notified ? "✓ Notified" : "🔔 Notify Me"}
-          </button>
-        ) : (
-          <button
-            disabled={!isActive}
-            style={{
-              width: "100%",
-              marginTop: 14,
-              padding: "10px 0",
-              borderRadius: 12,
-              border: "none",
-              background: !isActive ? "#fce7f3" : "#fff0f5",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: !isActive ? "not-allowed" : "pointer",
-              color: !isActive ? "#9f1239" : "#be185d",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              if (isActive) {
-                e.currentTarget.style.background = "#fce7f3";
-                e.currentTarget.style.transform = "scale(1.02)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (isActive) {
-                e.currentTarget.style.background = "#fff0f5";
-                e.currentTarget.style.transform = "scale(1)";
-              }
-            }}
-          >
-            Go to Store
-          </button>
-        )
-      )}
+      {/* ===== ACTIONS ROW ===== */}
+      <div style={{ display: "flex", alignItems: "center", padding: "10px 12px", gap: 8, background: "#ffffff" }}>
+        <LikeDislikeButtons
+          productId={item.Productid}
+          isAuthenticated={isAuthenticated}
+          onLoginRequired={onLoginRequired}
+        />
+
+        <div style={{ width: 1, height: 20, background: "#e2e8f0", flexShrink: 0 }} />
+
+        <div style={{ flex: 2.2, display: "flex", justifyContent: "stretch" }}>
+          {!isExpired && (
+            isUpcoming ? (
+              <button
+                onClick={handleNotify}
+                disabled={notifyLoading || notified}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: 999,
+                  border: "none",
+                  background: notified ? "#dcfce7" : "#fdf2f8",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: notified ? "#16a34a" : "#db2777",
+                  cursor: notifyLoading || notified ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <span>{notifyLoading ? "..." : notified ? "Notified" : "Notify Me"}</span>
+              </button>
+            ) : (
+              <button
+                disabled={!isActive}
+                onClick={() => isActive && onUnlockOffer(item)}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: 999,
+                  border: "none",
+                  background: "#16a34a",
+                  color: "#ffffff",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#15803d";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#16a34a";
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" />
+                  <path d="M3 9l2.44-4.88A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.12L21 9" />
+                  <path d="M12 3v6" />
+                </svg>
+                <span style={{ whiteSpace: "nowrap" }}>Go to Store</span>
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  background: "#ffffff",
+                  marginLeft: 2,
+                  flexShrink: 0
+                }}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </span>
+              </button>
+            )
+          )}
+          {isExpired && (
+            <button
+              disabled
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 999,
+                border: "none",
+                background: "#f1f5f9",
+                color: "#94a3b8",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "not-allowed",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Expired
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -6838,7 +6814,7 @@ export default function BillboardBanners() {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
         gap: 20,
       }}
     >
@@ -6850,7 +6826,7 @@ export default function BillboardBanners() {
           onUnlockOffer={handleUnlockOffer}
           onLoginRequired={() => setShowLogin(true)}
           getTimeRemaining={getTimeRemaining}
-          onNotifySuccess={() => setShowNotifyPopup(true)} // Pass callback to trigger popup
+          onNotifySuccess={() => setShowNotifyPopup(true)}
           userLocation={userLocation}
           locationError={locationError}
           locationDenied={locationDenied}
@@ -7066,7 +7042,7 @@ export default function BillboardBanners() {
                 letterSpacing: "-0.3px",
               }}
             >
-              No Special Offers Available
+              No Nearby Offers Available
             </h2>
             <p
               style={{
