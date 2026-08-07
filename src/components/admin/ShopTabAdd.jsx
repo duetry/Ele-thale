@@ -23,6 +23,7 @@ import * as Yup from "yup";
 
 import { getShopOwner, selectShopOwners } from "@/app/features/adminPanel/shopOwnerSlice";
 import { createShop, updateShop, getShops } from "@/app/features/adminPanel/shopSlice";
+import { fetchCategories } from "@/app/features/products/productSlice";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -34,23 +35,36 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
   const [preview, setPreview] = useState(editData?.ImageBase64 || editData?.ImageUrl || editData?.Imageurl || "");
 
   const shopOwners = useSelector(selectShopOwners);
+  const { categories } = useSelector((state) => state.products);
 
   useEffect(() => {
     dispatch(getShopOwner());
   }, [dispatch]);
+
   useEffect(() => {
-    if (editData?.ImageBase64) {
-      setPreview(editData.ImageBase64); // newly uploaded base64
-    } else if (editData?.ImageUrl || editData?.Imageurl) {
-      setPreview(editData.ImageUrl || editData.Imageurl); // existing URL from API
-    } else {
-      setPreview(""); // new mode → clear preview
+    if (!categories || categories.length === 0) {
+      dispatch(fetchCategories());
     }
-  }, [editData, open]);
+  }, [dispatch, categories]);
+  const [prevEditData, setPrevEditData] = useState(editData);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (editData !== prevEditData || open !== prevOpen) {
+    setPrevEditData(editData);
+    setPrevOpen(open);
+    if (editData?.ImageBase64) {
+      setPreview(editData.ImageBase64);
+    } else if (editData?.ImageUrl || editData?.Imageurl) {
+      setPreview(editData.ImageUrl || editData.Imageurl);
+    } else {
+      setPreview("");
+    }
+  }
 
   const formik = useFormik({
     initialValues: {
       StoreOwnerId: editData?.StoreOwnerId || "",
+      Categoryid: editData?.Categoryid || editData?.CategoryId || editData?.Category || "",
       Storename: editData?.Storename || "",
       Description: editData?.Description || "",
       Storeaddress: editData?.Storeaddress || "",
@@ -68,6 +82,7 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
 
     validationSchema: Yup.object({
       StoreOwnerId: Yup.string().required("Required"),
+      Categoryid: Yup.string().required("Required"),
       Storename: Yup.string().required("Required"),
       Description: Yup.string().required("Required"),
       Storeaddress: Yup.string().required("Required"),
@@ -90,9 +105,16 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
     onSubmit: async (values, { resetForm }) => {
       setLoading(true);
 
+      const selectedCategoryObj = categories?.find(c => c.Categoryid === values.Categoryid);
+      const categoryName = selectedCategoryObj ? selectedCategoryObj.Categoryname : "";
+
       const payload = {
         Storeid: editData?.Storeid,
         StoreOwnerId: values.StoreOwnerId,
+        Categoryid: values.Categoryid,
+        Categoryname: categoryName,
+        CategoryId: values.Categoryid,
+        Category: categoryName,
         Storename: values.Storename.trim(),
         Description: values.Description,
         Storeaddress: values.Storeaddress,
@@ -174,6 +196,24 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
               {shopOwners?.map((owner) => (
                 <MenuItem key={owner.ShopOwnerId} value={owner.ShopOwnerId}>
                   {owner.Name}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              label="Category"
+              name="Categoryid"
+              value={formik.values.Categoryid}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.Categoryid && Boolean(formik.errors.Categoryid)}
+              helperText={formik.touched.Categoryid && formik.errors.Categoryid}
+              fullWidth
+            >
+              {categories?.map((cat) => (
+                <MenuItem key={cat.Categoryid} value={cat.Categoryid}>
+                  {cat.Categoryname}
                 </MenuItem>
               ))}
             </TextField>

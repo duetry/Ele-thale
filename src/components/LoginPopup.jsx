@@ -640,12 +640,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   loginUser,
+  sentOtp,
   selectLoginLoading,
   selectLoginError,
 } from '@/app/features/auth/authSlice';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+
 
 export default function LoginPopup({ close, onLoginSuccess }) {
   const dispatch = useDispatch();
@@ -663,45 +663,18 @@ export default function LoginPopup({ close, onLoginSuccess }) {
   const [touched, setTouched] = useState({ phone: false, otp: false, password: false });
   const [showPassword, setShowPassword] = useState(false);
 
-  const [firebaseLoading, setFirebaseLoading] = useState(false);
-  const [firebaseError,   setFirebaseError]   = useState('');
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localError,   setLocalError]   = useState('');
 
-  const confirmationResultRef = useRef(null);
-  const firebaseTokenRef      = useRef(null);
-  const recaptchaVerifierRef  = useRef(null);
   const otpRefs               = useRef([]);
   const timerRef              = useRef(null);
   const [resendTimer, setResendTimer] = useState(0);
 
-
-
-
-useEffect(() => {
-  const initRecaptcha = async () => {
-    if (!recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {
-          size: "invisible",
-        }
-      );
-
-      await recaptchaVerifierRef.current.render();
-    }
-  };
-
-  initRecaptcha();
-
-  return () => {
-    clearInterval(timerRef.current);
-
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
-  };
-}, []);
+  useEffect(() => {
+    return () => {
+      clearInterval(timerRef.current);
+    };
+  }, []);
 
   /* ─── Timer ─── */
   const startResendTimer = () => {
@@ -716,69 +689,53 @@ useEffect(() => {
   };
 
   /* ─── Send OTP ─── */
-const sendOtp = async () => {
-  setFirebaseError('');
-  setFirebaseLoading(true);
+  const sendOtp = async () => {
+    setLocalError('');
+    setLocalLoading(true);
 
-  try {
-    const result = await signInWithPhoneNumber(
-      auth,
-      `+91${phone}`,
-      recaptchaVerifierRef.current
-    );
+    try {
+      const result = await dispatch(sentOtp({ phoneNumber: phone, action: 'send' }));
 
-    confirmationResultRef.current = result;
-
-    setStep("otp");
-    startResendTimer();
-
-  } catch (err) {
-    console.error(err);
-    setFirebaseError(err.message);
-  } finally {
-    setFirebaseLoading(false);
-  }
-};
+      if (sentOtp.fulfilled.match(result)) {
+        setStep("otp");
+        startResendTimer();
+      } else {
+        throw new Error(result.payload || 'Failed to send OTP');
+      }
+    } catch (err) {
+      console.error('sendOtp error:', err);
+      setLocalError(err.message || 'Failed to request OTP. Please try again.');
+    } finally {
+      setLocalLoading(false);
+    }
+  };
 
   /* ─── Verify OTP ─── */
   const verifyOtp = async () => {
-    if (!confirmationResultRef.current) {
-      setFirebaseError('Session expired. Please resend the OTP.');
-      return;
-    }
-    setFirebaseError('');
-    setFirebaseLoading(true);
+    setLocalError('');
+    setLocalLoading(true);
     try {
-      const credential = await confirmationResultRef.current.confirm(otp.join(''));
-      const idToken    = await credential.user.getIdToken();
-      firebaseTokenRef.current = idToken;
-
       const result = await dispatch(
-        loginUser({ phoneNumber: phone, firebaseToken: idToken })
+        loginUser({ phoneno: phone, otp: otp.join('') })
       );
 
       if (loginUser.fulfilled.match(result)) {
-   
-  const userType = result.payload?.usertype;
+        const userType = result.payload?.usertype;
 
-  if (userType === 'admin' || userType === 'SHOP_OWNER') {
-    router.push('/admin');
-  }
+        if (userType === 'admin' || userType === 'SHOP_OWNER') {
+          router.push('/admin');
+        }
 
-  close();
-  if (onLoginSuccess) onLoginSuccess();
-}
+        close();
+        if (onLoginSuccess) onLoginSuccess();
+      } else {
+        setLocalError(result.payload || 'Login failed. Please check your OTP.');
+      }
     } catch (err) {
       console.error('verifyOtp error:', err);
-      setFirebaseError(
-        err?.code === 'auth/invalid-verification-code'
-          ? 'Incorrect OTP. Please try again.'
-          : err?.code === 'auth/code-expired'
-          ? 'OTP expired. Please resend.'
-          : 'OTP verification failed. Please try again.'
-      );
+      setLocalError('OTP verification failed. Please try again.');
     } finally {
-      setFirebaseLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -839,13 +796,28 @@ const sendOtp = async () => {
 
   /* ─── Resend OTP ─── */
   const handleResendOtp = async () => {
-    if (resendTimer > 0 || firebaseLoading) return;
+    if (resendTimer > 0 || localLoading) return;
+    setLocalError('');
+    setLocalLoading(true);
 
-    await sendOtp();
+    try {
+      const result = await dispatch(sentOtp({ phoneNumber: phone, action: 'resend' }));
+
+      if (sentOtp.fulfilled.match(result)) {
+        startResendTimer();
+      } else {
+        throw new Error(result.payload || 'Failed to resend OTP');
+      }
+    } catch (err) {
+      console.error('resendOtp error:', err);
+      setLocalError(err.message || 'Failed to resend OTP. Please try again.');
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
   /* ─── Render ─── */
-  const isLoading = loginLoading || firebaseLoading;
+  const isLoading = loginLoading || localLoading;
 
   const headerText  = { phone: 'Welcome', otp: 'Verify Your Number', password: 'Welcome back', createPassword: 'Create Your Account' }[step];
   const subText     = { phone: 'Enter your phone number to continue', otp: `OTP sent to +91 ${phone}`, password: 'Enter your password to sign in', createPassword: 'Set a password to create your account' }[step];
@@ -946,7 +918,7 @@ const sendOtp = async () => {
                     setStep('phone');
                     setOtp(['', '', '', '', '', '']);
                     setErrors({ phone: '', otp: '', password: '' });
-                    setFirebaseError('');
+                    setLocalError('');
                     clearInterval(timerRef.current);
                   
                   }}
@@ -988,9 +960,9 @@ const sendOtp = async () => {
           )}
 
           {/* ── Errors ── */}
-          {firebaseError && (
+          {localError && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-600">
-              {firebaseError}
+              {localError}
             </div>
           )}
           {loginError && (
@@ -1012,9 +984,6 @@ const sendOtp = async () => {
 
         </form>
       </div>
-
-      {/* recaptcha-container: MUST be last in JSX, outside modal, above backdrop z-index */}
-      <div id="recaptcha-container" className="relative z-[10000]" />
 
     </div>
   );

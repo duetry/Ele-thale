@@ -1097,6 +1097,7 @@ import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { getShops, selectShops } from "@/app/features/adminPanel/shopSlice";
+import { getCategories, selectCategories } from "@/app/features/adminPanel/categorySlice";
 
 // ─── Styled helpers ──────────────────────────────────────────────────────────
 
@@ -1142,11 +1143,13 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const locationData = useSelector((state) => state?.adminPanel?.locationData);
   const shops = useSelector(selectShops);
+  const categories = useSelector(selectCategories);
 
   // ── Fetch lookup lists on mount ─────────────────────────────────────────
   useEffect(() => {
     dispatch(getLocationList());
     dispatch(getShops());
+    dispatch(getCategories());
   }, []);
 
   const formik = useFormik({
@@ -1161,6 +1164,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       Imagefile: null,
       Store: null,
       Location: null,
+      Categoryid: editData?.Categoryid || editData?.CategoryId || "",
       Power: editData?.Power ?? "",
       OfferStartTime: editData?.OfferStartTime || "",
       OfferEndTime: editData?.OfferEndTime || "",
@@ -1182,6 +1186,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       Finalprice: Yup.number().required("Required").min(0, "Cannot be negative"),
       Location: Yup.object().nullable().required("Location is required"),
       Store: Yup.object().nullable().required("Store is required"),
+      Categoryid: Yup.string().required("Category is required"),
       Power: Yup.number()
         .required("Required")
         .min(0, "Min 0")
@@ -1216,6 +1221,8 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       let base64Image = editData?.Imageurl || "";
 
       const sendPayload = async (image) => {
+        const selectedCat = categories?.find((c) => c.Categoryid === values.Categoryid);
+        const categoryName = selectedCat ? selectedCat.Categoryname : "";
         const payload = {
           Productid: editData?.Productid,
           Description: values.Description,
@@ -1232,6 +1239,8 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           OfferEndTime: values.OfferEndTime || null,
           Power: values.Power ?? null,
           Storeid: values.Store?.Storeid || "",
+          Categoryid: values.Categoryid,
+          Categoryname: categoryName,
           CoupounActive: values.CoupounActive,
           // ── FlashDeal in payload ──
           Flashdeal: values.FlashDeal,
@@ -1275,6 +1284,14 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       const matched = shops.find((s) => s.Storeid === editData.Storeid) || null;
       if (matched && formik.values.Store?.Storeid !== matched.Storeid) {
         formik.setFieldValue("Store", matched);
+      }
+    }
+
+    // Category
+    const catId = editData.Categoryid || editData.CategoryId;
+    if (categories?.length && catId) {
+      if (formik.values.Categoryid === "") {
+        formik.setFieldValue("Categoryid", catId);
       }
     }
 
@@ -1336,7 +1353,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       formik.setFieldValue("Longitude", editData.Longitude);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shops, locationData, editData]);
+  }, [shops, locationData, editData, categories]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -1681,6 +1698,85 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                 <option value="Banner">Banner</option>
               </TextField>
             </Box>
+
+            {/* Category Autocomplete */}
+            <Autocomplete
+              options={categories || []}
+              getOptionLabel={(option) => option?.Categoryname || ""}
+              isOptionEqualToValue={(option, value) => option?.Categoryid === value?.Categoryid}
+              value={categories?.find((c) => c.Categoryid === formik.values.Categoryid) || null}
+              onChange={(_, newValue) => formik.setFieldValue("Categoryid", newValue?.Categoryid || "")}
+              onBlur={() => formik.setFieldTouched("Categoryid", true)}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, px: 1.5 }}
+                  key={option.Categoryid}
+                >
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <CategoryIcon sx={{ fontSize: 16, color: "#7c3aed" }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#1e293b" }}>
+                      {option.Categoryname}
+                    </Typography>
+                    {option.Categoryid && (
+                      <Typography sx={{ fontSize: "11px", color: "#94a3b8" }}>
+                        ID: {option.Categoryid}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Category"
+                  placeholder="Search category..."
+                  error={formik.touched.Categoryid && Boolean(formik.errors.Categoryid)}
+                  helperText={formik.touched.Categoryid && formik.errors.Categoryid}
+                  sx={fieldSx}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <CategoryIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              PaperComponent={({ children, ...paperProps }) => (
+                <Box
+                  {...paperProps}
+                  sx={{
+                    borderRadius: "14px",
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+                    border: "1px solid #e2e8f0",
+                    overflow: "hidden",
+                    mt: 0.5,
+                    background: "#fff",
+                  }}
+                >
+                  {children}
+                </Box>
+              )}
+            />
 
             {/* Row 4: Location Autocomplete */}
             <Autocomplete

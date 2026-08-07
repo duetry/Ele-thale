@@ -77,15 +77,14 @@ const removeFromStorage = (key) => {
 
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ phoneNumber, password, firebaseToken }, { rejectWithValue }) => { // ← add firebaseToken
+  async ({ phoneno, otp }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_BASE}/Login`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
-          phoneno: phoneNumber,
-          password,
-          firebaseToken, // ← add this
+          phoneno,
+          otp,
         }),
       });
 
@@ -99,7 +98,7 @@ export const loginUser = createAsyncThunk(
 
       if (data.token) {
         setToStorage('authToken', data.token);
-        setToStorage('user', JSON.stringify(data.user));
+        setToStorage('user', JSON.stringify(data));
         setToStorage('userId', data?.user_id);
       }
 
@@ -187,13 +186,14 @@ export const validateCoupon = createAsyncThunk(
 // SEND OTP
 export const sentOtp = createAsyncThunk(
   'auth/sentOtp',
-  async ({ phoneNumber }, { rejectWithValue }) => {
+  async ({ phoneNumber, action = 'send' }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_BASE}/Login`, {
+      const response = await fetch(`${API_BASE}/Login/OTP_Send`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
           phoneno: phoneNumber,
+          action,
         }),
       });
 
@@ -228,7 +228,7 @@ export const verifyOtp = createAsyncThunk(
 
       if (data.token) {
         setToStorage('authToken', data.token);
-        setToStorage('user', JSON.stringify(data.user));
+        setToStorage('user', JSON.stringify(data.user || data));
         setToStorage('userId', data.user_id); // ✅ ADDED ONLY
       }
 

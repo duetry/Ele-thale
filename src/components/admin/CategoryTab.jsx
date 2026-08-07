@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogActions,
   Chip,
-  Avatar,
   Tooltip,
   TextField,
   InputAdornment,
@@ -21,28 +20,28 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 
-import ShopTabAdd from './ShopTabAdd';
+import CategoryTabAdd from './CategoryTabAdd';
+import { getCategories, deleteCategory, selectCategories, selectCategoryLoading } from '@/app/features/adminPanel/categorySlice';
 
-import { getShops, deleteShop, selectShops } from '@/app/features/adminPanel/shopSlice';
-
-const ShopTab = () => {
-  const [showAdd, setShowAdd]         = useState(false);
-  const [selectedShop, setSelectedShop] = useState(null);
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [openDelete, setOpenDelete]   = useState(false);
-  const [deleteId, setDeleteId]       = useState(null);
+const CategoryTab = () => {
+  const [showAdd, setShowAdd] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [openDelete, setOpenDelete] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const dispatch = useDispatch();
-  const shops    = useSelector(selectShops);
+  const categories = useSelector(selectCategories);
+  const loading = useSelector(selectCategoryLoading);
 
   useEffect(() => {
-    dispatch(getShops());
+    dispatch(getCategories());
   }, [dispatch]);
 
   const rows =
-    shops?.map((item, index) => ({
+    categories?.map((item, index) => ({
       ...item,
-      id: item.Storeid || index,
+      id: item.Categoryid || index,
     })) || [];
 
   const filteredRows = rows.filter((row) =>
@@ -53,119 +52,57 @@ const ShopTab = () => {
   );
 
   const confirmDelete = async () => {
-    await dispatch(deleteShop(deleteId));
-    dispatch(getShops());
+    await dispatch(deleteCategory(deleteId));
+    dispatch(getCategories());
     setOpenDelete(false);
   };
 
   const columns = [
     {
-      field: 'Imageurl',
-      headerName: 'Image',
-      width: 80,
-      sortable: false,
+      field: 'Categoryid',
+      headerName: 'Category ID',
+      width: 250,
       renderCell: (params) => (
-        <Avatar
-          src={params.value || undefined}
-          alt={params.row.Storename}
-          variant="rounded"
-          sx={{ width: 40, height: 40, bgcolor: '#e0e7ff', color: '#4338ca', fontWeight: 700 }}
-        >
-          {params.row.Storename?.[0]?.toUpperCase() || 'S'}
-        </Avatar>
+        <span style={{ fontFamily: 'monospace', color: '#64748b', fontSize: 12 }}>{params.value}</span>
       ),
     },
     {
-      field: 'Storename',
-      headerName: 'Store Name',
-      width: 180,
+      field: 'Categoryname',
+      headerName: 'Category Name',
+      width: 200,
       renderCell: (params) => (
         <span style={{ fontWeight: 600, color: '#1e293b' }}>{params.value}</span>
       ),
     },
     {
-      field: 'Categoryname',
-      headerName: 'Category',
-      width: 130,
+      field: 'Power',
+      headerName: 'Power',
+      width: 100,
+      type: 'number',
+      align: 'left',
+      headerAlign: 'left',
       renderCell: (params) => (
-        <span>{params.row.Categoryname || params.row.Category || '—'}</span>
+        <span style={{ fontWeight: 500, color: '#4f46e5' }}>{params.value}</span>
       ),
     },
     {
-      field: 'Email',
-      headerName: 'Email',
+      field: 'DateTime',
+      headerName: 'Date Created',
       width: 200,
-    },
-    {
-      field: 'Phoneno',
-      headerName: 'Phone',
-      width: 140,
-    },
-    {
-      field: 'Storeaddress',
-      headerName: 'Address',
-      width: 180,
-    },
-    {
-      field: 'Description',
-      headerName: 'Description',
-      width: 160,
-      renderCell: (params) => (
-        <Tooltip title={params.value || ''} placement="top">
-          <span style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            display: 'block',
-            maxWidth: 140,
-          }}>
-            {params.value || '—'}
-          </span>
-        </Tooltip>
-      ),
-    },
-    {
-      field: 'StoreTime',
-      headerName: 'Store Time',
-      width: 140,
-      renderCell: (params) => (
-        <span>{params.value || '—'}</span>
-      ),
-    },
-    {
-      field: 'Rating',
-      headerName: 'Rating',
-      width: 90,
-      renderCell: (params) => (
-        <span style={{ fontWeight: 600, color: '#f59e0b' }}>
-          ⭐ {params.value || '—'}
-        </span>
-      ),
-    },
-    {
-      field: 'StoreLocation',
-      headerName: 'Map',
-      width: 80,
-      sortable: false,
-      renderCell: (params) =>
-        params.value ? (
-          <Tooltip title="Open in Maps" placement="top">
-            <IconButton
-              size="small"
-              onClick={() => window.open(params.value, '_blank')}
-              sx={{ color: '#4285F4' }}
-            >
-              🗺️
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <span style={{ color: '#94a3b8' }}>—</span>
-        ),
+      renderCell: (params) => {
+        if (!params.value) return '—';
+        try {
+          const date = new Date(params.value);
+          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch {
+          return params.value;
+        }
+      }
     },
     {
       field: 'Isactive',
       headerName: 'Active',
-      width: 100,
+      width: 110,
       renderCell: (params) => (
         <Chip
           label={params.value === 'true' ? 'Active' : 'Inactive'}
@@ -182,7 +119,7 @@ const ShopTab = () => {
     {
       field: 'Deleted',
       headerName: 'Status',
-      width: 100,
+      width: 110,
       renderCell: (params) => (
         <Chip
           label={params.value === 'false' ? 'Live' : 'Deleted'}
@@ -208,7 +145,7 @@ const ShopTab = () => {
               color="primary"
               size="small"
               onClick={() => {
-                setSelectedShop(params.row);
+                setSelectedCategory(params.row);
                 setShowAdd(true);
               }}
             >
@@ -221,7 +158,7 @@ const ShopTab = () => {
               color="error"
               size="small"
               onClick={() => {
-                setDeleteId(params.row.Storeid);
+                setDeleteId(params.row.Categoryid);
                 setOpenDelete(true);
               }}
             >
@@ -235,11 +172,11 @@ const ShopTab = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Add Button */}
+      {/* Search and Add controls */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2 }}>
         <TextField
           size="small"
-          placeholder="Search shops..."
+          placeholder="Search categories..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           sx={{ width: 300 }}
@@ -254,21 +191,32 @@ const ShopTab = () => {
         <Button
           variant="contained"
           onClick={() => {
-            setSelectedShop(null);
+            setSelectedCategory(null);
             setShowAdd(true);
           }}
+          sx={{
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            textTransform: "none",
+            fontWeight: 600,
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px -1px rgba(99, 102, 241, 0.4)",
+            '&:hover': {
+              background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+            }
+          }}
         >
-          New Shop
+          New Category
         </Button>
       </Box>
 
-      {/* Table */}
+      {/* Table grid */}
       <Box sx={{ height: 500 }}>
         <DataGrid
           rows={filteredRows}
           columns={columns}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
+          loading={loading}
+          pageSize={10}
+          rowsPerPageOptions={[10, 20, 50]}
           disableRowSelectionOnClick
           sx={{
             borderRadius: 2,
@@ -284,24 +232,34 @@ const ShopTab = () => {
       </Box>
 
       {/* Add/Edit Modal */}
-      <ShopTabAdd
+      <CategoryTabAdd
         open={showAdd}
         handleClose={() => {
           setShowAdd(false);
-          setSelectedShop(null);
+          setSelectedCategory(null);
         }}
-        editData={selectedShop}
+        editData={selectedCategory}
       />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
-        <DialogTitle>Delete Shop</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Delete Category</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this shop?
+          Are you sure you want to delete this category? This action cannot be undone.
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDelete(false)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button 
+            onClick={() => setOpenDelete(false)}
+            sx={{ textTransform: "none", color: "#64748b", fontWeight: 600 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            color="error" 
+            variant="contained" 
+            onClick={confirmDelete}
+            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "8px" }}
+          >
             Delete
           </Button>
         </DialogActions>
@@ -310,4 +268,4 @@ const ShopTab = () => {
   );
 };
 
-export default ShopTab;
+export default CategoryTab;

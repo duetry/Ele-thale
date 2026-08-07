@@ -4,13 +4,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
-import { Users, Tag, Activity, Dice6, Store, Zap, Heart } from 'lucide-react'; // ✅ Added Heart
+import { Users, Tag, Activity, Dice6, Store, Zap, Heart, Layers } from 'lucide-react'; // ✅ Added Heart & Layers
 
 import UserDetailsTab from './UserDetailsTab';
 import CouponDetails from './CouponDetails';
 import UsertrackingTab from './UsertrackingTab';
 import AdminOffers from './AdminOffers';
 import ShopOwnerTab from './ShopOwnerTab';
+import CategoryTab from './CategoryTab';
 import ShopTab from './ShopTab';
 import FlashDealTab from './FlashDealTab';
 import ReactionsTab from './ReactionsTab'; // ✅ NEW
@@ -93,6 +94,18 @@ const AdminPanel = () => {
               >
                 <Dice6 className="w-4 h-4 mr-2" />
                 Shops Owner
+              </button>
+
+              <button
+                onClick={() => setActiveTab('category')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center ${
+                  activeTab === 'category'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Layers className="w-4 h-4 mr-2" />
+                Categories
               </button>
 
               <button
@@ -181,6 +194,7 @@ const AdminPanel = () => {
           {user?.usertype === 'SHOP_OWNER' && activeTab === 'coupons' && <CouponDetails />}
           {user?.usertype !== 'SHOP_OWNER' && activeTab === 'userTracking' && <UsertrackingTab />}
           {user?.usertype !== 'SHOP_OWNER' && activeTab === 'adminOffers' && <AdminOffers />}
+          {user?.usertype !== 'SHOP_OWNER' && activeTab === 'category' && <CategoryTab />}
           {user?.usertype !== 'SHOP_OWNER' && activeTab === 'shop' && <ShopTab />}
           {user?.usertype !== 'SHOP_OWNER' && activeTab === 'shopOwner' && <ShopOwnerTab />}
           {user?.usertype !== 'SHOP_OWNER' && activeTab === 'flashDeal' && <FlashDealTab />}
