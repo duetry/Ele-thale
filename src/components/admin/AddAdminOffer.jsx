@@ -101,7 +101,11 @@
 //     initialValues: {
 //       Description: editData?.Description || "",
 //       Finalprice: editData?.Finalprice || "",
-//       Isactive: editData?.Isactive === "true" ?? true,
+//       Isactive: !editData
+//         ? true
+//         : editData?.Isactive === "false" || editData?.Isactive === false || editData?.Isactive === "0" || editData?.Isactive === 0
+//         ? false
+//         : true,
 //       ProductName: editData?.ProductName || "",
 //       Price: editData?.Price || "",
 //       Brand: editData?.Brand || "",
@@ -1145,6 +1149,13 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
   const shops = useSelector(selectShops);
   const categories = useSelector(selectCategories);
 
+  // ── Filter active shops only (Isactive === "true") ──────────────────────
+  const activeShops = React.useMemo(() => {
+    return (shops || []).filter(
+      (shop) => shop?.Isactive === "true" || shop?.Isactive === true
+    );
+  }, [shops]);
+
   // ── Fetch lookup lists on mount ─────────────────────────────────────────
   useEffect(() => {
     dispatch(getLocationList());
@@ -1156,7 +1167,11 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     initialValues: {
       Description: editData?.Description || "",
       Finalprice: editData?.Finalprice || "",
-      Isactive: editData?.Isactive === "true" ?? true,
+      Isactive: !editData
+        ? true
+        : editData?.Isactive === "false" || editData?.Isactive === false || editData?.Isactive === "0" || editData?.Isactive === 0
+        ? false
+        : true,
       ProductName: editData?.ProductName || "",
       Price: editData?.Price || "",
       Brand: editData?.Brand || "",
@@ -1571,7 +1586,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
             {/* Row 2: Shop Autocomplete | Power */}
             <Box sx={{ display: "flex", gap: 2 }}>
               <Autocomplete
-                options={shops || []}
+                options={activeShops}
                 getOptionLabel={(option) => option?.Storename || ""}
                 isOptionEqualToValue={(option, value) => option?.Storeid === value?.Storeid}
                 value={formik.values.Store}

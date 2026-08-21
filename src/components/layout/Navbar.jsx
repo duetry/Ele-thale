@@ -896,9 +896,13 @@ import {
   LogOut,
   ChevronDown,
   Zap,
+  Store,
+  Flame,
+  Ticket,
+  Tag,
 } from 'lucide-react';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import LoginPopup from '../LoginPopup';
 import { clearAuth, selectIsAuthenticated, selectUser } from '@/app/features/auth/authSlice';
@@ -919,6 +923,7 @@ const MOBILE_BREAKPOINT = 768;
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useDispatch();
 
   const [mounted, setMounted] = useState(false);
@@ -931,23 +936,31 @@ export default function Navbar() {
   const user = useSelector(selectUser);
   const locationData = useSelector(selectLocationList);
   const selectedLocation = useSelector(selectSelectedLocation);
-
   /* =========================
      MOUNT + RESIZE LISTENER
      ========================= */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
 
-    const checkMobile = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    const checkMobile = () => {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
     checkMobile(); // run on mount
 
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   // Close mobile menu when switching to desktop
   useEffect(() => {
-    if (!isMobile) setMobileMenuOpen(false);
+    if (!isMobile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMobileMenuOpen(false);
+    }
   }, [isMobile]);
 
   /* =========================
@@ -1033,14 +1046,18 @@ export default function Navbar() {
   const navItems = [
     ...(!isAdminOrOwner
       ? [
-        { name: 'Super Deal', icon: Zap, onClick: handleSuperDealClick },
-          { name: 'Nearby Offers', icon: Gift, onClick: handleSpecialOfferClick },
+          { name: 'Super Deals', icon: Flame, onClick: handleSuperDealClick },
+          { name: 'Nearby Shops', icon: Store, onClick: handleSpecialOfferClick },
         ]
       : []),
     ...(isAdminOrOwner
       ? [{ name: 'Admin', icon: ShoppingBag, onClick: handleAdminClick }]
       : []),
   ];
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }}>
@@ -1347,6 +1364,83 @@ export default function Navbar() {
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── MOBILE BOTTOM NAVIGATION ── */}
+      {isMobile && !isAdminOrOwner && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 64,
+          background: '#ffffff',
+          borderTop: '1px solid #e5e7eb',
+          boxShadow: '0 -4px 16px rgba(0,0,0,0.06)',
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          zIndex: 100,
+          paddingBottom: 'safe-area-inset-bottom',
+        }}>
+          {[
+            { name: 'Super Deals', icon: Flame, path: '/' },
+            { name: 'Nearby Shops', icon: MapPin, path: '/specialOffer' },
+            { name: 'My Coupons', icon: Ticket, path: '/myCoupons' },
+            { name: 'My Offers', icon: Tag, path: '/myOffers' },
+          ].map((tab) => {
+            const isTabActive = pathname === tab.path || 
+                               (tab.path === '/' && (pathname === '/' || pathname === '/superDeal'));
+            return (
+              <button
+                key={tab.name}
+                onClick={() => {
+                  if (tab.path === '/specialOffer') {
+                    handleSpecialOfferClick();
+                  } else {
+                    router.push(tab.path);
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  border: 'none',
+                  color: isTabActive ? '#8B5CF6' : '#9ca3af',
+                  cursor: 'pointer',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  gap: 4,
+                  flex: 1,
+                  height: '100%',
+                  position: 'relative',
+                  padding: '8px 0',
+                }}
+              >
+                <tab.icon style={{
+                  width: 22,
+                  height: 22,
+                  color: isTabActive ? '#8B5CF6' : '#9ca3af',
+                  strokeWidth: isTabActive ? 2.5 : 2,
+                }} />
+                <span>{tab.name}</span>
+                {isTabActive && (
+                  <span style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: '25%',
+                    right: '25%',
+                    height: 3,
+                    borderRadius: '99px',
+                    background: '#8B5CF6',
+                  }} />
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 

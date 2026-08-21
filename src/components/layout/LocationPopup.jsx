@@ -71,7 +71,7 @@ export default function LocationPopup({ isOpen, onClose, onSelect }) {
       />
 
       {/* 🔹 POPUP CARD */}
-+ <div className="bg-white text-gray-900 w-full max-w-md rounded-2xl shadow-xl">
+      <div className="bg-white text-gray-900 w-full max-w-md rounded-2xl shadow-xl">
 
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">

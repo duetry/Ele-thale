@@ -5618,17 +5618,25 @@ function useUserLocation() {
       return;
     }
 
+    const hasHandledPopup = typeof window !== "undefined" && localStorage.getItem("locationPopupHandled");
+
     if (navigator.permissions) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
         if (result.state === "granted") {
           // Already granted — fetch silently
+          if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
           fetchLocation();
         } else if (result.state === "denied") {
           setLocationDenied(true);
           setLocationError(true);
+          if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
         } else {
-          // "prompt" state — show our custom popup first
-          setShowLocationPopup(true);
+          // "prompt" state — show custom popup ONLY if user hasn't already allowed or declined/dismissed it
+          if (!hasHandledPopup) {
+            setShowLocationPopup(true);
+          } else {
+            setLocationError(true);
+          }
         }
 
         result.onchange = () => {
@@ -5636,16 +5644,23 @@ function useUserLocation() {
             setLocationDenied(false);
             setLocationError(false);
             setShowLocationPopup(false);
+            if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
             fetchLocation();
           } else if (result.state === "denied") {
             setLocationDenied(true);
             setLocationError(true);
+            setShowLocationPopup(false);
+            if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
           }
         };
       });
     } else {
-      // Permissions API not available — show popup
-      setShowLocationPopup(true);
+      // Permissions API not available — show popup ONLY if not handled yet
+      if (!hasHandledPopup) {
+        setShowLocationPopup(true);
+      } else {
+        setLocationError(true);
+      }
     }
   }, []);
 
@@ -5655,9 +5670,14 @@ function useUserLocation() {
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocationError(false);
         setLocationDenied(false);
+        if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
       },
-      () => {
+      (err) => {
         setLocationError(true);
+        if (err.code === 1) { // PERMISSION_DENIED
+          setLocationDenied(true);
+        }
+        if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
       },
       { timeout: 8000, maximumAge: 60000 }
     );
@@ -5678,11 +5698,13 @@ function useUserLocation() {
   };
 
   const confirmLocation = () => {
+    if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
     setShowLocationPopup(false);
     fetchLocation();
   };
 
   const dismissLocation = () => {
+    if (typeof window !== "undefined") localStorage.setItem("locationPopupHandled", "true");
     setShowLocationPopup(false);
     setLocationError(true);
   };

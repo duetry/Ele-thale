@@ -59,17 +59,9 @@ const CategoryTab = () => {
 
   const columns = [
     {
-      field: 'Categoryid',
-      headerName: 'Category ID',
-      width: 250,
-      renderCell: (params) => (
-        <span style={{ fontFamily: 'monospace', color: '#64748b', fontSize: 12 }}>{params.value}</span>
-      ),
-    },
-    {
       field: 'Categoryname',
       headerName: 'Category Name',
-      width: 200,
+      width: 250,
       renderCell: (params) => (
         <span style={{ fontWeight: 600, color: '#1e293b' }}>{params.value}</span>
       ),
@@ -77,7 +69,7 @@ const CategoryTab = () => {
     {
       field: 'Power',
       headerName: 'Power',
-      width: 100,
+      width: 120,
       type: 'number',
       align: 'left',
       headerAlign: 'left',
@@ -88,7 +80,7 @@ const CategoryTab = () => {
     {
       field: 'DateTime',
       headerName: 'Date Created',
-      width: 200,
+      width: 220,
       renderCell: (params) => {
         if (!params.value) return '—';
         try {
@@ -98,40 +90,6 @@ const CategoryTab = () => {
           return params.value;
         }
       }
-    },
-    {
-      field: 'Isactive',
-      headerName: 'Active',
-      width: 110,
-      renderCell: (params) => (
-        <Chip
-          label={params.value === 'true' ? 'Active' : 'Inactive'}
-          size="small"
-          sx={{
-            background: params.value === 'true' ? '#dcfce7' : '#fef9c3',
-            color:      params.value === 'true' ? '#166534' : '#92400e',
-            fontWeight: 600,
-            fontSize: 11,
-          }}
-        />
-      ),
-    },
-    {
-      field: 'Deleted',
-      headerName: 'Status',
-      width: 110,
-      renderCell: (params) => (
-        <Chip
-          label={params.value === 'false' ? 'Live' : 'Deleted'}
-          size="small"
-          sx={{
-            background: params.value === 'false' ? '#dbeafe' : '#fee2e2',
-            color:      params.value === 'false' ? '#1e40af' : '#991b1b',
-            fontWeight: 600,
-            fontSize: 11,
-          }}
-        />
-      ),
     },
     {
       field: 'actions',

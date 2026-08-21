@@ -23,7 +23,6 @@ import * as Yup from "yup";
 
 import { getShopOwner, selectShopOwners } from "@/app/features/adminPanel/shopOwnerSlice";
 import { createShop, updateShop, getShops } from "@/app/features/adminPanel/shopSlice";
-import { fetchCategories } from "@/app/features/products/productSlice";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -35,17 +34,11 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
   const [preview, setPreview] = useState(editData?.ImageBase64 || editData?.ImageUrl || editData?.Imageurl || "");
 
   const shopOwners = useSelector(selectShopOwners);
-  const { categories } = useSelector((state) => state.products);
 
   useEffect(() => {
     dispatch(getShopOwner());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!categories || categories.length === 0) {
-      dispatch(fetchCategories());
-    }
-  }, [dispatch, categories]);
   const [prevEditData, setPrevEditData] = useState(editData);
   const [prevOpen, setPrevOpen] = useState(open);
 
@@ -64,7 +57,6 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
   const formik = useFormik({
     initialValues: {
       StoreOwnerId: editData?.StoreOwnerId || "",
-      Categoryid: editData?.Categoryid || editData?.CategoryId || editData?.Category || "",
       Storename: editData?.Storename || "",
       Description: editData?.Description || "",
       Storeaddress: editData?.Storeaddress || "",
@@ -82,7 +74,6 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
 
     validationSchema: Yup.object({
       StoreOwnerId: Yup.string().required("Required"),
-      Categoryid: Yup.string().required("Required"),
       Storename: Yup.string().required("Required"),
       Description: Yup.string().required("Required"),
       Storeaddress: Yup.string().required("Required"),
@@ -91,7 +82,9 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
         .matches(/^[0-9]{10}$/, "Enter valid 10 digit phone number")
         .required("Required"),
       StoreLocation: Yup.string().required("Required"),
-      Rating: Yup.string().required("Required"),
+      Rating: Yup.string()
+        .matches(/^[0-9]+(\.[0-9]+)?$/, "Rating must be a valid number")
+        .required("Required"),
       StartTime: Yup.string().required("Required"),
       EndTime: Yup.string().required("Required"),
       // Only require base64 if there's no existing ImageUrl
@@ -105,16 +98,13 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
     onSubmit: async (values, { resetForm }) => {
       setLoading(true);
 
-      const selectedCategoryObj = categories?.find(c => c.Categoryid === values.Categoryid);
-      const categoryName = selectedCategoryObj ? selectedCategoryObj.Categoryname : "";
-
       const payload = {
         Storeid: editData?.Storeid,
         StoreOwnerId: values.StoreOwnerId,
-        Categoryid: values.Categoryid,
-        Categoryname: categoryName,
-        CategoryId: values.Categoryid,
-        Category: categoryName,
+        Categoryid: editData?.Categoryid || editData?.CategoryId || "",
+        Categoryname: editData?.Categoryname || editData?.Category || "",
+        CategoryId: editData?.Categoryid || editData?.CategoryId || "",
+        Category: editData?.Categoryname || editData?.Category || "",
         Storename: values.Storename.trim(),
         Description: values.Description,
         Storeaddress: values.Storeaddress,
@@ -201,24 +191,6 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
             </TextField>
 
             <TextField
-              select
-              label="Category"
-              name="Categoryid"
-              value={formik.values.Categoryid}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.Categoryid && Boolean(formik.errors.Categoryid)}
-              helperText={formik.touched.Categoryid && formik.errors.Categoryid}
-              fullWidth
-            >
-              {categories?.map((cat) => (
-                <MenuItem key={cat.Categoryid} value={cat.Categoryid}>
-                  {cat.Categoryname}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
               label="Store Name"
               name="Storename"
               value={formik.values.Storename}
@@ -266,10 +238,14 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
               label="Phone"
               name="Phoneno"
               value={formik.values.Phoneno}
-              onChange={formik.handleChange}
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                formik.setFieldValue('Phoneno', digitsOnly);
+              }}
               onBlur={formik.handleBlur}
               error={formik.touched.Phoneno && Boolean(formik.errors.Phoneno)}
               helperText={formik.touched.Phoneno && formik.errors.Phoneno}
+              inputProps={{ maxLength: 10, inputMode: 'numeric', pattern: '[0-9]*' }}
               fullWidth
             />
 
@@ -288,10 +264,16 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
               label="Rating"
               name="Rating"
               value={formik.values.Rating}
-              onChange={formik.handleChange}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9.]/g, '');
+                const parts = val.split('.');
+                const cleanVal = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : val;
+                formik.setFieldValue('Rating', cleanVal);
+              }}
               onBlur={formik.handleBlur}
               error={formik.touched.Rating && Boolean(formik.errors.Rating)}
               helperText={formik.touched.Rating && formik.errors.Rating}
+              inputProps={{ inputMode: 'decimal' }}
               fullWidth
             />
 

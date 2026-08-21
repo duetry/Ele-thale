@@ -10,6 +10,7 @@ import categoryReducer from '@/app/features/adminPanel/categorySlice';
 import flashDealReducer from '@/app/features/adminPanel/flashDealSlice';
 import reactionsReducer from '@/app/features/adminPanel/reactionSlice';
 import notifiedReducer from '@/app/features/adminPanel/notifiedSlice';
+import userFeedbackReducer from '@/app/features/adminPanel/userFeedbackSlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,7 +23,8 @@ export const store = configureStore({
     category: categoryReducer,
     flashDeal: flashDealReducer,
     reactions: reactionsReducer,
-    notified: notifiedReducer, 
+    notified: notifiedReducer,
+    userFeedback: userFeedbackReducer,
   },
 });
 

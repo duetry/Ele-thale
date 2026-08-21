@@ -84,14 +84,6 @@ const ShopTab = () => {
       ),
     },
     {
-      field: 'Categoryname',
-      headerName: 'Category',
-      width: 130,
-      renderCell: (params) => (
-        <span>{params.row.Categoryname || params.row.Category || '—'}</span>
-      ),
-    },
-    {
       field: 'Email',
       headerName: 'Email',
       width: 200,
