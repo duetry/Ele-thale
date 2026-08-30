@@ -84,20 +84,22 @@ export const getSearchLog = createAsyncThunk(
   },
 );
 
-// 3️⃣ GET Coupon Code List (with or without phoneno)
+// 3️⃣ GET Coupon Code List (using GET_Coupon_By_User)
 export const getCouponCodeList = createAsyncThunk(
   'admin/getCouponCodeList',
-  async ({ shopOwnerId }, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
       const token = getFromStorage("authToken");
+      const id = typeof params === 'object' ? (params?.userId || params?.shopOwnerId) : params;
+      let url = `${API_BASE}/GET_Coupon_By_User`;
+      if (id) {
+        url += `?userId=${id}`;
+      }
 
-      const response = await fetch(
-        `${API_BASE}/GET_CouponCode_List?shopOwnerId=${shopOwnerId}`, // ✅ query param
-        {
-          method: 'GET', // ✅ changed to GET
-          headers: getHeaders(token), // unchanged
-        }
-      );
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getHeaders(token),
+      });
 
       const data = await response.json();
 
@@ -107,7 +109,36 @@ export const getCouponCodeList = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || "Something went wrong");
+    }
+  }
+);
+
+export const getCouponByUser = createAsyncThunk(
+  'admin/getCouponByUser',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage("authToken");
+      const id = typeof params === 'object' ? (params?.userId || params?.shopOwnerId) : params;
+      let url = `${API_BASE}/GET_Coupon_By_User`;
+      if (id) {
+        url += `?userId=${id}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getHeaders(token),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch coupons by user");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || "Something went wrong");
     }
   }
 );
@@ -153,6 +184,29 @@ export const getLocationList = createAsyncThunk(
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to fetch coupon codes");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || "Something went wrong");
+    }
+  },
+);
+
+export const getGamesList = createAsyncThunk(
+  "admin/getGamesList",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = getFromStorage("authToken");
+      const response = await fetch(`${API_BASE}/Games`, {
+        method: "GET",
+        headers: getHeaders(token),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch games list");
       }
 
       return data;
@@ -399,9 +453,14 @@ const initialState = {
   postSearchSuccess: false,
 
   // Coupon
-unlockedCoupon: null,
-unlockLoading: false,
-unlockError: null,
+  unlockedCoupon: null,
+  unlockLoading: false,
+  unlockError: null,
+
+  // Games Data
+  gamesData: [],
+  gamesLoading: false,
+  gamesError: null,
 };
 
 /* =========================================================
@@ -485,9 +544,21 @@ const adminPanelSlice = createSlice({
       })
       .addCase(getCouponCodeList.fulfilled, (state, action) => {
         state.couponLoading = false;
-        state.couponCodes = action.payload?.data;
+        state.couponCodes = action.payload?.coupons || action.payload?.data || (Array.isArray(action.payload) ? action.payload : []);
       })
       .addCase(getCouponCodeList.rejected, (state, action) => {
+        state.couponLoading = false;
+        state.couponError = action.payload;
+      })
+      .addCase(getCouponByUser.pending, (state) => {
+        state.couponLoading = true;
+        state.couponError = null;
+      })
+      .addCase(getCouponByUser.fulfilled, (state, action) => {
+        state.couponLoading = false;
+        state.couponCodes = action.payload?.coupons || action.payload?.data || (Array.isArray(action.payload) ? action.payload : []);
+      })
+      .addCase(getCouponByUser.rejected, (state, action) => {
         state.couponLoading = false;
         state.couponError = action.payload;
       })
@@ -504,6 +575,20 @@ const adminPanelSlice = createSlice({
       .addCase(getLocationList.rejected, (state, action) => {
         state.couponLoading = false;
         state.couponError = action.payload;
+      })
+
+      // GET Games List
+      .addCase(getGamesList.pending, (state) => {
+        state.gamesLoading = true;
+        state.gamesError = null;
+      })
+      .addCase(getGamesList.fulfilled, (state, action) => {
+        state.gamesLoading = false;
+        state.gamesData = action.payload?.data || action.payload || [];
+      })
+      .addCase(getGamesList.rejected, (state, action) => {
+        state.gamesLoading = false;
+        state.gamesError = action.payload;
       })
 
       // GET Login User Details

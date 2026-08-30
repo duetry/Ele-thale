@@ -85,6 +85,7 @@ const AdminOffers = () => {
     { field: 'ProductName', headerName: 'Product Name', width: 150 },
     { field: 'Brand', headerName: 'Brand', width: 230 },
     { field: 'Type', headerName: 'Type', width: 150 },
+    { field: 'GameName', headerName: 'Game Name', width: 140 },
     { field: 'Price', headerName: 'Price', width: 100 },
     { field: 'Finalprice', headerName: 'Final Price', width: 120 },
     { field: 'Description', headerName: 'Type', width: 100 },

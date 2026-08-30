@@ -43,9 +43,15 @@ const CouponDetails = () => {
   const adminState = useSelector((state) => state?.adminPanel);
   const user = useSelector(selectUser);
   const userId = useSelector(selectUserId);
-  console.log("adminState" , adminState)
-  console.log("user" , user)
-  console.log("userId" , userId)
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    dispatch(getCouponCodeList({ userId, shopOwnerId: userId }));
+  }, [dispatch, userId]);
+
   if (!adminState) {
     return (
       <Alert severity="error">
@@ -60,39 +66,43 @@ const CouponDetails = () => {
     couponError = null,
   } = adminState;
 
-useEffect(() => {
-  if (userId) {
-    dispatch(getCouponCodeList({ shopOwnerId: userId }));
+  if (couponLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
-}, [dispatch, userId]);
-
-  // if (!mounted || couponLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center p-12">
-  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-  //     </div>
-  //   );
-  // }
 
   if (couponError) {
-    return <Alert severity="error">
-  {typeof couponError === "string"
-    ? couponError
-    : couponError?.message || "Something went wrong"}
-</Alert>
+    return (
+      <Alert severity="error">
+        {typeof couponError === "string"
+          ? couponError
+          : couponError?.message || "Something went wrong"}
+      </Alert>
+    );
   }
 
-  const rows = Array.isArray(couponCodes)
-    ? couponCodes.map((item, index) => ({
-        id: item.CouponId || index,
-        PhoneNo: item.PhoneNo,
-        ProductName: item.ProductName,
-        CouponCode: item.CouponCode,
-        IsUsed: item.IsUsed,
-        UserId: item.UserId,
-        CouponId: item.CouponId,
-      }))
+  const rawCoupons = Array.isArray(couponCodes)
+    ? couponCodes
+    : Array.isArray(couponCodes?.coupons)
+    ? couponCodes.coupons
+    : Array.isArray(couponCodes?.data)
+    ? couponCodes.data
     : [];
+
+  const rows = rawCoupons.map((item, index) => ({
+    id: item.CouponId || item.coupon_id || item.id || index,
+    PhoneNo: item.PhoneNo || item.phone_no || item.phoneno || item.user_phone || 'N/A',
+    ProductName: item.ProductName || item.product_name || item.title || item.name || 'N/A',
+    CouponCode: item.CouponCode || item.coupon_code || item.code || 'N/A',
+    IsUsed: String(item.IsUsed ?? item.is_used ?? item.is_validated ?? 'false'),
+    UserId: item.UserId || item.user_id,
+    CouponId: item.CouponId || item.coupon_id,
+    CreatedAt: item.CreatedAt || item.created_at || item.created_on || null,
+    ShopOwnerId: item.ShopOwnerId || item.shop_owner_id,
+  }));
 
   const filteredData = rows.filter((item) =>
     Object.values(item).some((val) =>
@@ -126,16 +136,33 @@ useEffect(() => {
       })
       .catch((err) => {
         setToast({
-    open: true,
-    message: typeof err === "string" ? err : err?.message || "Error occurred",
-    severity: 'error',
-  });
+          open: true,
+          message: typeof err === "string" ? err : err?.message || "Error occurred",
+          severity: 'error',
+        });
       });
   };
 
-useEffect(() => {
-  setMounted(true);
-}, []);
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const usedCount = rows.filter((r) => r.IsUsed === 'true').length;
+  const activeCount = rows.length - usedCount;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -149,8 +176,10 @@ useEffect(() => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard icon={Tag} label="Total Coupons" value={rows.length} />
+        <StatCard icon={TrendingUp} label="Active Coupons" value={activeCount} />
+        <StatCard icon={Tag} label="Used Coupons" value={usedCount} />
         <StatCard
           icon={Tag}
           label="Unique Products"
@@ -191,6 +220,12 @@ useEffect(() => {
                     Coupon Code
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                    Created At
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
                     Validate
                   </th>
                 </tr>
@@ -201,27 +236,42 @@ useEffect(() => {
                     key={row.id}
                     className="hover:bg-blue-50 transition-colors duration-150"
                   >
-                    <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-800">
                       {row.PhoneNo}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className="px-6 py-4 text-sm text-gray-700 font-semibold">
                       {row.ProductName}
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <code className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg font-mono text-sm font-semibold">
+                      <code className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg font-mono text-sm font-bold tracking-wider">
                         {row.CouponCode}
                       </code>
                     </td>
                     <td className="px-6 py-4 text-sm">
-                    <Button
-  variant="contained"
-  color="success"
-  disabled={row.IsUsed === "true"}
-  onClick={() => handleValidateCoupon(row)}
->
-  {row.IsUsed === "true" ? 'Validated' : 'Validate'}
-</Button>
-
+                      {row.IsUsed === "true" ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                          Used
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                          Active
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                      {formatDate(row.CreatedAt)}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <Button
+                        variant="contained"
+                        color={row.IsUsed === "true" ? "inherit" : "success"}
+                        disabled={row.IsUsed === "true"}
+                        onClick={() => handleValidateCoupon(row)}
+                        size="small"
+                        sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                      >
+                        {row.IsUsed === "true" ? 'Validated' : 'Validate'}
+                      </Button>
                     </td>
                   </tr>
                 ))}

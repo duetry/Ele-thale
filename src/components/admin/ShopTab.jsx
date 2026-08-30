@@ -84,6 +84,37 @@ const ShopTab = () => {
       ),
     },
     {
+      field: 'Categoryname',
+      headerName: 'Category',
+      width: 140,
+      renderCell: (params) => (
+        <span style={{ fontWeight: 500, color: '#334155' }}>
+          {params.value || params.row.Category || '—'}
+        </span>
+      ),
+    },
+    {
+      field: 'SubCategoryname',
+      headerName: 'Subcategories',
+      width: 160,
+      renderCell: (params) => {
+        const val = params.value || params.row.Subcategoryname || params.row.SubCategory || '—';
+        return (
+          <Tooltip title={val} placement="top">
+            <span style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'block',
+              maxWidth: 140,
+            }}>
+              {val}
+            </span>
+          </Tooltip>
+        );
+      },
+    },
+    {
       field: 'Email',
       headerName: 'Email',
       width: 200,
@@ -97,6 +128,38 @@ const ShopTab = () => {
       field: 'Storeaddress',
       headerName: 'Address',
       width: 180,
+    },
+    {
+      field: 'LocationName',
+      headerName: 'Location',
+      width: 140,
+      renderCell: (params) => (
+        <span>{params.value || params.row.Location || params.row.LocationName || params.row.Locationid || '—'}</span>
+      ),
+    },
+    {
+      field: 'Kilometer',
+      headerName: 'Kilometer',
+      width: 100,
+      renderCell: (params) => (
+        <span>{params.value !== undefined && params.value !== null && params.value !== '' ? `${params.value} km` : '—'}</span>
+      ),
+    },
+    {
+      field: 'Latitude',
+      headerName: 'Latitude',
+      width: 100,
+      renderCell: (params) => (
+        <span>{params.value || '—'}</span>
+      ),
+    },
+    {
+      field: 'Longitude',
+      headerName: 'Longitude',
+      width: 100,
+      renderCell: (params) => (
+        <span>{params.value || '—'}</span>
+      ),
     },
     {
       field: 'Description',

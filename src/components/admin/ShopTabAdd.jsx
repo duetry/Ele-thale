@@ -12,7 +12,9 @@ import {
   Typography,
   Slide,
   Switch,
-  MenuItem
+  MenuItem,
+  Autocomplete,
+  Chip
 } from "@mui/material";
 
 import CloseIcon from "@mui/icons-material/Close";
@@ -23,10 +25,26 @@ import * as Yup from "yup";
 
 import { getShopOwner, selectShopOwners } from "@/app/features/adminPanel/shopOwnerSlice";
 import { createShop, updateShop, getShops } from "@/app/features/adminPanel/shopSlice";
+import { getLocationList } from "@/app/features/adminPanel/adminPanelSlice";
+import {
+  getCategories,
+  getSubCategories,
+  selectCategories,
+  selectSubCategories,
+} from "@/app/features/adminPanel/categorySlice";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
+
+const parseSubCategoryArray = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    return val.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+};
 
 const ShopTabAdd = ({ open, handleClose, editData }) => {
   const dispatch = useDispatch();
@@ -34,9 +52,14 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
   const [preview, setPreview] = useState(editData?.ImageBase64 || editData?.ImageUrl || editData?.Imageurl || "");
 
   const shopOwners = useSelector(selectShopOwners);
+  const categories = useSelector(selectCategories);
+  const subCategories = useSelector(selectSubCategories);
+  const locationData = useSelector((state) => state?.adminPanel?.locationData);
 
   useEffect(() => {
     dispatch(getShopOwner());
+    dispatch(getCategories());
+    dispatch(getLocationList());
   }, [dispatch]);
 
   const [prevEditData, setPrevEditData] = useState(editData);
@@ -57,6 +80,9 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
   const formik = useFormik({
     initialValues: {
       StoreOwnerId: editData?.StoreOwnerId || "",
+      Categoryid: editData?.Categoryid || editData?.CategoryId || "",
+      Categoryname: editData?.Categoryname || editData?.Category || "",
+      SubCategoryname: parseSubCategoryArray(editData?.SubCategoryname || editData?.Subcategoryname || editData?.SubCategory),
       Storename: editData?.Storename || "",
       Description: editData?.Description || "",
       Storeaddress: editData?.Storeaddress || "",
@@ -69,11 +95,16 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       ImageBase64: editData?.ImageBase64 || "",
       ImageUrl: editData?.ImageUrl || editData?.Imageurl || "",
       IsActive: editData?.Deleted === "false",
+      Location: null,
+      Kilometer: editData?.Kilometer ?? editData?.kilometer ?? "",
+      Latitude: editData?.Latitude ?? editData?.latitude ?? "",
+      Longitude: editData?.Longitude ?? editData?.longitude ?? editData?.langitude ?? "",
     },
     enableReinitialize: true,
 
     validationSchema: Yup.object({
       StoreOwnerId: Yup.string().required("Required"),
+      Categoryid: Yup.string().required("Category is required"),
       Storename: Yup.string().required("Required"),
       Description: Yup.string().required("Required"),
       Storeaddress: Yup.string().required("Required"),
@@ -87,6 +118,21 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
         .required("Required"),
       StartTime: Yup.string().required("Required"),
       EndTime: Yup.string().required("Required"),
+      Location: Yup.object().nullable().required("Location is required"),
+      Kilometer: Yup.number()
+        .typeError("Must be a number")
+        .required("Kilometer is required")
+        .min(0, "Cannot be negative"),
+      Latitude: Yup.number()
+        .typeError("Must be a number")
+        .required("Latitude is required")
+        .min(-90, "Min -90")
+        .max(90, "Max 90"),
+      Longitude: Yup.number()
+        .typeError("Must be a number")
+        .required("Longitude is required")
+        .min(-180, "Min -180")
+        .max(180, "Max 180"),
       // Only require base64 if there's no existing ImageUrl
       ImageBase64: Yup.string().when("ImageUrl", {
         is: (val) => !val,
@@ -98,13 +144,20 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
     onSubmit: async (values, { resetForm }) => {
       setLoading(true);
 
+      const subCategoryStr = Array.isArray(values.SubCategoryname)
+        ? values.SubCategoryname.join(",")
+        : values.SubCategoryname || "";
+
       const payload = {
         Storeid: editData?.Storeid,
         StoreOwnerId: values.StoreOwnerId,
-        Categoryid: editData?.Categoryid || editData?.CategoryId || "",
-        Categoryname: editData?.Categoryname || editData?.Category || "",
-        CategoryId: editData?.Categoryid || editData?.CategoryId || "",
-        Category: editData?.Categoryname || editData?.Category || "",
+        Categoryid: values.Categoryid,
+        Categoryname: values.Categoryname,
+        CategoryId: values.Categoryid,
+        Category: values.Categoryname,
+        SubCategoryname: subCategoryStr,
+        Subcategoryname: subCategoryStr,
+        SubCategory: subCategoryStr,
         Storename: values.Storename.trim(),
         Description: values.Description,
         Storeaddress: values.Storeaddress,
@@ -118,6 +171,12 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
         ImageUrl: values.ImageUrl,
         Isactive: values.IsActive ? "true" : "false",
         Deleted: values.IsActive ? "false" : "true",
+        LocationId: values.Location?.LocationId || "",
+        LocationName: values.Location?.Name || values.Location?.LocationName || "",
+        Location: values.Location?.Name || values.Location?.LocationName || "",
+        Kilometer: values.Kilometer,
+        Latitude: values.Latitude,
+        Longitude: values.Longitude,
       };
 
       if (editData?.Storeid) {
@@ -133,6 +192,38 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
       handleClose();
     },
   });
+
+  const selectedCategoryid = formik.values.Categoryid;
+  useEffect(() => {
+    if (selectedCategoryid) {
+      dispatch(getSubCategories(selectedCategoryid));
+    }
+  }, [selectedCategoryid, dispatch]);
+
+  useEffect(() => {
+    if (!editData) return;
+
+    const locId = editData.LocationId || editData.Locationid;
+    const locName = editData.LocationName || editData.Location;
+    if (locationData?.length) {
+      const matched = locationData.find(
+        (l) => l.LocationId === locId || l.Name === locName || l.LocationId === editData.Location
+      ) || null;
+      if (matched && formik.values.Location?.LocationId !== matched.LocationId) {
+        formik.setFieldValue("Location", matched);
+      }
+    }
+
+    if (editData.Kilometer !== undefined && editData.Kilometer !== null && formik.values.Kilometer === "") {
+      formik.setFieldValue("Kilometer", editData.Kilometer);
+    }
+    if (editData.Latitude !== undefined && editData.Latitude !== null && formik.values.Latitude === "") {
+      formik.setFieldValue("Latitude", editData.Latitude);
+    }
+    if (editData.Longitude !== undefined && editData.Longitude !== null && formik.values.Longitude === "") {
+      formik.setFieldValue("Longitude", editData.Longitude);
+    }
+  }, [locationData, editData]);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -190,6 +281,66 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
               ))}
             </TextField>
 
+            {/* Category Dropdown */}
+            <TextField
+              select
+              label="Category"
+              name="Categoryid"
+              value={formik.values.Categoryid}
+              onChange={(e) => {
+                const catId = e.target.value;
+                const selectedCat = categories?.find(
+                  (c) => (c.Categoryid || c.CategoryId) === catId
+                );
+                formik.setFieldValue("Categoryid", catId);
+                formik.setFieldValue(
+                  "Categoryname",
+                  selectedCat ? (selectedCat.Categoryname || selectedCat.Name || "") : ""
+                );
+                formik.setFieldValue("SubCategoryname", []);
+              }}
+              onBlur={formik.handleBlur}
+              error={formik.touched.Categoryid && Boolean(formik.errors.Categoryid)}
+              helperText={formik.touched.Categoryid && formik.errors.Categoryid}
+              fullWidth
+            >
+              {categories?.map((cat) => (
+                <MenuItem key={cat.Categoryid || cat.CategoryId} value={cat.Categoryid || cat.CategoryId}>
+                  {cat.Categoryname || cat.Name}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {/* SubCategory Selection */}
+            <Autocomplete
+              multiple
+              freeSolo
+              options={
+                subCategories
+                  ?.map((sub) => sub.SubCategoryname || sub.Subcategoryname || sub.Name)
+                  .filter(Boolean) || []
+              }
+              value={Array.isArray(formik.values.SubCategoryname) ? formik.values.SubCategoryname : []}
+              onChange={(event, newValue) => {
+                formik.setFieldValue("SubCategoryname", newValue);
+              }}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip variant="outlined" label={option} size="small" {...getTagProps({ index })} key={index} />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Subcategory"
+                  placeholder={formik.values.Categoryid ? "Select subcategory" : "Select a category first"}
+                  disabled={!formik.values.Categoryid}
+                  error={formik.touched.SubCategoryname && Boolean(formik.errors.SubCategoryname)}
+                  helperText={formik.touched.SubCategoryname && formik.errors.SubCategoryname}
+                />
+              )}
+            />
+
             <TextField
               label="Store Name"
               name="Storename"
@@ -222,6 +373,70 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
               helperText={formik.touched.Storeaddress && formik.errors.Storeaddress}
               fullWidth
             />
+
+            {/* Location Autocomplete */}
+            <Autocomplete
+              options={locationData || []}
+              getOptionLabel={(option) => option?.Name || option?.LocationName || ""}
+              isOptionEqualToValue={(option, value) => option?.LocationId === value?.LocationId}
+              value={formik.values.Location}
+              onChange={(_, newValue) => formik.setFieldValue("Location", newValue)}
+              onBlur={() => formik.setFieldTouched("Location", true)}
+              renderOption={(props, option) => (
+                <Box component="li" {...props} key={option.LocationId || option.Name} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, px: 1.5 }}>
+                  <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#1e293b" }}>
+                    {option.Name || option.LocationName}
+                  </Typography>
+                </Box>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Location"
+                  placeholder="Search location..."
+                  error={formik.touched.Location && Boolean(formik.errors.Location)}
+                  helperText={formik.touched.Location && formik.errors.Location}
+                  fullWidth
+                />
+              )}
+            />
+
+            {/* Kilometer, Latitude, Longitude Inputs */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                label="Kilometer (KM)"
+                name="Kilometer"
+                type="number"
+                value={formik.values.Kilometer}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Kilometer && Boolean(formik.errors.Kilometer)}
+                helperText={formik.touched.Kilometer && formik.errors.Kilometer}
+                fullWidth
+              />
+              <TextField
+                label="Latitude"
+                name="Latitude"
+                type="number"
+                value={formik.values.Latitude}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Latitude && Boolean(formik.errors.Latitude)}
+                helperText={formik.touched.Latitude && formik.errors.Latitude}
+                fullWidth
+              />
+              <TextField
+                label="Longitude"
+                name="Longitude"
+                type="number"
+                value={formik.values.Longitude}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.Longitude && Boolean(formik.errors.Longitude)}
+                helperText={formik.touched.Longitude && formik.errors.Longitude}
+                fullWidth
+              />
+            </Box>
 
             <TextField
               label="Email"
@@ -341,4 +556,4 @@ const ShopTabAdd = ({ open, handleClose, editData }) => {
   );
 };
 
-export default ShopTabAdd;
+export default ShopTabAdd;

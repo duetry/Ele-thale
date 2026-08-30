@@ -508,6 +508,11 @@ export default function ProductsPage() {
                           ✨ For You
                         </div>
                       )}
+                      {(product.GameName || product.gameName || product.Game || product.game) && (
+                        <div style={{ background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', color: 'white', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(5,150,105,0.3)' }}>
+                          🎮 {product.GameName || product.gameName || product.Game || product.game}
+                        </div>
+                      )}
                     </div>
 
                     {product.Remark && (
@@ -530,9 +535,29 @@ export default function ProductsPage() {
                   </div>
 
                   <div style={{ padding: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', color: '#6B7280' }}>
-                      <Tag size={14} />
-                      {product.Categoryname} {product.Subcategoryname && `• ₹{product.Subcategoryname}`}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px', fontSize: '12px', color: '#6B7280' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Tag size={14} />
+                        <span>{product.Categoryname}</span>
+                        {product.Subcategoryname && <span>• {product.Subcategoryname}</span>}
+                      </div>
+                      {(product.GameName || product.gameName || product.Game || product.game) && (
+                        <div style={{
+                          background: '#ECFDF5',
+                          color: '#047857',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          border: '1px solid #A7F3D0',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          🎮 {product.GameName || product.gameName || product.Game || product.game}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '8px' }}>{product.Storename}</div>

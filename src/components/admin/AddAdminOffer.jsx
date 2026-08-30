@@ -1063,6 +1063,7 @@ import {
   getAdminOffers,
   updateAdminOffers,
   getLocationList,
+  getGamesList,
 } from "@/app/features/adminPanel/adminPanelSlice";
 
 import {
@@ -1097,6 +1098,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BoltIcon from "@mui/icons-material/Bolt";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -1146,6 +1148,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const locationData = useSelector((state) => state?.adminPanel?.locationData);
+  const gamesData = useSelector((state) => state?.adminPanel?.gamesData);
   const shops = useSelector(selectShops);
   const categories = useSelector(selectCategories);
 
@@ -1161,6 +1164,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     dispatch(getLocationList());
     dispatch(getShops());
     dispatch(getCategories());
+    dispatch(getGamesList());
   }, []);
 
   const formik = useFormik({
@@ -1185,11 +1189,16 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       OfferEndTime: editData?.OfferEndTime || "",
       CoupounActive: editData?.CoupounActive === "true" || editData?.CoupounActive === true || !editData ? true : false,
       // ── FlashDeal field ──
-      FlashDeal: editData?.FlashDeal === "true" || editData?.FlashDeal === true ? true : false,
+      FlashDeal: (() => {
+        const raw = editData?.Flashdeal ?? editData?.FlashDeal ?? editData?.flashdeal ?? editData?.flashDeal ?? editData?.IsFlashDeal ?? editData?.isFlashDeal;
+        return raw === "true" || raw === true || raw === "1" || raw === 1;
+      })(),
       // ── NEW: Kilometer / Latitude / Longitude ──
       Kilometer: editData?.Kilometer ?? "",
       Latitude: editData?.Latitude ?? "",
       Longitude: editData?.Longitude ?? "",
+      // ── NEW: GameName field ──
+      GameName: editData?.GameName || editData?.gameName || editData?.Game || editData?.game || "",
     },
     enableReinitialize: true,
     validationSchema: Yup.object({
@@ -1258,11 +1267,14 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           Categoryname: categoryName,
           CoupounActive: values.CoupounActive,
           // ── FlashDeal in payload ──
-          Flashdeal: values.FlashDeal,
+          Flashdeal: values.FlashDeal ? "true" : "false",
+          FlashDeal: values.FlashDeal ? "true" : "false",
           // ── NEW: Kilometer / Latitude / Longitude in payload ──
           Kilometer: values.Kilometer,
           Latitude: values.Latitude,
           Longitude: values.Longitude,
+          // ── NEW: GameName in payload ──
+          GameName: values.GameName || "",
         };
 
         if (editData?.Productid) {
@@ -1336,8 +1348,9 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
     }
 
     // ── FlashDeal patch ──
-    if (editData.FlashDeal !== undefined && editData.FlashDeal !== null) {
-      const val = editData.FlashDeal === "true" || editData.FlashDeal === true;
+    const flashVal = editData.Flashdeal ?? editData.FlashDeal ?? editData.flashdeal ?? editData.flashDeal ?? editData.IsFlashDeal ?? editData.isFlashDeal;
+    if (flashVal !== undefined && flashVal !== null) {
+      const val = flashVal === "true" || flashVal === true || flashVal === "1" || flashVal === 1;
       if (formik.values.FlashDeal !== val) {
         formik.setFieldValue("FlashDeal", val);
       }
@@ -1366,6 +1379,12 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       formik.values.Longitude === ""
     ) {
       formik.setFieldValue("Longitude", editData.Longitude);
+    }
+
+    // GameName patch
+    const gName = editData?.GameName || editData?.gameName || editData?.Game || editData?.game;
+    if (gName && formik.values.GameName !== gName) {
+      formik.setFieldValue("GameName", gName);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shops, locationData, editData, categories]);
@@ -1769,6 +1788,102 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                       <>
                         <InputAdornment position="start">
                           <CategoryIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              PaperComponent={({ children, ...paperProps }) => (
+                <Box
+                  {...paperProps}
+                  sx={{
+                    borderRadius: "14px",
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+                    border: "1px solid #e2e8f0",
+                    overflow: "hidden",
+                    mt: 0.5,
+                    background: "#fff",
+                  }}
+                >
+                  {children}
+                </Box>
+              )}
+            />
+
+            {/* Game Selection Autocomplete */}
+            <Autocomplete
+              options={gamesData || []}
+              getOptionLabel={(option) =>
+                typeof option === "string"
+                  ? option
+                  : option?.GameName || option?.gameName || option?.name || option?.Game || ""
+              }
+              isOptionEqualToValue={(option, value) => {
+                const optName = typeof option === "string" ? option : option?.GameName || option?.gameName || option?.name || option?.Game || "";
+                const valName = typeof value === "string" ? value : value?.GameName || value?.gameName || value?.name || value?.Game || "";
+                return optName === valName;
+              }}
+              value={
+                (gamesData || []).find((g) => {
+                  const gName = typeof g === "string" ? g : g?.GameName || g?.gameName || g?.name || g?.Game || "";
+                  return gName === formik.values.GameName;
+                }) || (formik.values.GameName ? { GameName: formik.values.GameName } : null)
+              }
+              onChange={(_, newValue) => {
+                const selectedName = typeof newValue === "string"
+                  ? newValue
+                  : newValue?.GameName || newValue?.gameName || newValue?.name || newValue?.Game || "";
+                formik.setFieldValue("GameName", selectedName);
+              }}
+              onBlur={() => formik.setFieldTouched("GameName", true)}
+              freeSolo
+              fullWidth
+              renderOption={(props, option) => {
+                const gName = typeof option === "string" ? option : option?.GameName || option?.gameName || option?.name || option?.Game || "";
+                const key = props.key || gName;
+                return (
+                  <Box
+                    component="li"
+                    {...props}
+                    sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1, px: 1.5 }}
+                    key={key}
+                  >
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "8px",
+                        background: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <SportsEsportsIcon sx={{ fontSize: 16, color: "#7c3aed" }} />
+                    </Box>
+                    <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#1e293b" }}>
+                      {gName}
+                    </Typography>
+                  </Box>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Game"
+                  placeholder="Search or select game..."
+                  error={formik.touched.GameName && Boolean(formik.errors.GameName)}
+                  helperText={formik.touched.GameName && formik.errors.GameName}
+                  sx={fieldSx}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <SportsEsportsIcon sx={{ fontSize: 16, color: "#94a3b8" }} />
                         </InputAdornment>
                         {params.InputProps.startAdornment}
                       </>

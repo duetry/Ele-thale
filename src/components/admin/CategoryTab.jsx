@@ -21,7 +21,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 
 import CategoryTabAdd from './CategoryTabAdd';
+import SubCategoryModal from './SubCategoryModal';
 import { getCategories, deleteCategory, selectCategories, selectCategoryLoading } from '@/app/features/adminPanel/categorySlice';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 const CategoryTab = () => {
   const [showAdd, setShowAdd] = useState(false);
@@ -29,6 +31,10 @@ const CategoryTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [openDelete, setOpenDelete] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Subcategories modal state
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [selectedCategoryForSub, setSelectedCategoryForSub] = useState(null);
 
   const dispatch = useDispatch();
   const categories = useSelector(selectCategories);
@@ -61,7 +67,7 @@ const CategoryTab = () => {
     {
       field: 'Categoryname',
       headerName: 'Category Name',
-      width: 250,
+      width: 220,
       renderCell: (params) => (
         <span style={{ fontWeight: 600, color: '#1e293b' }}>{params.value}</span>
       ),
@@ -69,7 +75,7 @@ const CategoryTab = () => {
     {
       field: 'Power',
       headerName: 'Power',
-      width: 120,
+      width: 100,
       type: 'number',
       align: 'left',
       headerAlign: 'left',
@@ -78,9 +84,37 @@ const CategoryTab = () => {
       ),
     },
     {
+      field: 'subcategories',
+      headerName: 'Subcategories',
+      width: 180,
+      sortable: false,
+      renderCell: (params) => (
+        <Chip
+          icon={<AccountTreeIcon sx={{ fontSize: '16px !important' }} />}
+          label="View Subcategories"
+          size="small"
+          clickable
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedCategoryForSub(params.row);
+            setShowSubModal(true);
+          }}
+          sx={{
+            background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)',
+            color: '#4f46e5',
+            fontWeight: 600,
+            border: '1px solid #c7d2fe',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+            },
+          }}
+        />
+      ),
+    },
+    {
       field: 'DateTime',
       headerName: 'Date Created',
-      width: 220,
+      width: 200,
       renderCell: (params) => {
         if (!params.value) return '—';
         try {
@@ -102,7 +136,8 @@ const CategoryTab = () => {
             <IconButton
               color="primary"
               size="small"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setSelectedCategory(params.row);
                 setShowAdd(true);
               }}
@@ -115,7 +150,8 @@ const CategoryTab = () => {
             <IconButton
               color="error"
               size="small"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setDeleteId(params.row.Categoryid);
                 setOpenDelete(true);
               }}
@@ -176,8 +212,16 @@ const CategoryTab = () => {
           pageSize={10}
           rowsPerPageOptions={[10, 20, 50]}
           disableRowSelectionOnClick
+          onRowClick={(params, event) => {
+            if (event.target.closest('button') || event.target.closest('.MuiIconButton-root')) {
+              return;
+            }
+            setSelectedCategoryForSub(params.row);
+            setShowSubModal(true);
+          }}
           sx={{
             borderRadius: 2,
+            cursor: 'pointer',
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: '#f8fafc',
               fontWeight: 700,
@@ -189,7 +233,7 @@ const CategoryTab = () => {
         />
       </Box>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Category Modal */}
       <CategoryTabAdd
         open={showAdd}
         handleClose={() => {
@@ -197,6 +241,16 @@ const CategoryTab = () => {
           setSelectedCategory(null);
         }}
         editData={selectedCategory}
+      />
+
+      {/* SubCategory Management Modal */}
+      <SubCategoryModal
+        open={showSubModal}
+        handleClose={() => {
+          setShowSubModal(false);
+          setSelectedCategoryForSub(null);
+        }}
+        category={selectedCategoryForSub}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -227,3 +281,4 @@ const CategoryTab = () => {
 };
 
 export default CategoryTab;
+

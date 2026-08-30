@@ -16,6 +16,7 @@ import {
   X,
   LogOut,
   UserCheck,
+  Ticket,
 } from 'lucide-react';
 
 import UserDetailsTab from './UserDetailsTab';
@@ -75,6 +76,7 @@ const AdminPanel = () => {
     { id: 'category', label: 'Categories', icon: Layers },
     { id: 'shop', label: 'Shop', icon: Store },
     { id: 'adminOffers', label: 'Products', icon: Package },
+    { id: 'coupon', label: 'Coupon', icon: Ticket },
     { id: 'flashDeal', label: 'Flash Deal', icon: Zap },
     { id: 'notified', label: 'Requested', icon: FileText },
     { id: 'reactions', label: 'Reactions', icon: Heart },
@@ -200,6 +202,7 @@ const AdminPanel = () => {
           {activeTab === 'category' && <CategoryTab />}
           {activeTab === 'shop' && <ShopTab />}
           {activeTab === 'shopOwner' && <ShopOwnerTab />}
+          {activeTab === 'coupon' && <CouponDetails />}
           {activeTab === 'flashDeal' && <FlashDealTab />}
           {activeTab === 'reactions' && <ReactionsTab />}
           {activeTab === 'notified' && <NotifiedTab />}
