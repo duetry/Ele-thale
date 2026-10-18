@@ -1038,6 +1038,11 @@ export default function Navbar() {
     }
   };
 
+  const handleNearbyOffersClick = () => {
+    router.push('/billBoard');
+    dispatch(userTracking('billBoard'));
+  };
+
   /* =========================
      NAV ITEMS CONFIG
      ========================= */
@@ -1047,6 +1052,7 @@ export default function Navbar() {
     ...(!isAdminOrOwner
       ? [
           { name: 'Super Deals', icon: Flame, onClick: handleSuperDealClick },
+          { name: 'Nearby Offers', icon: Tag, onClick: handleNearbyOffersClick },
           { name: 'Nearby Shops', icon: Store, onClick: handleSpecialOfferClick },
         ]
       : []),
@@ -1386,7 +1392,8 @@ export default function Navbar() {
         }}>
           {[
             { name: 'Super Deals', icon: Flame, path: '/' },
-            { name: 'Nearby Shops', icon: MapPin, path: '/specialOffer' },
+            { name: 'Nearby Offers', icon: Sparkles, path: '/billBoard' },
+            { name: 'Nearby Shops', icon: Store, path: '/specialOffer' },
             { name: 'My Coupons', icon: Ticket, path: '/myCoupons' },
             { name: 'My Offers', icon: Tag, path: '/myOffers' },
           ].map((tab) => {
@@ -1398,6 +1405,8 @@ export default function Navbar() {
                 onClick={() => {
                   if (tab.path === '/specialOffer') {
                     handleSpecialOfferClick();
+                  } else if (tab.path === '/billBoard') {
+                    handleNearbyOffersClick();
                   } else {
                     router.push(tab.path);
                   }

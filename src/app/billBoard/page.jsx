@@ -1,12 +1,11 @@
-import HeroSection from '@/components/foryou/HeroSection'
-import React from 'react'
+import BillboardBanners from '@/components/billBoard/BillBoard';
+import React from 'react';
 
-const page = () => {
-  return (
-    <div>
-        <HeroSection/>
-    </div>
-  )
+export const metadata = {
+  title: 'Nearby Offers | Offer Sandhai',
+  description: 'Explore live, upcoming, and exclusive offers near you with real-time distance and store details.',
+};
+
+export default function BillboardPage() {
+  return <BillboardBanners />;
 }
-
-export default page

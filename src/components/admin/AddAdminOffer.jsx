@@ -1104,6 +1104,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { getShops, selectShops } from "@/app/features/adminPanel/shopSlice";
 import { getCategories, selectCategories } from "@/app/features/adminPanel/categorySlice";
+import LocationMapPicker from "./LocationMapPicker";
 
 // ─── Styled helpers ──────────────────────────────────────────────────────────
 
@@ -1407,7 +1408,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       open={open}
       onClose={handleClose}
       fullWidth
-      maxWidth="md"
+      maxWidth="lg"
       TransitionComponent={Transition}
       PaperProps={{
         sx: {
@@ -1609,7 +1610,20 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                 getOptionLabel={(option) => option?.Storename || ""}
                 isOptionEqualToValue={(option, value) => option?.Storeid === value?.Storeid}
                 value={formik.values.Store}
-                onChange={(_, newValue) => formik.setFieldValue("Store", newValue)}
+                onChange={(_, newValue) => {
+                  formik.setFieldValue("Store", newValue);
+                  if (newValue) {
+                    if (newValue.Latitude !== undefined && newValue.Latitude !== null && newValue.Latitude !== "") {
+                      formik.setFieldValue("Latitude", newValue.Latitude);
+                    }
+                    if (newValue.Longitude !== undefined && newValue.Longitude !== null && newValue.Longitude !== "") {
+                      formik.setFieldValue("Longitude", newValue.Longitude);
+                    }
+                    if (newValue.Kilometer !== undefined && newValue.Kilometer !== null && newValue.Kilometer !== "") {
+                      formik.setFieldValue("Kilometer", newValue.Kilometer);
+                    }
+                  }
+                }}
                 onBlur={() => formik.setFieldTouched("Store", true)}
                 fullWidth
                 renderOption={(props, option) => (
@@ -1977,6 +1991,19 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                   {children}
                 </Box>
               )}
+            />
+
+            {/* Interactive Location & Address Map Picker */}
+            <LocationMapPicker
+              latitude={formik.values.Latitude}
+              longitude={formik.values.Longitude}
+              address={formik.values.Store?.Storeaddress || formik.values.Store?.StoreLocation || ""}
+              onLocationSelect={({ lat, lng }) => {
+                formik.setFieldValue("Latitude", lat);
+                formik.setFieldValue("Longitude", lng);
+              }}
+              label="Offer Location Pin"
+              mapHeight="360px"
             />
 
             {/* ── NEW: Row 4b — Kilometer | Latitude | Longitude ── */}

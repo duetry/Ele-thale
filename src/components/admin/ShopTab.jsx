@@ -118,11 +118,13 @@ const ShopTab = () => {
       field: 'Email',
       headerName: 'Email',
       width: 200,
+      renderCell: (params) => params.value || '—',
     },
     {
       field: 'Phoneno',
       headerName: 'Phone',
       width: 140,
+      renderCell: (params) => params.value || '—',
     },
     {
       field: 'Storeaddress',
@@ -288,6 +290,18 @@ const ShopTab = () => {
     },
   ];
 
+  if (showAdd) {
+    return (
+      <ShopTabAdd
+        onBack={() => {
+          setShowAdd(false);
+          setSelectedShop(null);
+        }}
+        editData={selectedShop}
+      />
+    );
+  }
+
   return (
     <Box sx={{ width: '100%' }}>
       {/* Add Button */}
@@ -338,15 +352,7 @@ const ShopTab = () => {
         />
       </Box>
 
-      {/* Add/Edit Modal */}
-      <ShopTabAdd
-        open={showAdd}
-        handleClose={() => {
-          setShowAdd(false);
-          setSelectedShop(null);
-        }}
-        editData={selectedShop}
-      />
+
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
