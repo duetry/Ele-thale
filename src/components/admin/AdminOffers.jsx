@@ -126,6 +126,23 @@ const AdminOffers = () => {
       ),
     },
     {
+      field: 'couponcount',
+      headerName: 'Coupon Count',
+      width: 130,
+      renderCell: (params) => {
+        const count =
+          params.row?.couponcount ??
+          params.row?.Couponcount ??
+          params.row?.couponCount ??
+          params.row?.CouponCount;
+        return (
+          <Box sx={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+            {count !== undefined && count !== null && count !== '' ? count : '—'}
+          </Box>
+        );
+      },
+    },
+    {
       field: 'actions',
       headerName: 'Actions',
       width: 130,

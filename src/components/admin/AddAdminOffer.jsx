@@ -1099,6 +1099,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BoltIcon from "@mui/icons-material/Bolt";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
+import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -1189,6 +1190,7 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       OfferStartTime: editData?.OfferStartTime || "",
       OfferEndTime: editData?.OfferEndTime || "",
       CoupounActive: editData?.CoupounActive === "true" || editData?.CoupounActive === true || !editData ? true : false,
+      couponcount: editData?.couponcount ?? editData?.Couponcount ?? editData?.couponCount ?? editData?.CouponCount ?? "",
       // ── FlashDeal field ──
       FlashDeal: (() => {
         const raw = editData?.Flashdeal ?? editData?.FlashDeal ?? editData?.flashdeal ?? editData?.flashDeal ?? editData?.IsFlashDeal ?? editData?.isFlashDeal;
@@ -1240,6 +1242,23 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
         .required("Longitude is required")
         .min(-180, "Min -180")
         .max(180, "Max 180"),
+      couponcount: Yup.number()
+        .transform((value, originalValue) =>
+          originalValue === "" || originalValue === null || originalValue === undefined
+            ? null
+            : value
+        )
+        .nullable()
+        .when("CoupounActive", {
+          is: (val) => val === true || val === "true",
+          then: (schema) =>
+            schema
+              .typeError("Coupon count must be a number")
+              .required("Coupon count is required when coupon is on")
+              .min(1, "Coupon count must be at least 1")
+              .integer("Coupon count must be a whole number"),
+          otherwise: (schema) => schema.nullable().optional(),
+        }),
     }),
     onSubmit: async (values, { resetForm }) => {
       setLoading(true);
@@ -1267,6 +1286,24 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           Categoryid: values.Categoryid,
           Categoryname: categoryName,
           CoupounActive: values.CoupounActive,
+          couponcount:
+            values.couponcount !== "" &&
+            values.couponcount !== null &&
+            values.couponcount !== undefined
+              ? Number(values.couponcount)
+              : (values.CoupounActive ? 0 : 0),
+          Couponcount:
+            values.couponcount !== "" &&
+            values.couponcount !== null &&
+            values.couponcount !== undefined
+              ? Number(values.couponcount)
+              : (values.CoupounActive ? 0 : 0),
+          CouponCount:
+            values.couponcount !== "" &&
+            values.couponcount !== null &&
+            values.couponcount !== undefined
+              ? Number(values.couponcount)
+              : (values.CoupounActive ? 0 : 0),
           // ── FlashDeal in payload ──
           Flashdeal: values.FlashDeal ? "true" : "false",
           FlashDeal: values.FlashDeal ? "true" : "false",
@@ -1380,6 +1417,20 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
       formik.values.Longitude === ""
     ) {
       formik.setFieldValue("Longitude", editData.Longitude);
+    }
+
+    // couponcount patch
+    const cCount =
+      editData?.couponcount ??
+      editData?.Couponcount ??
+      editData?.couponCount ??
+      editData?.CouponCount;
+    if (
+      cCount !== undefined &&
+      cCount !== null &&
+      formik.values.couponcount === ""
+    ) {
+      formik.setFieldValue("couponcount", cCount);
     }
 
     // GameName patch
@@ -1496,7 +1547,13 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
           >
             <Switch
               checked={formik.values.CoupounActive}
-              onChange={(e) => formik.setFieldValue("CoupounActive", e.target.checked)}
+              onChange={(e) => {
+                const isChecked = e.target.checked;
+                formik.setFieldValue("CoupounActive", isChecked);
+                if (!isChecked) {
+                  formik.setFieldError("couponcount", undefined);
+                }
+              }}
               size="small"
               sx={{
                 "& .MuiSwitch-switchBase.Mui-checked": { color: "#fff" },
@@ -2117,6 +2174,69 @@ const AddAdminOffers = ({ open, handleClose, editData }) => {
                     </InputAdornment>
                   ),
                 }}
+              />
+            </Box>
+
+            {/* ── Section: Coupon Configuration ── */}
+            <Divider sx={{ borderColor: "#e2e8f0" }} />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
+              <Box sx={{ ...sectionLabel, mb: 0 }}>
+                <ConfirmationNumberIcon sx={{ fontSize: 14 }} />
+                Coupon Details
+              </Box>
+              <Chip
+                label={formik.values.CoupounActive ? "Coupon On (Count Mandatory)" : "Coupon Off"}
+                size="small"
+                sx={{
+                  background: formik.values.CoupounActive
+                    ? "linear-gradient(135deg, #10b981, #059669)"
+                    : "#94a3b8",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: "11px",
+                }}
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                label={formik.values.CoupounActive ? "Coupon Count *" : "Coupon Count"}
+                name="couponcount"
+                type="number"
+                value={formik.values.couponcount}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.couponcount && Boolean(formik.errors.couponcount)}
+                helperText={
+                  formik.touched.couponcount && formik.errors.couponcount
+                    ? formik.errors.couponcount
+                    : formik.values.CoupounActive
+                    ? "Mandatory: Enter the number of coupons available"
+                    : "Coupon is currently Off (optional)"
+                }
+                fullWidth
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <ConfirmationNumberIcon
+                        sx={{
+                          fontSize: 16,
+                          color: formik.values.CoupounActive ? "#6366f1" : "#94a3b8",
+                        }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{ min: 1, step: 1 }}
               />
             </Box>
 
