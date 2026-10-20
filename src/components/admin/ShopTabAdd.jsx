@@ -23,6 +23,9 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SaveIcon from "@mui/icons-material/Save";
 import MapIcon from "@mui/icons-material/Map";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import TravelExploreIcon from "@mui/icons-material/TravelExplore";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -243,6 +246,110 @@ const ShopTabAdd = ({ onBack, editData }) => {
     reader.readAsDataURL(file);
   };
 
+  const [gmapsImportInput, setGmapsImportInput] = useState("");
+  const [importingGmaps, setImportingGmaps] = useState(false);
+  const [importFeedback, setImportFeedback] = useState(null);
+
+  const handleImportGoogleMaps = async (inputStr) => {
+    const raw = (inputStr || "").trim();
+    if (!raw) {
+      setImportFeedback({ type: "error", message: "Please paste a Google Maps link or coordinates." });
+      return;
+    }
+
+    setImportingGmaps(true);
+    setImportFeedback(null);
+
+    try {
+      const res = await fetch("/api/resolve-maps-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: raw }),
+      });
+      const data = await res.json();
+
+      if (data && (data.lat || data.placeName)) {
+        if (data.placeName) {
+          formik.setFieldValue("Storename", data.placeName);
+        }
+
+        if (data.lat !== null && data.lng !== null) {
+          formik.setFieldValue("Latitude", data.lat);
+          formik.setFieldValue("Longitude", data.lng);
+
+          const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${data.lat},${data.lng}`;
+          formik.setFieldValue(
+            "StoreLocation",
+            data.resolvedUrl && data.resolvedUrl.startsWith("http") ? data.resolvedUrl : gmapsUrl
+          );
+
+          try {
+            const revRes = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.lat}&lon=${data.lng}&addressdetails=1`,
+              { headers: { "Accept-Language": "en" } }
+            );
+            const revData = await revRes.json();
+            const addr = revData?.address || {};
+
+            const road = addr.road || addr.pedestrian || addr.street || addr.footway || "";
+            const area = addr.suburb || addr.neighbourhood || addr.residential || "";
+            const cityOrTown = addr.town || addr.city || addr.village || addr.municipality || "";
+            const state = addr.state || "Tamil Nadu";
+            const postcode = addr.postcode || "";
+
+            const addrParts = [
+              data.placeName,
+              road,
+              area,
+              cityOrTown,
+              state,
+              postcode
+            ].filter(Boolean);
+
+            if (addrParts.length > 0) {
+              formik.setFieldValue("Storeaddress", addrParts.join(", "));
+            }
+
+            if (locationData?.length && cityOrTown) {
+              const matchedLoc = locationData.find(
+                (l) =>
+                  (l.Name && l.Name.toLowerCase().includes(cityOrTown.toLowerCase())) ||
+                  (cityOrTown.toLowerCase().includes((l.Name || "").toLowerCase()))
+              );
+              if (matchedLoc) {
+                formik.setFieldValue("Location", matchedLoc);
+              }
+            }
+          } catch (e) {
+            console.error("Reverse geocoding error during import:", e);
+            if (data.placeName) {
+              formik.setFieldValue("Storeaddress", `${data.placeName}, Lat: ${data.lat}, Lng: ${data.lng}`);
+            }
+          }
+        }
+
+        setImportFeedback({
+          type: "success",
+          message: `✅ Imported "${data.placeName || 'Shop'}" successfully! Location & coordinates pinned.`,
+        });
+        setGmapsImportInput("");
+      } else {
+        setImportFeedback({
+          type: "error",
+          message: "Could not detect coordinates or shop name. Please check the URL or try searching on Google Maps.",
+        });
+      }
+    } catch (err) {
+      console.error("Import error:", err);
+      setImportFeedback({
+        type: "error",
+        message: "Failed to resolve link. Please ensure valid Google Maps URL or enter coordinates.",
+      });
+    } finally {
+      setImportingGmaps(false);
+    }
+  };
+
   return (
     <Box sx={{ width: "100%", pb: 6 }}>
       {/* ── Page Header Bar ── */}
@@ -341,6 +448,91 @@ const ShopTabAdd = ({ onBack, editData }) => {
             gap: 2.5,
           }}
         >
+          {/* ── Quick Google Maps Import Card ── */}
+          <Box
+            sx={{
+              p: 2.5,
+              borderRadius: "14px",
+              background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)",
+              border: "1px solid #bae6fd",
+              boxShadow: "0 4px 16px rgba(14, 165, 233, 0.08)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <TravelExploreIcon sx={{ color: "#0284c7" }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#0f172a" }}>
+                  Quick Import Shop from Google Maps
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                onClick={() => {
+                  const query = formik.values.Storename || "Mathi bakes Manapparai";
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
+                }}
+                sx={{
+                  textTransform: "none",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  borderColor: "#38bdf8",
+                  color: "#0284c7",
+                  background: "#fff",
+                  "&:hover": { borderColor: "#0284c7", background: "#f0f9ff" },
+                }}
+              >
+                Find &quot;{formik.values.Storename || "Shop"}&quot; on Google Maps ↗
+              </Button>
+            </Box>
+            <Typography variant="body2" sx={{ color: "#475569", mb: 1.5 }}>
+              Paste any Google Maps link, share URL (e.g. <code>maps.app.goo.gl/...</code>), or coordinates to automatically fill Store Name, Address, Latitude, Longitude & Map pin.
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: { xs: "wrap", sm: "nowrap" } }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Paste Google Maps link (e.g. https://maps.app.goo.gl/... or place link or 10.6058, 78.4180)"
+                value={gmapsImportInput}
+                onChange={(e) => setGmapsImportInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleImportGoogleMaps(gmapsImportInput);
+                  }
+                }}
+                sx={{
+                  background: "#fff",
+                  borderRadius: "8px",
+                  "& .MuiOutlinedInput-root": { borderRadius: "8px" },
+                }}
+              />
+              <LoadingButton
+                variant="contained"
+                loading={importingGmaps}
+                onClick={() => handleImportGoogleMaps(gmapsImportInput)}
+                sx={{
+                  whiteSpace: "nowrap",
+                  borderRadius: "8px",
+                  px: 3,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  background: "linear-gradient(135deg, #0284c7, #0369a1)",
+                  "&:hover": { background: "#0284c7" },
+                }}
+              >
+                Auto-Fill Shop
+              </LoadingButton>
+            </Box>
+            {importFeedback && (
+              <Typography sx={{ fontSize: "12px", mt: 1, color: importFeedback.type === 'error' ? '#dc2626' : '#15803d', fontWeight: 600 }}>
+                {importFeedback.message}
+              </Typography>
+            )}
+          </Box>
+
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e293b", pb: 1, borderBottom: "1px solid #f1f5f9" }}>
             🏪 Shop Basic Details
           </Typography>
@@ -465,10 +657,22 @@ const ShopTabAdd = ({ onBack, editData }) => {
             label="Location Link / Address"
             name="StoreLocation"
             value={formik.values.StoreLocation}
-            onChange={formik.handleChange}
+            onChange={(e) => {
+              const val = e.target.value;
+              formik.handleChange(e);
+              if (
+                val &&
+                (val.includes("google.com/maps") ||
+                  val.includes("goo.gl") ||
+                  /^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(val.trim()))
+              ) {
+                handleImportGoogleMaps(val);
+              }
+            }}
             onBlur={formik.handleBlur}
             error={formik.touched.StoreLocation && Boolean(formik.errors.StoreLocation)}
             helperText={formik.touched.StoreLocation && formik.errors.StoreLocation}
+            placeholder="Paste Google Maps link (e.g. https://maps.app.goo.gl/... or place link) or address"
             fullWidth
           />
 
@@ -563,8 +767,9 @@ const ShopTabAdd = ({ onBack, editData }) => {
               latitude={formik.values.Latitude}
               longitude={formik.values.Longitude}
               address={formik.values.Storeaddress || formik.values.StoreLocation}
+              shopName={formik.values.Storename}
               mapHeight="420px"
-              onLocationSelect={({ lat, lng, address, googleMapsUrl }) => {
+              onLocationSelect={({ lat, lng, address, placeName, googleMapsUrl }) => {
                 formik.setFieldValue("Latitude", lat);
                 formik.setFieldValue("Longitude", lng);
                 if (address) {
@@ -572,6 +777,9 @@ const ShopTabAdd = ({ onBack, editData }) => {
                 }
                 if (googleMapsUrl) {
                   formik.setFieldValue("StoreLocation", googleMapsUrl);
+                }
+                if (placeName && (!formik.values.Storename || formik.values.Storename.trim() === "")) {
+                  formik.setFieldValue("Storename", placeName);
                 }
               }}
               label="Map Location Selector"
