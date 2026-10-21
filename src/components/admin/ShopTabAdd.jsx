@@ -268,8 +268,9 @@ const ShopTabAdd = ({ onBack, editData }) => {
       });
       const data = await res.json();
 
-      if (data && (data.lat || data.placeName)) {
-        if (data.placeName) {
+      if (data && (data.lat !== null || data.placeName)) {
+        // Only set Storename if user hasn't already entered one manually
+        if (data.placeName && (!formik.values.Storename || formik.values.Storename.trim() === "")) {
           formik.setFieldValue("Storename", data.placeName);
         }
 
@@ -283,47 +284,35 @@ const ShopTabAdd = ({ onBack, editData }) => {
             data.resolvedUrl && data.resolvedUrl.startsWith("http") ? data.resolvedUrl : gmapsUrl
           );
 
-          try {
-            const revRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.lat}&lon=${data.lng}&addressdetails=1`,
-              { headers: { "Accept-Language": "en" } }
-            );
-            const revData = await revRes.json();
-            const addr = revData?.address || {};
-
-            const road = addr.road || addr.pedestrian || addr.street || addr.footway || "";
-            const area = addr.suburb || addr.neighbourhood || addr.residential || "";
-            const cityOrTown = addr.town || addr.city || addr.village || addr.municipality || "";
-            const state = addr.state || "Tamil Nadu";
-            const postcode = addr.postcode || "";
-
-            const addrParts = [
-              data.placeName,
-              road,
-              area,
-              cityOrTown,
-              state,
-              postcode
-            ].filter(Boolean);
-
-            if (addrParts.length > 0) {
-              formik.setFieldValue("Storeaddress", addrParts.join(", "));
-            }
-
-            if (locationData?.length && cityOrTown) {
-              const matchedLoc = locationData.find(
-                (l) =>
-                  (l.Name && l.Name.toLowerCase().includes(cityOrTown.toLowerCase())) ||
-                  (cityOrTown.toLowerCase().includes((l.Name || "").toLowerCase()))
-              );
-              if (matchedLoc) {
-                formik.setFieldValue("Location", matchedLoc);
+          // If official formatted address already resolved from Place Details, use it directly
+          if (data.formattedAddress) {
+            formik.setFieldValue("Storeaddress", data.formattedAddress);
+          } else {
+            // Otherwise reverse geocode via protected server endpoint without prepending shop name
+            try {
+              const revRes = await fetch("/api/reverse-geocode", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lat: data.lat, lng: data.lng }),
+              });
+              if (revRes.ok) {
+                const revData = await revRes.json();
+                if (revData.formattedAddress) {
+                  formik.setFieldValue("Storeaddress", revData.formattedAddress);
+                }
+                if (locationData?.length && revData.cityOrTown && !formik.values.Location) {
+                  const matchedLoc = locationData.find(
+                    (l) =>
+                      (l.Name && l.Name.toLowerCase().includes(revData.cityOrTown.toLowerCase())) ||
+                      (revData.cityOrTown.toLowerCase().includes((l.Name || "").toLowerCase()))
+                  );
+                  if (matchedLoc) {
+                    formik.setFieldValue("Location", matchedLoc);
+                  }
+                }
               }
-            }
-          } catch (e) {
-            console.error("Reverse geocoding error during import:", e);
-            if (data.placeName) {
-              formik.setFieldValue("Storeaddress", `${data.placeName}, Lat: ${data.lat}, Lng: ${data.lng}`);
+            } catch (e) {
+              console.error("Reverse geocoding error during import:", e);
             }
           }
         }
@@ -769,17 +758,33 @@ const ShopTabAdd = ({ onBack, editData }) => {
               address={formik.values.Storeaddress || formik.values.StoreLocation}
               shopName={formik.values.Storename}
               mapHeight="420px"
-              onLocationSelect={({ lat, lng, address, placeName, googleMapsUrl }) => {
-                formik.setFieldValue("Latitude", lat);
-                formik.setFieldValue("Longitude", lng);
+              onLocationSelect={({ lat, lng, address, placeName, googleMapsUrl, isDirectSelection, cityOrTown }) => {
+                if (lat !== undefined && lat !== null) {
+                  formik.setFieldValue("Latitude", lat);
+                }
+                if (lng !== undefined && lng !== null) {
+                  formik.setFieldValue("Longitude", lng);
+                }
                 if (address) {
                   formik.setFieldValue("Storeaddress", address);
                 }
                 if (googleMapsUrl) {
                   formik.setFieldValue("StoreLocation", googleMapsUrl);
                 }
-                if (placeName && (!formik.values.Storename || formik.values.Storename.trim() === "")) {
+                // Only populate Storename if user explicitly picked from search AND currently empty
+                if (isDirectSelection && placeName && (!formik.values.Storename || formik.values.Storename.trim() === "")) {
                   formik.setFieldValue("Storename", placeName);
+                }
+                // Auto-match city or town in location dropdown if available
+                if (cityOrTown && locationData?.length && !formik.values.Location) {
+                  const matchedLoc = locationData.find(
+                    (l) =>
+                      (l.Name && l.Name.toLowerCase().includes(cityOrTown.toLowerCase())) ||
+                      (cityOrTown.toLowerCase().includes((l.Name || "").toLowerCase()))
+                  );
+                  if (matchedLoc) {
+                    formik.setFieldValue("Location", matchedLoc);
+                  }
                 }
               }}
               label="Map Location Selector"

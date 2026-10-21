@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   TextField,
@@ -24,14 +24,22 @@ import MapIcon from '@mui/icons-material/Map';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
+import PlaceIcon from '@mui/icons-material/Place';
 
 const TILE_SERVERS = {
+  osm: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: ['a', 'b', 'c'],
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors',
+    name: 'OpenStreetMap',
+  },
   googleRoadmap: {
     url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     maxZoom: 20,
     attribution: '&copy; Google Maps',
-    name: 'Google Maps (Shops & Details)',
+    name: 'Google Maps (Roadmap)',
   },
   googleSatellite: {
     url: 'https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
@@ -39,13 +47,6 @@ const TILE_SERVERS = {
     maxZoom: 20,
     attribution: '&copy; Google Maps Hybrid',
     name: 'Satellite',
-  },
-  osm: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    subdomains: ['a', 'b', 'c'],
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors',
-    name: 'OpenStreetMap',
   },
 };
 
@@ -102,6 +103,9 @@ const LocationMapPicker = ({
   const currentTileLayerRef = useRef(null);
   const markerInstance = useRef(null);
 
+  // Request counter to safely discard stale async geocoding responses
+  const activeReverseReqId = useRef(0);
+
   const shopNameRef = useRef(shopName);
   useEffect(() => {
     shopNameRef.current = shopName;
@@ -115,15 +119,85 @@ const LocationMapPicker = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [searchSource, setSearchSource] = useState(null);
 
-  // Sync search input when address prop changes
+  // Keep search input synced when address prop changes from outside (e.g. form reset or prefill)
+  const lastPropAddressRef = useRef(address);
   useEffect(() => {
-    if (address && address !== searchQuery) {
+    if (address && address !== lastPropAddressRef.current) {
+      lastPropAddressRef.current = address;
       setSearchQuery(address);
     }
   }, [address]);
 
-  // Load Leaflet & setup initial map with Google Maps Tile Layer
+  // Reverse geocode coordinates to get structured street address without altering shop name
+  const reverseGeocode = useCallback(async (lat, lng) => {
+    const currentReqId = ++activeReverseReqId.current;
+    setLoadingGeo(true);
+
+    try {
+      const res = await fetch('/api/reverse-geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng }),
+      });
+
+      if (!res.ok) throw new Error('Reverse geocode failed');
+      const data = await res.json();
+
+      // Guard against race conditions: ignore if another request started later
+      if (currentReqId !== activeReverseReqId.current) return;
+
+      const formattedAddress = data.formattedAddress || '';
+      const fullPlusCode = data.plusCode || encodePlusCode(lat, lng);
+      const shortPlus = getShortPlusCode(fullPlusCode);
+      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+
+      if (formattedAddress) {
+        setSearchQuery(formattedAddress);
+      }
+
+      if (onLocationSelect) {
+        onLocationSelect({
+          lat,
+          lng,
+          address: formattedAddress,
+          plusCode: shortPlus,
+          fullPlusCode: fullPlusCode,
+          googleMapsUrl,
+          cityOrTown: data.cityOrTown || '',
+          state: data.state || '',
+          postcode: data.postcode || '',
+          isDirectSelection: false, // Map click/drag: do not overwrite Storename
+        });
+      }
+    } catch (err) {
+      console.error('Reverse geocoding error:', err);
+      if (currentReqId !== activeReverseReqId.current) return;
+
+      const fullPlusCode = encodePlusCode(lat, lng);
+      const shortPlus = getShortPlusCode(fullPlusCode);
+      const fallbackAddress = `Lat: ${lat.toFixed(7)}, Lng: ${lng.toFixed(7)}`;
+      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+
+      if (onLocationSelect) {
+        onLocationSelect({
+          lat,
+          lng,
+          address: searchQuery || fallbackAddress,
+          plusCode: shortPlus,
+          googleMapsUrl,
+          isDirectSelection: false,
+        });
+      }
+    } finally {
+      if (currentReqId === activeReverseReqId.current) {
+        setLoadingGeo(false);
+      }
+    }
+  }, [onLocationSelect, searchQuery]);
+
+  // Load Leaflet and setup interactive map
   useEffect(() => {
     let isMounted = true;
 
@@ -158,8 +232,7 @@ const LocationMapPicker = ({
           zoomControl: true,
         });
 
-        // Add Google Maps Roadmap tiles by default
-        const tileConfig = TILE_SERVERS.googleRoadmap;
+        const tileConfig = TILE_SERVERS[mapType] || TILE_SERVERS.googleRoadmap;
         const initialLayer = L.tileLayer(tileConfig.url, {
           maxZoom: tileConfig.maxZoom,
           subdomains: tileConfig.subdomains,
@@ -172,20 +245,39 @@ const LocationMapPicker = ({
           draggable: true,
         }).addTo(map);
 
-        // Handle marker drag
+        // Marker drag handler: immediately update form coords, then reverse-geocode address
         customMarker.on('dragend', async () => {
           const pos = customMarker.getLatLng();
           const lat = parseFloat(pos.lat.toFixed(7));
           const lng = parseFloat(pos.lng.toFixed(7));
-          await reverseGeocode(lat, lng, shopNameRef.current);
+
+          // Send exact coords immediately to the form
+          if (onLocationSelect) {
+            onLocationSelect({
+              lat,
+              lng,
+              isDirectSelection: false,
+            });
+          }
+
+          await reverseGeocode(lat, lng);
         });
 
-        // Handle map click
+        // Map click handler: place marker at clicked location, update coords immediately
         map.on('click', async (e) => {
           const lat = parseFloat(e.latlng.lat.toFixed(7));
           const lng = parseFloat(e.latlng.lng.toFixed(7));
           customMarker.setLatLng([lat, lng]);
-          await reverseGeocode(lat, lng, shopNameRef.current);
+
+          if (onLocationSelect) {
+            onLocationSelect({
+              lat,
+              lng,
+              isDirectSelection: false,
+            });
+          }
+
+          await reverseGeocode(lat, lng);
         });
 
         leafletMapInstance.current = map;
@@ -228,100 +320,29 @@ const LocationMapPicker = ({
     currentTileLayerRef.current = newLayer;
   };
 
-  // Update map view when latitude/longitude props change externally
+  // Sync marker position when latitude or longitude props change externally (e.g. edit mode initialization)
   useEffect(() => {
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
     if (!isNaN(lat) && !isNaN(lng) && leafletMapInstance.current && markerInstance.current) {
-      markerInstance.current.setLatLng([lat, lng]);
-      leafletMapInstance.current.setView([lat, lng], Math.max(leafletMapInstance.current.getZoom(), 16));
+      const currentPos = markerInstance.current.getLatLng();
+      if (Math.abs(currentPos.lat - lat) > 0.000001 || Math.abs(currentPos.lng - lng) > 0.000001) {
+        markerInstance.current.setLatLng([lat, lng]);
+        leafletMapInstance.current.setView([lat, lng], Math.max(leafletMapInstance.current.getZoom(), 16));
+      }
     }
   }, [latitude, longitude]);
 
-  // Reverse geocode lat,lng to get detailed Plus Code address & direct map redirect link
-  const reverseGeocode = async (lat, lng, nameOverride = '') => {
-    setLoadingGeo(true);
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-        {
-          headers: {
-            'Accept-Language': 'en',
-          },
-        }
-      );
-      const data = await response.json();
-      const addr = data?.address || {};
-
-      // 1. Calculate Plus Code (e.g. JC3J+GWG)
-      const fullPlusCode = data?.extratags?.plus_code || encodePlusCode(lat, lng);
-      const shortPlus = getShortPlusCode(fullPlusCode);
-
-      // 2. Extract detailed address components (road, area, town/village, state, pincode)
-      const road = addr.road || addr.pedestrian || addr.street || addr.footway || '';
-      const area = addr.suburb || addr.neighbourhood || addr.residential || addr.quarter || '';
-      const cityOrTown = addr.town || addr.city || addr.village || addr.municipality || addr.county || '';
-      const state = addr.state || 'Tamil Nadu';
-      const postcode = addr.postcode || '621306';
-
-      // 3. Assemble exact structured address with Shop Name at front if present
-      const effectiveName = (nameOverride || shopNameRef.current || '').trim();
-      const addressParts = [
-        effectiveName,
-        shortPlus,
-        road,
-        area,
-        cityOrTown,
-        state,
-        postcode
-      ].filter(Boolean);
-
-      const exactAddress = addressParts.join(', ');
-      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-
-      setSearchQuery(exactAddress);
-
-      if (onLocationSelect) {
-        onLocationSelect({
-          lat,
-          lng,
-          address: exactAddress,
-          placeName: effectiveName,
-          plusCode: shortPlus,
-          fullPlusCode: fullPlusCode,
-          googleMapsUrl: googleMapsUrl,
-        });
-      }
-    } catch (err) {
-      console.error('Reverse geocoding error:', err);
-      const fullPlusCode = encodePlusCode(lat, lng);
-      const shortPlus = getShortPlusCode(fullPlusCode);
-      const effectiveName = (nameOverride || shopNameRef.current || '').trim();
-      const fallbackAddress = [effectiveName, shortPlus, `Lat: ${lat}, Lng: ${lng}`].filter(Boolean).join(', ');
-      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-
-      if (onLocationSelect) {
-        onLocationSelect({
-          lat,
-          lng,
-          address: searchQuery || fallbackAddress,
-          placeName: effectiveName,
-          plusCode: shortPlus,
-          googleMapsUrl: googleMapsUrl,
-        });
-      }
-    } finally {
-      setLoadingGeo(false);
-    }
-  };
-
-  // Check if string contains coordinates like "10.6058, 78.4180" or Google Maps URL (including short links)
-  const parseCoordinatesOrUrl = async (str) => {
+  // Check if search query contains coordinates or a Google Maps URL
+  const checkCoordinatesOrUrl = async (str) => {
     if (!str) return null;
     const trimmed = str.trim();
 
-    // Check for short Google Maps links that need resolution
-    if (trimmed.includes('goo.gl') || trimmed.includes('maps.app.goo.gl')) {
+    // Check for coordinates or Google Maps links
+    const isUrl = trimmed.includes('http://') || trimmed.includes('https://') || trimmed.includes('google.com/maps') || trimmed.includes('goo.gl');
+    const isCoordPair = /^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(trimmed);
+
+    if (isUrl || isCoordPair) {
       try {
         const res = await fetch('/api/resolve-maps-url', {
           method: 'POST',
@@ -329,148 +350,140 @@ const LocationMapPicker = ({
           body: JSON.stringify({ url: trimmed }),
         });
         const data = await res.json();
-        if (data && data.lat && data.lng) {
+        if (data && data.lat !== null && data.lng !== null) {
           return {
             lat: data.lat,
             lng: data.lng,
             placeName: data.placeName || '',
+            formattedAddress: data.formattedAddress || '',
             resolvedUrl: data.resolvedUrl || trimmed,
+            placeId: data.placeId || null,
           };
         }
       } catch (err) {
-        console.error('Error resolving short URL:', err);
-      }
-    }
-
-    let placeName = '';
-    // Extract place name from URL
-    const placeMatch = trimmed.match(/\/place\/([^/@?]+)/) || trimmed.match(/\/search\/([^/@?]+)/);
-    if (placeMatch) {
-      placeName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' ')).trim();
-    } else {
-      const qParamMatch = trimmed.match(/[?&]q=([^&]+)/);
-      if (qParamMatch) {
-        const decoded = decodeURIComponent(qParamMatch[1].replace(/\+/g, ' ')).trim();
-        if (!/^-?\d+\.\d+,-?\d+\.\d+$/.test(decoded)) {
-          placeName = decoded;
-        }
-      }
-    }
-
-    // @lat,lng
-    const gmapMatch = trimmed.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (gmapMatch) {
-      const lat = parseFloat(gmapMatch[1]);
-      const lng = parseFloat(gmapMatch[2]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng, placeName };
-      }
-    }
-
-    // !3dlat!4dlng
-    const dataMatch = trimmed.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
-    if (dataMatch) {
-      const lat = parseFloat(dataMatch[1]);
-      const lng = parseFloat(dataMatch[2]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng, placeName };
-      }
-    }
-
-    // query or ll parameter coords
-    const qCoordMatch = trimmed.match(/[?&](?:q|query|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (qCoordMatch) {
-      const lat = parseFloat(qCoordMatch[1]);
-      const lng = parseFloat(qCoordMatch[2]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng, placeName };
-      }
-    }
-
-    // Direct plain coordinates "10.6058, 78.4180"
-    const coordMatch = trimmed.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-    if (coordMatch) {
-      const lat = parseFloat(coordMatch[1]);
-      const lng = parseFloat(coordMatch[2]);
-      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-        return { lat, lng, placeName };
+        console.error('Error resolving URL or coordinates in picker:', err);
       }
     }
 
     return null;
   };
 
-  // Search places via Nominatim Geocoding API or parse Lat,Lng input directly
+  // Execute Search: Google Places API (New) via /api/places-search
   const handleSearchPlaces = async (queryStr) => {
     const q = queryStr !== undefined ? queryStr : searchQuery;
     if (!q || q.trim().length < 2) return;
 
     setLoadingSearch(true);
     try {
-      const directData = await parseCoordinatesOrUrl(q);
+      // 1. First check if user pasted a URL or coordinate pair
+      const directData = await checkCoordinatesOrUrl(q);
       if (directData && directData.lat && directData.lng) {
-        const lat = parseFloat(directData.lat.toFixed(7));
-        const lng = parseFloat(directData.lng.toFixed(7));
+        const lat = directData.lat;
+        const lng = directData.lng;
 
         if (leafletMapInstance.current && markerInstance.current) {
           markerInstance.current.setLatLng([lat, lng]);
           leafletMapInstance.current.setView([lat, lng], 17);
         }
         setShowSuggestions(false);
-        await reverseGeocode(lat, lng, directData.placeName);
+
+        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        if (onLocationSelect) {
+          onLocationSelect({
+            lat,
+            lng,
+            address: directData.formattedAddress || searchQuery,
+            placeName: directData.placeName || '',
+            placeId: directData.placeId,
+            googleMapsUrl,
+            isDirectSelection: true,
+          });
+        }
         return;
       }
 
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=8`,
-        {
-          headers: {
-            'Accept-Language': 'en',
-          },
-        }
-      );
-      const data = await res.json();
-      setSuggestions(data || []);
-      setShowSuggestions(true);
+      // 2. Perform search using Google Places API (New) backend endpoint
+      const currentLat = parseFloat(latitude) || 10.6058;
+      const currentLng = parseFloat(longitude) || 78.4180;
+
+      const res = await fetch('/api/places-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: q,
+          biasLat: currentLat,
+          biasLng: currentLng,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data.places || []);
+        setSearchSource(data.source || 'google');
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+      }
     } catch (err) {
-      console.error('Geocoding search error:', err);
+      console.error('Places search error:', err);
+      setSuggestions([]);
     } finally {
       setLoadingSearch(false);
     }
   };
 
-  // Auto-search suggestions as user types (debounced)
+  // Auto-search suggestions as user types (debounced at 400ms)
   useEffect(() => {
-    if (!searchQuery || searchQuery.trim().length < 3) {
+    if (!searchQuery || searchQuery.trim().length < 2) {
       setSuggestions([]);
       return;
     }
 
+    // Don't auto-search if query matches the current address prop
+    if (searchQuery === address) {
+      return;
+    }
+
     const timer = setTimeout(() => {
-      if (searchQuery !== address) {
-        handleSearchPlaces(searchQuery);
-      }
-    }, 450);
+      handleSearchPlaces(searchQuery);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Select place from search dropdown
+  // Handle selecting a place from the Google Places / OSM dropdown
   const handleSelectSuggestion = (place) => {
-    const lat = parseFloat(parseFloat(place.lat).toFixed(7));
-    const lng = parseFloat(parseFloat(place.lon).toFixed(7));
+    if (!place || place.lat === null || place.lng === null) return;
+
+    const lat = parseFloat(place.lat.toFixed(7));
+    const lng = parseFloat(place.lng.toFixed(7));
+    const placeAddress = place.formattedAddress || place.name || '';
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 
     setShowSuggestions(false);
+    setSearchQuery(placeAddress);
 
+    // Pin marker to exact Google Places coordinates
     if (leafletMapInstance.current && markerInstance.current) {
       markerInstance.current.setLatLng([lat, lng]);
       leafletMapInstance.current.setView([lat, lng], 17);
     }
 
-    reverseGeocode(lat, lng, place.name || shopNameRef.current);
+    // Direct selection: preserve business name and exact coordinates, do not trigger reverse geocode overwrite
+    if (onLocationSelect) {
+      onLocationSelect({
+        lat,
+        lng,
+        address: placeAddress,
+        placeName: place.name || '',
+        placeId: place.id || null,
+        googleMapsUrl,
+        isDirectSelection: true,
+      });
+    }
   };
 
-  // Fetch Current Device Location (GPS)
+  // GPS Current Location
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
@@ -488,11 +501,19 @@ const LocationMapPicker = ({
           leafletMapInstance.current.setView([lat, lng], 17);
         }
 
+        if (onLocationSelect) {
+          onLocationSelect({
+            lat,
+            lng,
+            isDirectSelection: false,
+          });
+        }
+
         await reverseGeocode(lat, lng);
       },
       (err) => {
         console.error('GPS Geolocation error:', err);
-        alert('Could not retrieve your location. Please ensure location permissions are enabled.');
+        alert('Could not retrieve your location. Please check browser permissions.');
         setLoadingGeo(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -521,7 +542,7 @@ const LocationMapPicker = ({
 
   return (
     <Box sx={{ width: '100%', mb: 1 }}>
-      {/* Header controls: Label & Map Type Switcher */}
+      {/* Header controls: Title & Map Type Switcher */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 0.8 }}>
           <MapIcon sx={{ fontSize: 18, color: '#6366f1' }} />
@@ -529,7 +550,6 @@ const LocationMapPicker = ({
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* Map Layer Switcher: Google Maps vs Satellite vs OSM */}
           <ToggleButtonGroup
             value={mapType}
             exclusive
@@ -554,13 +574,13 @@ const LocationMapPicker = ({
               },
             }}
           >
-            <ToggleButton value="googleRoadmap" title="Google Maps (Details, Shops & Tamil/English Labels)">
+            <ToggleButton value="googleRoadmap" title="Google Maps Roadmap">
               🗺️ Google Maps
             </ToggleButton>
             <ToggleButton value="googleSatellite" title="Google Satellite View">
               🛰️ Satellite
             </ToggleButton>
-            <ToggleButton value="osm" title="OpenStreetMap Layer">
+            <ToggleButton value="osm" title="OpenStreetMap Layer (Terms Compliant)">
               🌐 OSM
             </ToggleButton>
           </ToggleButtonGroup>
@@ -586,7 +606,7 @@ const LocationMapPicker = ({
             </Button>
           </Tooltip>
 
-          <Tooltip title="Test exact location redirect in Google Maps">
+          <Tooltip title="Open pin in Google Maps">
             <IconButton
               size="small"
               onClick={handleOpenGoogleMaps}
@@ -605,12 +625,12 @@ const LocationMapPicker = ({
         </Box>
       </Box>
 
-      {/* Address / Shop Search Bar */}
+      {/* Business & Address Search Bar (Google Places API New) */}
       <Box sx={{ position: 'relative', mb: 1.5 }}>
         <TextField
           fullWidth
           size="small"
-          placeholder="Search shop, area, or paste Lat,Lng (e.g. JC3J+GWG, Anna Nagar, Manapparai)..."
+          placeholder="Search business name (e.g. Mathi Bakes, Manapparai), address, or paste link..."
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -628,7 +648,7 @@ const LocationMapPicker = ({
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: '#94a3b8', fontSize: 20 }} />
+                <SearchIcon sx={{ color: '#6366f1', fontSize: 20 }} />
               </InputAdornment>
             ),
             endAdornment: (
@@ -639,7 +659,7 @@ const LocationMapPicker = ({
                   <IconButton
                     size="small"
                     onClick={() => handleSearchPlaces()}
-                    title="Search place on map"
+                    title="Search business"
                     sx={{ color: '#6366f1' }}
                   >
                     <SearchIcon size="small" />
@@ -656,11 +676,11 @@ const LocationMapPicker = ({
           }}
         />
 
-        {/* Autocomplete Dropdown List with Google Maps Fallback */}
+        {/* Autocomplete Dropdown List powered by Google Places API (New) */}
         {showSuggestions && (
           suggestions.length > 0 ? (
             <Paper
-              elevation={6}
+              elevation={8}
               sx={{
                 position: 'absolute',
                 top: '100%',
@@ -668,35 +688,53 @@ const LocationMapPicker = ({
                 right: 0,
                 zIndex: 9999,
                 mt: 0.5,
-                maxHeight: 260,
+                maxHeight: 280,
                 overflowY: 'auto',
                 borderRadius: '12px',
                 border: '1px solid #cbd5e1',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
               }}
             >
+              <Box sx={{ px: 2, py: 1, backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {searchSource === 'google' ? 'Google Places Search Results' : 'Search Results'}
+                </Typography>
+                <Chip
+                  label={searchSource === 'google' ? 'Google Places API' : 'OpenStreetMap'}
+                  size="small"
+                  sx={{
+                    height: '20px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    backgroundColor: searchSource === 'google' ? '#e0f2fe' : '#f1f5f9',
+                    color: searchSource === 'google' ? '#0369a1' : '#475569',
+                  }}
+                />
+              </Box>
+
               <List density="compact" disablePadding>
                 {suggestions.map((item, index) => (
                   <ListItem
                     button
-                    key={index}
+                    key={item.id || index}
                     onClick={() => handleSelectSuggestion(item)}
                     sx={{
                       py: 1.2,
-                      px: 1.5,
+                      px: 2,
                       borderBottom: index < suggestions.length - 1 ? '1px solid #f1f5f9' : 'none',
-                      '&:hover': { backgroundColor: '#f8fafc' },
+                      '&:hover': { backgroundColor: '#f0fdf4' },
                     }}
                   >
+                    <PlaceIcon sx={{ fontSize: 18, color: '#ef4444', mr: 1.5, mt: 0.3, alignSelf: 'flex-start' }} />
                     <ListItemText
-                      primary={item.display_name}
+                      primary={item.name || item.formattedAddress}
                       primaryTypographyProps={{
                         fontSize: '13px',
-                        color: '#1e293b',
-                        fontWeight: 600,
+                        color: '#0f172a',
+                        fontWeight: 700,
                       }}
-                      secondary={`Lat: ${parseFloat(item.lat).toFixed(5)}, Lng: ${parseFloat(item.lon).toFixed(5)}`}
-                      secondaryTypographyProps={{ fontSize: '11px', color: '#64748b' }}
+                      secondary={item.formattedAddress && item.name ? item.formattedAddress : `Coordinates: ${item.lat}, ${item.lng}`}
+                      secondaryTypographyProps={{ fontSize: '11px', color: '#64748b', mt: 0.3 }}
                     />
                   </ListItem>
                 ))}
@@ -722,10 +760,10 @@ const LocationMapPicker = ({
                 }}
               >
                 <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', mb: 0.5 }}>
-                  No match in OpenStreetMap for &quot;{searchQuery}&quot;
+                  No exact match found for &quot;{searchQuery}&quot;
                 </Typography>
                 <Typography sx={{ fontSize: '12px', color: '#64748b', mb: 1.5 }}>
-                  Local shops & bakeries (like Mathi Bakes) are listed on Google Maps!
+                  You can click directly on the map to pin the location, or search in Google Maps and paste the link below.
                 </Typography>
                 <Button
                   size="small"
@@ -751,16 +789,13 @@ const LocationMapPicker = ({
                 >
                   Search &quot;{searchQuery}&quot; on Google Maps ↗
                 </Button>
-                <Typography sx={{ fontSize: '11px', color: '#94a3b8', mt: 1 }}>
-                  💡 Tip: Find it on Google Maps, copy the link or coordinates, and paste it here!
-                </Typography>
               </Paper>
             )
           )
         )}
       </Box>
 
-      {/* Map View Container rendering Google Maps Tiles */}
+      {/* Map View Container */}
       <Box
         sx={{
           position: 'relative',
@@ -793,13 +828,13 @@ const LocationMapPicker = ({
           >
             <CircularProgress size={30} />
             <Typography variant="body2" sx={{ ml: 1.5, color: '#475569', fontWeight: 600 }}>
-              Loading Google Maps tiles...
+              Loading map...
             </Typography>
           </Box>
         )}
       </Box>
 
-      {/* Exact Plus Code & Direct Google Maps Redirect Link Badge */}
+      {/* Selected Coordinates & Direct Google Maps Link Card */}
       <Paper
         elevation={0}
         sx={{
@@ -821,7 +856,7 @@ const LocationMapPicker = ({
               sx={{ background: '#ede9fe', color: '#6366f1', fontWeight: 700, fontSize: '12px' }}
             />
             <Typography variant="caption" sx={{ color: '#475569', fontWeight: 600 }}>
-              Lat: {latitude || '—'}, Lng: {longitude || '—'}
+              Lat: {latitude ? parseFloat(latitude).toFixed(7) : '—'}, Lng: {longitude ? parseFloat(longitude).toFixed(7) : '—'}
             </Typography>
           </Box>
 
@@ -843,7 +878,7 @@ const LocationMapPicker = ({
 
         {searchQuery && (
           <Typography variant="caption" sx={{ color: '#334155', fontWeight: 500, lineHeight: 1.4 }}>
-            🎯 <strong>Exact Address</strong>: {searchQuery}
+            🎯 <strong>Selected Location</strong>: {searchQuery}
           </Typography>
         )}
       </Paper>
